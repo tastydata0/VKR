@@ -1,0 +1,8 @@
+fastapi
+pymongo
+pydantic
+uvicorn
+python-docx
+wget
+PyJWT
+starlette

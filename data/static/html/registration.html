@@ -6,6 +6,15 @@
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 </head>
 <body>
+
+    <div id="header-container"></div>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#header-container').load('/static/html/header.html');
+    });
+</script>
     <div class="container">
         <h1 class="mt-4">Регистрация</h1>
         <form class="mt-4" id="registrationForm" method="post" action="/registration">
@@ -34,8 +43,8 @@
                 <input type="text" class="form-control" id="school" name="school" required value="Школа №123">
             </div>
             <div class="form-group">
-                <label for="entryYear">Год поступления в 1 класс:</label>
-                <input type="number" class="form-control" id="entryYear" name="entryYear" required value="2015">
+                <label for="schoolClass">Класс:</label>
+                <input type="number" class="form-control" id="schoolClass" name="schoolClass" required value="2015">
             </div>
             <div class="form-group">
                 <label for="birthDate">Дата рождения (ДД.ММ.ГГГГ):</label>
@@ -68,7 +77,7 @@
             var email = document.getElementById("email").value;
             var parentEmail = document.getElementById("parentEmail").value;
             var school = document.getElementById("school").value;
-            var entryYear = document.getElementById("entryYear").value;
+            var schoolClass = document.getElementById("schoolClass").value;
             var birthDateInput = document.getElementById("birthDate");
 
             var birthDateValue = birthDateInput.value;
@@ -80,7 +89,7 @@
                 email: email,
                 parentEmail: parentEmail,
                 school: school,
-                entryYear: entryYear,
+                schoolClass: schoolClass,
                 birthDate: formattedBirthDate,
                 password: password
             };

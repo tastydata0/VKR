@@ -4,5 +4,10 @@ pydantic
 uvicorn
 python-docx
 wget
-PyJWT
 starlette
+openpyxl
+img2pdf
+pymorphy3
+petrovich
+python-dotenv
+argon2-cffi

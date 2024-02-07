@@ -12,6 +12,10 @@ from typing import Dict, List, Optional
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse
+from starlette.authentication import requires
+from starlette.middleware import Middleware
+from starlette.routing import Route
+from starlette.middleware.authentication import AuthenticationMiddleware
 import uvicorn
 from docx_generator import generate_doc
 import json
@@ -26,14 +30,13 @@ from name_translation import fio_to_genitive
 import passwords
 import sheets_api
 
+from .auth import BasicAuthBackend
+
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 
 generated_docs_folder = "data/docx_files"
 
 active_tokens = {}
-app = FastAPI()
-app.mount("/static/docs", StaticFiles(directory=generated_docs_folder))
-app.mount("/static/html", StaticFiles(directory="data/static/html"))
 
 
 mail = Mail()
@@ -145,14 +148,14 @@ def form_user_key(user_data: RegistrationData | LoginData | User) -> str:
     return form_user_key_dict(user_data.dict())
 
 
-@app.get("/programs")
-async def programs(request: Request):
-    return templates.TemplateResponse(
-        "programs.html", {"request": request, "programs": sheets_api.load_programs()}
-    )
+# @app.get("/programs")
+# async def programs(request: Request):
+#     return templates.TemplateResponse(
+#         "programs.html", {"request": request, "programs": sheets_api.load_programs()}
+#     )
 
 
-@app.get("/registration")
+# @app.get("/registration")
 async def registration_form(request: Request):
     data = {}
     return templates.TemplateResponse(
@@ -161,13 +164,13 @@ async def registration_form(request: Request):
 
 
 # Эндпоинт для отображения HTML-страницы входа
-@app.get("/login", response_class=HTMLResponse)
+# @app.get("/login", response_class=HTMLResponse)
 async def login_form(request: Request):
     data = {}
     return templates.TemplateResponse("login.html", {"request": request, "data": data})
 
 
-@app.get("/send_docs")
+# @app.get("/send_docs")
 async def send_docs_form(request: Request):
     access_token = request.cookies.get("access_token")
     print(f"{access_token=}")
@@ -181,7 +184,7 @@ async def send_docs_form(request: Request):
         return RedirectResponse(url="/login")
 
 
-@app.get("/")
+# @app.get("/")
 async def get_form(request: Request):
     access_token = request.cookies.get("access_token")
 
@@ -206,7 +209,7 @@ async def get_form(request: Request):
         return RedirectResponse(url="/login")
 
 
-@app.post("/")
+# @app.post("/")
 async def post_form(request: Request, data: User):
     try:
         user = resolve_user_by_token(request.cookies.get("access_token"))
@@ -221,7 +224,7 @@ async def post_form(request: Request, data: User):
         return RedirectResponse(url="/login")
 
 
-@app.post("/send_docs")
+# @app.post("/send_docs")
 async def upload_files(request: Request, files: list[UploadFile]):
     access_token = request.cookies.get("access_token")
 
@@ -236,7 +239,7 @@ async def upload_files(request: Request, files: list[UploadFile]):
         return RedirectResponse(url="/login")
 
 
-@app.post("/registration")
+# @app.post("/registration")
 async def register(data: RegistrationData):
     if not database.register_user(data):
         raise HTTPException(status_code=400, detail="User exists")
@@ -288,7 +291,7 @@ def resolve_user_by_token(token: str) -> User:
 
 
 # Эндпоинт для создания токена
-@app.post("/token")
+# @app.post("/token")
 async def create_token(form_data: LoginData):
     user_with_pass = database._find_user_with_password(
         form_data.fullName, form_data.birthDate
@@ -317,8 +320,10 @@ async def create_token(form_data: LoginData):
 
 
 # Эндпоинт для доступа к данным пользователя
-@app.get("/users/me", response_model=User)
+# @requires("authenticated")
+# @app.get("/users/me", response_model=User)
 async def read_users_me(request: Request):
+    # return request.user
     access_token = request.cookies.get("access_token")
 
     try:
@@ -328,9 +333,9 @@ async def read_users_me(request: Request):
         return RedirectResponse(url="/login")
 
 
-@app.get("/favicon.ico", include_in_schema=False)
-async def favicon():
-    return FileResponse("data/static/favicon.ico")
+# @app.get("/favicon.ico", include_in_schema=False)
+# async def favicon():
+#     return FileResponse("data/static/favicon.ico")
 
 
 def register_exception(app: FastAPI):
@@ -343,6 +348,24 @@ def register_exception(app: FastAPI):
         print(request, exc_str)
         content = {"status_code": 10422, "message": exc_str, "data": None}
         return JSONResponse(content=content, status_code=422)
+
+
+middleware = [Middleware(AuthenticationMiddleware, backend=BasicAuthBackend())]
+routes = [
+    Route("/registration", endpoint=registration_form, methods=["GET"]),
+    Route("/login", endpoint=login_form, methods=["GET"]),
+    Route("/registration", endpoint=register, methods=["POST"]),
+    Route("/users/me", endpoint=read_users_me, methods=["GET"]),
+    Route("/token", endpoint=create_token, methods=["POST"]),
+    Route("/send_docs", endpoint=upload_files, methods=["POST"]),
+    Route("/send_docs", endpoint=send_docs_form, methods=["GET"]),
+    Route("/", endpoint=post_form, methods=["POST"]),
+    Route("/", endpoint=get_form, methods=["GET"]),
+]
+
+app = FastAPI(routes=routes, middleware=middleware)
+app.mount("/static/docs", StaticFiles(directory=generated_docs_folder))
+app.mount("/static/html", StaticFiles(directory="data/static/html"))
 
 
 def start():

@@ -9,7 +9,7 @@ console = Console()
 
 # User modules
 import logging_setup
-import server
+import server.server as server
 
 
 def main():

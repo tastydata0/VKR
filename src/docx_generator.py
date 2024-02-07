@@ -2,7 +2,7 @@ from uuid import uuid4
 from docx import Document
 import os
 import datetime
-import sheets_api
+from sheets_api import *
 
 from models import User
 from name_translation import fio_to_genitive
@@ -16,7 +16,7 @@ def generate_doc(userData: User):
     program_info = list(
         filter(
             lambda program: program["id"] == userData.selectedProgram,
-            sheets_api.load_programs(),
+            load_programs(),
         )
     )[0]
 

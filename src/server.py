@@ -19,11 +19,12 @@ from docs_to_pdf import merge_docs_to_pdf
 from mail_service import Mail
 from fastapi.staticfiles import StaticFiles
 from fastapi import status
-import sheets_api
+import src.sheets_api
 from models import *
 import database
 from name_translation import fio_to_genitive
 import passwords
+import sheets_api
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 

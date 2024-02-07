@@ -36,6 +36,13 @@ class User(BaseModel):
     documents: Optional[dict[str, str]] = Field(
         {"applicationForm": "", "consestToDataProcessing": ""}
     )
+    application: Optional[dict[str, str]] = Field(None)
+
+
+class UserKey(BaseModel):
+    # TODO: исправить уязвимость
+    fullName: str
+    birthDate: str
 
 
 class Program(BaseModel):

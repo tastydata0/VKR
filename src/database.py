@@ -1,10 +1,10 @@
 from datetime import datetime
 import json
 from pymongo import MongoClient
-import models
+from models import *
 import dotenv
 import os
-import passwords
+from passwords import get_password_hash
 
 dotenv.load_dotenv(".env")
 username = os.getenv("DB_USER")
@@ -32,18 +32,18 @@ def _find_user_with_password(fullName: str, birthDate: str):
     return users.find_one({"fullName": fullName, "birthDate": birthDate})
 
 
-def find_user(fullName: str, birthDate: str) -> models.User | None:
+def find_user(fullName: str, birthDate: str) -> User | None:
     raw_user_data = _find_user_with_password(fullName=fullName, birthDate=birthDate)
     if raw_user_data is None:
         return None
-    return models.User(**raw_user_data)
+    return User(**raw_user_data)
 
 
-def find_user_creds(fullName: str, birthDate: str) -> models.LoginData:
+def find_user_creds(fullName: str, birthDate: str) -> LoginData:
     raw_user_data = _find_user_with_password(fullName=fullName, birthDate=birthDate)
     if raw_user_data is None:
         return None
-    return models.LoginData(**raw_user_data)
+    return LoginData(**raw_user_data)
 
 
 def user_exists(fullName: str, birthDate: str):
@@ -51,7 +51,7 @@ def user_exists(fullName: str, birthDate: str):
     return user is not None
 
 
-def modify_user(fullName: str, birthDate: str, newUserData: models.User):
+def modify_user(fullName: str, birthDate: str, newUserData: User):
     if user_exists(fullName, birthDate):
         query = {"fullName": fullName, "birthDate": birthDate}
         new_values = {"$set": newUserData.dict()}
@@ -61,9 +61,19 @@ def modify_user(fullName: str, birthDate: str, newUserData: models.User):
         return 0  # Пользователь не существует, модификация невозможна
 
 
-def register_user(userData: models.RegistrationData):
+def update_user_application_state(user_key: UserKey, application_state: str):
+    if user_exists(user_key.fullName, user_key.birthDate):
+        query = {"fullName": user_key.fullName, "birthDate": user_key.birthDate}
+        new_values = {"$set": {"application": {"state": application_state}}}
+        result = users.update_one(query, new_values)
+        return result.modified_count
+    else:
+        return 0
+
+
+def register_user(userData: RegistrationData):
     # Хэширование пароля
-    userData.password = passwords.get_password_hash(userData.password)
+    userData.password = get_password_hash(userData.password)
 
     userData = userData.dict()
     if not user_exists(userData["fullName"], userData["birthDate"]):
@@ -92,8 +102,7 @@ def find_user_by_token(token: str):
     raw_user_data = users.find_one({"_id": token_info["user_id"]})
     if raw_user_data is None:
         return None
-    return models.User(**raw_user_data)
+    return User(**raw_user_data)
 
 
 _setup_db()
-

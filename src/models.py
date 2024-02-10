@@ -3,6 +3,12 @@ from fastapi import File
 from pydantic import BaseModel, Field
 
 
+class ApplicationStage(BaseModel):
+    stageName: str
+    stageStatus: str  # current, passed, todo, negative
+    stageHref: Optional[str] = Field("#")
+
+
 class RegistrationData(BaseModel):
     fullName: str
     email: str
@@ -37,6 +43,10 @@ class User(BaseModel):
         {"applicationForm": "", "consestToDataProcessing": ""}
     )
     application: Optional[dict[str, str]] = Field(None)
+
+
+class UserMinInfo(BaseModel):
+    fullName: str
 
 
 class UserKey(BaseModel):

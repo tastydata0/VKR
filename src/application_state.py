@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from statemachine import StateMachine, State
 from models import UserKey
 

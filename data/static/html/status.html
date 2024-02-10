@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Статус заявления</title>
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+    <style>
+      .styled-list {
+        list-style: none;
+        padding: 0;
+      }
+
+      .list-item {
+        border-radius: 10px;
+        margin-bottom: 5px;
+        padding: 6px;
+        transition: background-color 0.3s;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+      }
+
+      .list-item:hover {
+        background-color: rgba(0, 0, 0, 0.1);
+      }
+
+      .current {
+        background-color: rgba(0, 0, 0, 0.05);
+      }
+
+      .list-item a {
+        flex: 1;
+        padding-left: 10px;
+        text-decoration: none;
+        color: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="header-container"></div>
+    <h2 class="mt-4">Статус заявления 📜</h2>
+
+    <ul class="styled-list">
+      {% for stage in application_stages %}
+      <li
+        class="list-item {% if request.path == stage.stageHref %} current {% endif %}"
+      >
+        <img
+          src="/static/icons/stage_{% if request.path == stage.stageHref and stage.stageStatus == 'todo' %}current{% else %}{{ stage.stageStatus }}{% endif %}.svg"
+          width="16px"
+        />
+        <a href="{{ stage.stageHref }}">{{ stage.stageName }}</a>
+      </li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>

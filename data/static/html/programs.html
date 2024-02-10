@@ -1,124 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
     <style>
-        .star {
-            width: 24px;
-            height: 24px;
-                        vertical-align: middle; /* Выравнивание по вертикали */
-        }
-          #stars-container {
-            position: relative; /* Сделать элемент относительным */
-            top: -10px; /* Поднять его вверх */
-            margin-left: 6px;
-        }
+      .star {
+        width: 24px;
+        height: 24px;
+        vertical-align: middle;
+      }
+      #stars-container {
+        position: relative;
+        top: -10px;
+        margin-left: 6px;
+      }
     </style>
     <title>Выбор программы</title>
-</head>
-<body>
-<div class="container">
-    <div class="row">
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
         <div class="col-md-4">
-            <div class="btn-group-vertical">
-                {% for program in programs %}
-                <button class="btn btn-light program-button" data-program-id="{{ program.id }}" data-program-difficulty="{{ program.difficulty }}">{{ program.brief }}</button>
-                {% endfor %}
-            </div>
+          <div class="btn-group-vertical">
+            {% for program in programs %}
+            <button
+              class="btn btn-light program-button"
+              data-program-id="{{ program.id }}"
+              data-program-difficulty="{{ program.difficulty }}"
+            >
+              {{ program.brief }}
+            </button>
+            {% endfor %}
+          </div>
         </div>
         <div class="col-md-8">
-            <div id="program-details" class="d-flex">
-                <div>
-                    <h3 id="program-title"></h3>
-                    <div id="program-info" class="d-flex align-items-center">
-                        <p id="program-difficulty-label">Сложность: </p>
-                        <div id="stars-container" style="display: flex;">
-                            [Звезды]
-                        </div>
-                    </div>
-                    <p id="program-hours" style="margin-bottom: 0px;"></p>
-                    <p id="program-cost"></p>
-                    <p id="program-description" class="fixed-width-description">[Описание программы]</p>
-                </div>
-                                <div>
-                    <img id="program-icon" class="program-icon" width="96" height="96" src="[URL иконки]">
-                </div>
+          <div id="program-details" class="d-flex">
+            <div>
+              <h3 id="program-title"></h3>
+              <div id="program-info" class="d-flex align-items-center">
+                <p id="program-difficulty-label">Сложность:</p>
+                <div id="stars-container" style="display: flex">[Звезды]</div>
+              </div>
+              <p id="program-hours" style="margin-bottom: 0px"></p>
+              <p id="program-cost"></p>
+              <p id="program-description" class="fixed-width-description">
+                [Описание программы]
+              </p>
             </div>
+            <div>
+              <img
+                id="program-icon"
+                class="program-icon"
+                width="96"
+                height="96"
+                src="[URL иконки]"
+              />
+            </div>
+          </div>
         </div>
+      </div>
     </div>
-</div>
 
-<style>
-    .fixed-width-description {
+    <style>
+      .fixed-width-description {
         max-width: 300px; /* Фиксированная максимальная ширина описания программы */
         word-wrap: break-word;
-    }
-</style>
-
-
-
+      }
+    </style>
 
     <script>
-        const programs = {{ programs | tojson | safe }};
-        const programDetails = document.getElementById("program-details");
+      const programs = {{ programs | tojson | safe }};
+      const programDetails = document.getElementById("program-details");
 
-        // Предзагрузка изображений
-        programs.forEach(program => {
-            const img = new Image();
-            img.src = program.iconUrl;
-        });
+      // Предзагрузка изображений
+      programs.forEach(program => {
+          const img = new Image();
+          img.src = program.iconUrl;
+      });
 
-        // Предзагрузка изображения звездочки
-        const starImage = new Image();
-        starImage.src = 'star.png';
+      // Предзагрузка изображения звездочки
+      const starImage = new Image();
+      starImage.src = 'star.png';
 
-        const buttons = document.querySelectorAll(".program-button");
-        buttons.forEach(button => {
-            button.addEventListener("click", () => {
-                // Получим ID и сложность выбранной программы
-                const programId = button.getAttribute("data-program-id");
-                const programDifficulty = button.getAttribute("data-program-difficulty");
+      const buttons = document.querySelectorAll(".program-button");
+      buttons.forEach(button => {
+          button.addEventListener("click", () => {
+              // Получим ID и сложность выбранной программы
+              const programId = button.getAttribute("data-program-id");
+              const programDifficulty = button.getAttribute("data-program-difficulty");
 
-                // Найдем выбранную программу по ID
-                const selectedProgram = programs.find(program => program.id === programId);
+              // Найдем выбранную программу по ID
+              const selectedProgram = programs.find(program => program.id === programId);
 
-                // Установим информацию о программе
-                document.getElementById("program-title").textContent = selectedProgram.brief;
-                
-                const programInfo = document.getElementById("program-info");
+              // Установим информацию о программе
+              document.getElementById("program-title").textContent = selectedProgram.brief;
+
+              const programInfo = document.getElementById("program-info");
 
 
-                const starsContainer = document.getElementById("stars-container");
-                starsContainer.innerHTML = ''; // Очистим содержимое
-                for (let i = 0; i < 3; i++) {
-                    const star = document.createElement("img");
-                    star.src = i < programDifficulty ? 'https://img.icons8.com/fluency-systems-filled/48/star.png' : 'https://img.icons8.com/fluency-systems-regular/48/star--v1.png';
-                    star.alt = i < programDifficulty ? 'Звезда' : 'Пустая звезда';
-                    star.className = 'star';
-                    starsContainer.appendChild(star);
-                }
+              const starsContainer = document.getElementById("stars-container");
+              starsContainer.innerHTML = ''; // Очистим содержимое
+              for (let i = 0; i < 3; i++) {
+                  const star = document.createElement("img");
+                  star.src = i < programDifficulty ? 'https://img.icons8.com/fluency-systems-filled/48/star.png' : 'https://img.icons8.com/fluency-systems-regular/48/star--v1.png';
+                  star.alt = i < programDifficulty ? 'Звезда' : 'Пустая звезда';
+                  star.className = 'star';
+                  starsContainer.appendChild(star);
+              }
 
-                const programIcon = document.getElementById("program-icon");
-                programIcon.src = selectedProgram.iconUrl;
-                programIcon.alt = selectedProgram.brief;
+              const programIcon = document.getElementById("program-icon");
+              programIcon.src = selectedProgram.iconUrl;
+              programIcon.alt = selectedProgram.brief;
 
-                const programHours = document.getElementById("program-hours");
-                programHours.innerHTML = `${selectedProgram.hoursAud + selectedProgram.hoursHome} часов (${selectedProgram.hoursAud} аудиторных)`
+              const programHours = document.getElementById("program-hours");
+              programHours.innerHTML = `${selectedProgram.hoursAud + selectedProgram.hoursHome} часов (${selectedProgram.hoursAud} аудиторных)`
 
-                const programCost = document.getElementById("program-cost");
-                programCost.innerHTML = `Стоимость: ${selectedProgram.cost}`
+              const programCost = document.getElementById("program-cost");
+              programCost.innerHTML = `Стоимость: ${selectedProgram.cost}`
 
-                const programDescription = document.getElementById("program-description");
-                programDescription.textContent = selectedProgram.details;
-            });
-        });
+              const programDescription = document.getElementById("program-description");
+              programDescription.textContent = selectedProgram.details;
+          });
+      });
     </script>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</body>
+  </body>
 </html>
-

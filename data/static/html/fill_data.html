@@ -1,347 +1,330 @@
+{% extends "base_with_status.html" %} {% block title %} Подача заявления {%
+endblock %} {% block base_with_status_content %}
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
-        .star {
-            width: 24px;
-            height: 24px;
-            vertical-align: middle;
-            /* Выравнивание по вертикали */
-        }
+      .star {
+        width: 24px;
+        height: 24px;
+        vertical-align: middle;
+      }
 
-        #stars-container {
-            position: relative;
-            /* Сделать элемент относительным */
-            top: -10px;
-            /* Поднять его вверх */
-            margin-left: 6px;
-        }
+      #stars-container {
+        position: relative;
+        top: -10px;
+        margin-left: 6px;
+      }
 
-        #program-details {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
+      #program-details {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
 
-        .program-icon {
-            align-self: flex-start;
-            /* Располагаем иконку в начале контейнера */
-            margin-right: 10px;
-            /* Расстояние между иконкой и остальными элементами */
-        }
+      .program-icon {
+        align-self: flex-start;
+        margin-right: 10px;
+      }
 
-
-
-        .d-flex.align-items-center {
-            display: flex;
-            align-items: center;
-        }
+      .d-flex.align-items-center {
+        display: flex;
+        align-items: center;
+      }
     </style>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
-        crossorigin="anonymous">
-    <title>Подача заявления</title>
-</head>
+  </head>
 
-<body>
-    <div id="header-container"></div>
+  <body>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-    <script>
-        $(document).ready(function () {
-            $('#header-container').load('/static/html/header.html');
-        });
-    </script>
-    <div class="container mt-4">
-        <h1>Подача заявления</h1>
 
-        <form method="POST" onsubmit="sendData(event)">
-            <h2>Выбор программы</h2>
-            <div class="container">
-                <div class="row">
-                    <div class="col-auto" style="padding-left: 0px; margin-bottom: 16px;">
-                        {% for program in programs %}
-                        <div class="form-check">
-                            <input class="form-check-input program-radio" style="margin-bottom: 8px;" type="radio"
-                                name="selectedProgram" id="{{ program.id }}" value="{{ program.id }}"
-                                data-program-difficulty="{{ program.difficulty }}" {% if
-                                known_data.selectedProgram==program.id %}checked{% endif %}>
-                            <label class="form-check-label" for="{{ program.id }}">
-                                {{ program.brief }}
-                            </label>
-                        </div>
-                        {% endfor %}
-                    </div>
-
-                    <div class="col">
-                        <div id="program-details" class="d-flex">
-                            <div>
-                                <h3 id="program-title"></h3>
-                                <div id="program-info" class="d-flex align-items-center">
-                                    <p id="program-difficulty-label">Сложность: </p>
-                                    <div id="stars-container" style="display: flex;">
-                                        [Звезды]
-                                    </div>
-                                </div>
-                                <p id="program-hours" style="margin-bottom: 0px;"></p>
-                                <p id="program-cost"></p>
-                                <p id="program-description" class="fixed-width-description">[Описание программы]</p>
-                            </div>
-                            <div>
-                                <img id="program-icon" class="program-icon" width="96" height="96" src="[URL иконки]">
-                            </div>
-                        </div>
-
-
-
-                    </div>
-                </div>
-            </div>
-
-            <h2>Личные данные</h2>
-
-            {% for field in form_fields %}
-            <div class="mb-3">
-                <label for="{{ field.id }}" class="form-label">{{ field.label }}:</label>
-                <input type="{{ field.type }}" class="form-control" id="{{ field.id }}" name="{{ field.name }}"
-                    placeholder="{{ field.placeholder }}"
-                    value="{% if known_data[field.name] is not none %}{{ known_data[field.name] }}{% endif %}">
+    <form method="POST" onsubmit="sendData(event)">
+      <h2>Выбор программы</h2>
+      <div class="container">
+        <div class="row">
+          <div class="col-auto" style="padding-left: 0px; margin-bottom: 16px">
+            {% for program in programs %}
+            <div class="form-check">
+              <input class="form-check-input program-radio"
+              style="margin-bottom: 8px;" type="radio" name="selectedProgram"
+              id="{{ program.id }}" value="{{ program.id }}"
+              data-program-difficulty="{{ program.difficulty }}" {% if
+              known_data.selectedProgram==program.id %}checked{% endif %}>
+              <label class="form-check-label" for="{{ program.id }}">
+                {{ program.brief }}
+              </label>
             </div>
             {% endfor %}
-            <button type="submit" class="btn btn-primary">Отправить данные</button>
-        </form>
-    </div>
+          </div>
 
+          <div class="col">
+            <div id="program-details" class="d-flex">
+              <div>
+                <h3 id="program-title"></h3>
+                <div id="program-info" class="d-flex align-items-center">
+                  <p id="program-difficulty-label">Сложность:</p>
+                  <div id="stars-container" style="display: flex">[Звезды]</div>
+                </div>
+                <p id="program-hours" style="margin-bottom: 0px"></p>
+                <p id="program-cost"></p>
+                <p id="program-description" class="fixed-width-description">
+                  [Описание программы]
+                </p>
+              </div>
+              <div>
+                <img
+                  id="program-icon"
+                  class="program-icon"
+                  width="96"
+                  height="96"
+                  src="[URL иконки]"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
+      <h2>Личные данные</h2>
+
+      {% for field in form_fields %}
+      <div class="mb-3">
+        <label for="{{ field.id }}" class="form-label"
+          >{{ field.label }}:</label
+        >
+        <input
+          type="{{ field.type }}"
+          class="form-control"
+          id="{{ field.id }}"
+          name="{{ field.name }}"
+          placeholder="{{ field.placeholder }}"
+          value="{% if known_data[field.name] is not none %}{{ known_data[field.name] }}{% endif %}"
+        />
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary">Отправить данные</button>
+    </form>
 
     <script>
+      function download(url, filename) {
+        fetch(url)
+          .then((response) => response.blob())
+          .then((blob) => {
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+          })
+          .catch(console.error);
+      }
 
-        function download(url, filename) {
-            fetch(url)
-                .then(response => response.blob())
-                .then(blob => {
-                    const link = document.createElement("a");
-                    link.href = URL.createObjectURL(blob);
-                    link.download = filename;
-                    link.click();
-                })
-                .catch(console.error);
+      function sendData(event) {
+        event.preventDefault();
+
+        var formElements = document.forms[0].elements;
+
+        var userData = {};
+
+        for (var i = 0; i < formElements.length; i++) {
+          var element = formElements[i];
+          userData[element.name] = element.value;
         }
 
-        function sendData(event) {
-            event.preventDefault();
-
-            var formElements = document.forms[0].elements;
-
-            var userData = {};
-
-            for (var i = 0; i < formElements.length; i++) {
-                var element = formElements[i];
-                userData[element.name] = element.value;
-            }
-
-            // Проводим валидацию для поля birthDate
-            if (userData.hasOwnProperty("birthDate")) {
-                var birthDate = userData.birthDate;
-                // Добавьте здесь вашу валидацию, например, проверку формата даты
-                if (!isValidDate(birthDate)) {
-                    alert("Некорректный формат даты рождения.");
-                    return;
-                }
-            }
-
-            var selectedProgram = document.querySelector('input[name="selectedProgram"]:checked');
-            if (selectedProgram) {
-                userData.selectedProgram = selectedProgram.value;
-            } else {
-                alert("Пожалуйста, выберите программу обучения.");
-                return;
-            }
-
-            // Отправляем данные на сервер
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", "/");
-            xhr.setRequestHeader("Content-Type", "application/json");
-            xhr.send(JSON.stringify(userData));
-
-            // Обработка ответа сервера
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    console.log("Ответ от сервера:", xhr.responseText);
-                    var relativePath = JSON.parse(xhr.responseText).url;
-                    var baseUrl = window.location.href; // Получаем текущий URL страницы
-                    var fullUrl = new URL(relativePath, baseUrl);
-
-                    download(fullUrl.href, "Заявление.docx");
-                }
-            };
+        // Проводим валидацию для поля birthDate
+        if (userData.hasOwnProperty("birthDate")) {
+          var birthDate = userData.birthDate;
+          // Добавьте здесь вашу валидацию, например, проверку формата даты
+          if (!isValidDate(birthDate)) {
+            alert("Некорректный формат даты рождения.");
+            return;
+          }
         }
 
-        function isValidDate(dateString) {
+        var selectedProgram = document.querySelector(
+          'input[name="selectedProgram"]:checked'
+        );
+        if (selectedProgram) {
+          userData.selectedProgram = selectedProgram.value;
+        } else {
+          alert("Пожалуйста, выберите программу обучения.");
+          return;
+        }
 
-            var datePattern = /^(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.\d{4}$/;
+        // Отправляем данные на сервер
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/");
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.send(JSON.stringify(userData));
 
-            if (!datePattern.test(dateString)) {
-                return false; // Date string does not match the pattern
-            }
+        // Обработка ответа сервера
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4 && xhr.status === 200) {
+            console.log("Ответ от сервера:", xhr.responseText);
+            var relativePath = JSON.parse(xhr.responseText).url;
+            var baseUrl = window.location.href; // Получаем текущий URL страницы
+            var fullUrl = new URL(relativePath, baseUrl);
 
-            var dateParts = dateString.split(".");
+            download(fullUrl.href, "Заявление.docx");
+          }
+        };
+      }
 
-            if (dateParts.length !== 3) {
-                return false; // Incorrect format
-            }
+      function isValidDate(dateString) {
+        var datePattern = /^(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.\d{4}$/;
 
-            var day = parseInt(dateParts[0], 10);
-            var month = parseInt(dateParts[1], 10);
-            var year = parseInt(dateParts[2], 10);
+        if (!datePattern.test(dateString)) {
+          return false;
+        }
 
-            // Check if the parts are valid numbers
-            if (isNaN(day) || isNaN(month) || isNaN(year)) {
-                return false;
-            }
+        var dateParts = dateString.split(".");
 
-            // Reformat the date string to "MM/DD/YYYY" format
-            var reformattedDate = month + "/" + day + "/" + year;
+        if (dateParts.length !== 3) {
+          return false;
+        }
 
-            // Try to create a Date object from the reformatted string
-            var date = new Date(reformattedDate);
+        var day = parseInt(dateParts[0], 10);
+        var month = parseInt(dateParts[1], 10);
+        var year = parseInt(dateParts[2], 10);
 
-            // Check if the created Date object is a valid date
-            if (isNaN(date.getTime())) {
-                return false;
-            }
+        if (isNaN(day) || isNaN(month) || isNaN(year)) {
+          return false;
+        }
 
-            return true;
-        }   
+        var reformattedDate = month + "/" + day + "/" + year;
+
+        var date = new Date(reformattedDate);
+
+        if (isNaN(date.getTime())) {
+          return false;
+        }
+
+        return true;
+      }
     </script>
     <script>
 
-        function setProgramInfo() {
-            // Получите выбранное значение
-            const programId = $('input[name="selectedProgram"]:checked').val();
-            const programDifficulty = $('input[name="selectedProgram"]:checked').data("program-difficulty");
+      function setProgramInfo() {
+          const programId = $('input[name="selectedProgram"]:checked').val();
+          const programDifficulty = $('input[name="selectedProgram"]:checked').data("program-difficulty");
 
-            // Выполните действия в зависимости от выбора
-            console.log("Выбрана программа с ID: " + programId);
-            console.log("Сложность программы: " + programDifficulty);
+          console.log("Выбрана программа с ID: " + programId);
+          console.log("Сложность программы: " + programDifficulty);
 
-            // Вызовите другие функции или скрипты
-            // Например, функцию selectProgram(programId, programDifficulty), если у вас есть такая функция
+          // Найдем выбранную программу по ID
+          const currentSelectedProgram = programs.find(program => program.id === programId);
 
-            // Найдем выбранную программу по ID
-            const currentSelectedProgram = programs.find(program => program.id === programId);
+          // Установим информацию о программе
+          document.getElementById("program-title").textContent = currentSelectedProgram.brief;
 
-            // Установим информацию о программе
-            document.getElementById("program-title").textContent = currentSelectedProgram.brief;
-
-            const programInfo = document.getElementById("program-info");
+          const programInfo = document.getElementById("program-info");
 
 
-            const starsContainer = document.getElementById("stars-container");
-            starsContainer.innerHTML = ''; // Очистим содержимое
-            for (let i = 0; i < 3; i++) {
-                const star = document.createElement("img");
-                star.src = i < programDifficulty ? 'https://img.icons8.com/fluency-systems-filled/48/star.png' : 'https://img.icons8.com/fluency-systems-regular/48/star--v1.png';
-                star.alt = i < programDifficulty ? 'Звезда' : 'Пустая звезда';
-                star.className = 'star';
-                starsContainer.appendChild(star);
-            }
+          const starsContainer = document.getElementById("stars-container");
+          starsContainer.innerHTML = ''; // Очистим содержимое
+          for (let i = 0; i < 3; i++) {
+              const star = document.createElement("img");
+              star.src = i < programDifficulty ? 'https://img.icons8.com/fluency-systems-filled/48/star.png' : 'https://img.icons8.com/fluency-systems-regular/48/star--v1.png';
+              star.alt = i < programDifficulty ? 'Звезда' : 'Пустая звезда';
+              star.className = 'star';
+              starsContainer.appendChild(star);
+          }
 
-            const programIcon = document.getElementById("program-icon");
-            programIcon.src = currentSelectedProgram.iconUrl;
-            programIcon.alt = currentSelectedProgram.brief;
+          const programIcon = document.getElementById("program-icon");
+          programIcon.src = currentSelectedProgram.iconUrl;
+          programIcon.alt = currentSelectedProgram.brief;
 
-            const programHours = document.getElementById("program-hours");
-            programHours.innerHTML = `${currentSelectedProgram.hoursAud + currentSelectedProgram.hoursHome} часов (${currentSelectedProgram.hoursAud} аудиторных)`
+          const programHours = document.getElementById("program-hours");
+          programHours.innerHTML = `${currentSelectedProgram.hoursAud + currentSelectedProgram.hoursHome} часов (${currentSelectedProgram.hoursAud} аудиторных)`
 
-            const programCost = document.getElementById("program-cost");
-            programCost.innerHTML = `Стоимость: ${currentSelectedProgram.cost}`
+          const programCost = document.getElementById("program-cost");
+          programCost.innerHTML = `Стоимость: ${currentSelectedProgram.cost}`
 
-            const programDescription = document.getElementById("program-description");
-            programDescription.textContent = currentSelectedProgram.details;
-        }
+          const programDescription = document.getElementById("program-description");
+          programDescription.textContent = currentSelectedProgram.details;
+      }
 
-        const programs = {{ programs | tojson | safe }};
-        $('input[type="radio"].program-radio').change(setProgramInfo);
+      const programs = {{ programs | tojson | safe }};
+      $('input[type="radio"].program-radio').change(setProgramInfo);
 
-        // Проверяем, есть ли выбранная программа в known_data
-        const selectedProgramId = '{{ known_data.selectedProgram }}';
+      // Проверяем, есть ли выбранная программа в known_data
+      const selectedProgramId = '{{ known_data.selectedProgram }}';
 
-        // Если выбранная программа есть, устанавливаем данные о ней
-        if ((!selectedProgramId || selectedProgramId == 'None') && programs.length > 0) {
-            $('input[name="selectedProgram"][value="' + programs[0].id + '"]').prop('checked', true);
-            setProgramInfo();
-        } else if (selectedProgramId) {
-            const selectedProgram = programs.find(program => program.id === selectedProgramId);
+      console.log(selectedProgramId);
 
-            if (selectedProgram) {
-                // Вызываем функцию, которая устанавливает данные о программе
-                setProgramInfo();
-            }
-        }
+      // Если выбранная программа есть, устанавливаем данные о ней
+      if ((!selectedProgramId || selectedProgramId == 'None') && programs.length > 0) {
+          $('input[name="selectedProgram"][value="' + programs[0].id + '"]').prop('checked', true);
+          setProgramInfo();
+      } else if (selectedProgramId) {
+          const selectedProgram = programs.find(program => program.id === selectedProgramId);
+
+          if (selectedProgram) {
+              // Вызываем функцию, которая устанавливает данные о программе
+              setProgramInfo();
+          }
+      }
 
 
 
 
-        const programDetails = document.getElementById("program-details");
+      const programDetails = document.getElementById("program-details");
 
-        // Предзагрузка изображений
-        programs.forEach(program => {
-            const img = new Image();
-            img.src = program.iconUrl;
-        });
+      // Предзагрузка изображений
+      programs.forEach(program => {
+          const img = new Image();
+          img.src = program.iconUrl;
+      });
 
-        // Предзагрузка изображения звездочки
-        const starImage = new Image();
-        starImage.src = 'star.png';
+      // Предзагрузка изображения звездочки
+      const starImage = new Image();
+      starImage.src = 'star.png';
 
-        /*const buttons = document.querySelectorAll(".program-radio");
-        buttons.forEach(button => {
-            button.addEventListener("click", () => {
-                // Получим ID и сложность выбранной программы
-                const programId = button.getAttribute("data-program-id");
-                const programDifficulty = button.getAttribute("data-program-difficulty");
+      /*const buttons = document.querySelectorAll(".program-radio");
+      buttons.forEach(button => {
+          button.addEventListener("click", () => {
+              // Получим ID и сложность выбранной программы
+              const programId = button.getAttribute("data-program-id");
+              const programDifficulty = button.getAttribute("data-program-difficulty");
 
-                // Найдем выбранную программу по ID
-                const selectedProgram = programs.find(program => program.id === programId);
+              // Найдем выбранную программу по ID
+              const selectedProgram = programs.find(program => program.id === programId);
 
-                // Установим информацию о программе
-                document.getElementById("program-title").textContent = selectedProgram.brief;
+              // Установим информацию о программе
+              document.getElementById("program-title").textContent = selectedProgram.brief;
 
-                const programInfo = document.getElementById("program-info");
+              const programInfo = document.getElementById("program-info");
 
 
-                const starsContainer = document.getElementById("stars-container");
-                starsContainer.innerHTML = ''; // Очистим содержимое
-                for (let i = 0; i < 3; i++) {
-                    const star = document.createElement("img");
-                    star.src = i < programDifficulty ? 'https://img.icons8.com/fluency-systems-filled/48/star.png' : 'https://img.icons8.com/fluency-systems-regular/48/star--v1.png';
-                    star.alt = i < programDifficulty ? 'Звезда' : 'Пустая звезда';
-                    star.className = 'star';
-                    starsContainer.appendChild(star);
-                }
+              const starsContainer = document.getElementById("stars-container");
+              starsContainer.innerHTML = ''; // Очистим содержимое
+              for (let i = 0; i < 3; i++) {
+                  const star = document.createElement("img");
+                  star.src = i < programDifficulty ? 'https://img.icons8.com/fluency-systems-filled/48/star.png' : 'https://img.icons8.com/fluency-systems-regular/48/star--v1.png';
+                  star.alt = i < programDifficulty ? 'Звезда' : 'Пустая звезда';
+                  star.className = 'star';
+                  starsContainer.appendChild(star);
+              }
 
-                const programIcon = document.getElementById("program-icon");
-                programIcon.src = selectedProgram.iconUrl;
-                programIcon.alt = selectedProgram.brief;
+              const programIcon = document.getElementById("program-icon");
+              programIcon.src = selectedProgram.iconUrl;
+              programIcon.alt = selectedProgram.brief;
 
-                const programHours = document.getElementById("program-hours");
-                programHours.innerHTML = `${selectedProgram.hoursAud + selectedProgram.hoursHome} часов (${selectedProgram.hoursAud} аудиторных)`
+              const programHours = document.getElementById("program-hours");
+              programHours.innerHTML = `${selectedProgram.hoursAud + selectedProgram.hoursHome} часов (${selectedProgram.hoursAud} аудиторных)`
 
-                const programCost = document.getElementById("program-cost");
-                programCost.innerHTML = `Стоимость: ${selectedProgram.cost}`
+              const programCost = document.getElementById("program-cost");
+              programCost.innerHTML = `Стоимость: ${selectedProgram.cost}`
 
-                const programDescription = document.getElementById("program-description");
-                programDescription.textContent = selectedProgram.details;
-            });
-        });*/
+              const programDescription = document.getElementById("program-description");
+              programDescription.textContent = selectedProgram.details;
+          });
+      });*/
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</body>
-
+  </body>
 </html>
+
+{% endblock %}

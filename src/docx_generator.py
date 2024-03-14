@@ -11,7 +11,7 @@ from name_translation import fio_to_genitive
 def generate_doc(userData: User):
     template_file_path = "data/docx_files/template.docx"
     filename = f"{uuid4()}.docx"
-    output_file_path = f"data/docx_files/{filename}"
+    output_file_path = f"/tmp/{filename}"
 
     program_info = list(
         filter(
@@ -60,7 +60,7 @@ def generate_doc(userData: User):
 
     template_document.save(output_file_path)
 
-    return filename
+    return output_file_path
 
 
 def replace_text_in_paragraph(paragraph, key, value):

@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram name="Page-1" id="ueudMttdfkXRUOUWZ84N">
-        <mxGraphModel dx="2205" dy="1073" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="1161" dy="662" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -158,69 +158,76 @@
                         <mxPoint y="1" as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="49" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;Google Sheet&lt;br&gt;&lt;br&gt;users (no password)&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#005700;fontColor=#ffffff;" vertex="1" parent="1">
+                <mxCell id="49" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;Google Sheet&lt;br&gt;&lt;br&gt;users (no password)&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#005700;fontColor=#ffffff;" parent="1" vertex="1">
                     <mxGeometry x="311" y="2194" width="430" height="244" as="geometry"/>
                 </mxCell>
-                <mxCell id="53" value="" style="edgeStyle=none;html=1;fontSize=16;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="51" target="57">
+                <mxCell id="53" value="" style="edgeStyle=none;html=1;fontSize=16;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="51" target="57" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="55" value="Read, write" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=16;" vertex="1" connectable="0" parent="53">
+                <mxCell id="55" value="Read, write" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=16;" parent="53" vertex="1" connectable="0">
                     <mxGeometry x="0.1558" y="-3" relative="1" as="geometry">
                         <mxPoint as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="62" value="" style="edgeStyle=none;html=1;fontSize=16;" edge="1" parent="1" source="51" target="61">
+                <mxCell id="62" value="" style="edgeStyle=none;html=1;fontSize=16;" parent="1" source="51" target="61" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="63" value="Read" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=16;" vertex="1" connectable="0" parent="62">
+                <mxCell id="63" value="Read" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=16;" parent="62" vertex="1" connectable="0">
                     <mxGeometry x="0.4106" y="3" relative="1" as="geometry">
                         <mxPoint y="-1" as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="51" value="Server" style="rounded=0;whiteSpace=wrap;html=1;fontSize=16;fillColor=none;" vertex="1" parent="1">
+                <mxCell id="51" value="Server" style="rounded=0;whiteSpace=wrap;html=1;fontSize=16;fillColor=none;" parent="1" vertex="1">
                     <mxGeometry x="988" y="1898.5" width="324" height="117" as="geometry"/>
                 </mxCell>
-                <mxCell id="54" value="" style="edgeStyle=none;html=1;fontSize=16;" edge="1" parent="1" source="52" target="49">
+                <mxCell id="54" value="" style="edgeStyle=none;html=1;fontSize=16;" parent="1" source="52" target="49" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="56" value="Read" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=16;" vertex="1" connectable="0" parent="54">
+                <mxCell id="56" value="Read" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=16;" parent="54" vertex="1" connectable="0">
                     <mxGeometry x="0.2928" y="5" relative="1" as="geometry">
                         <mxPoint as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="64" value="" style="edgeStyle=none;html=1;fontSize=16;" edge="1" parent="1" source="52" target="61">
+                <mxCell id="64" value="" style="edgeStyle=none;html=1;fontSize=16;" parent="1" source="52" target="61" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="65" value="Read, write" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=16;" vertex="1" connectable="0" parent="64">
+                <mxCell id="65" value="Read, write" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=16;" parent="64" vertex="1" connectable="0">
                     <mxGeometry x="-0.4079" y="-1" relative="1" as="geometry">
                         <mxPoint as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="69" value="" style="edgeStyle=none;html=1;fontSize=16;" edge="1" parent="1" source="52" target="67">
+                <mxCell id="69" value="" style="edgeStyle=none;html=1;fontSize=16;" parent="1" source="52" target="67" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="52" value="Admin" style="rounded=0;whiteSpace=wrap;html=1;fontSize=16;fillColor=none;" vertex="1" parent="1">
+                <mxCell id="52" value="Admin" style="rounded=0;whiteSpace=wrap;html=1;fontSize=16;fillColor=none;" parent="1" vertex="1">
                     <mxGeometry x="988" y="2251" width="324" height="117" as="geometry"/>
                 </mxCell>
-                <mxCell id="59" value="" style="edgeStyle=none;html=1;fontSize=16;" edge="1" parent="1" source="57" target="49">
+                <mxCell id="59" value="" style="edgeStyle=none;html=1;fontSize=16;" parent="1" source="57" target="49" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="60" value="Mirror" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=16;" vertex="1" connectable="0" parent="59">
+                <mxCell id="60" value="Mirror" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=16;" parent="59" vertex="1" connectable="0">
                     <mxGeometry x="0.3427" y="2" relative="1" as="geometry">
                         <mxPoint as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="57" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;MongoDB&lt;br&gt;&lt;br&gt;users&lt;br&gt;tokens&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#005700;fontColor=#ffffff;" vertex="1" parent="1">
+                <mxCell id="57" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;MongoDB&lt;br&gt;&lt;br&gt;users&lt;br&gt;tokens&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#005700;fontColor=#ffffff;" parent="1" vertex="1">
                     <mxGeometry x="311" y="1851" width="430" height="244" as="geometry"/>
                 </mxCell>
-                <mxCell id="61" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;Google Sheet&lt;br&gt;&lt;br&gt;config, states&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#005700;fontColor=#ffffff;" vertex="1" parent="1">
+                <mxCell id="61" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;Google Sheet&lt;br&gt;&lt;br&gt;config, states&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#005700;fontColor=#ffffff;" parent="1" vertex="1">
                     <mxGeometry x="1068" y="2079" width="158" height="109" as="geometry"/>
                 </mxCell>
-                <mxCell id="70" value="" style="edgeStyle=none;html=1;fontSize=16;" edge="1" parent="1" source="67" target="57">
+                <mxCell id="70" value="" style="edgeStyle=none;html=1;fontSize=16;" parent="1" source="67" target="57" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="67" value="Update, delete user util&lt;br&gt;&lt;br&gt;Accept / deny docs util" style="rounded=0;whiteSpace=wrap;html=1;fontSize=16;fillColor=none;fontColor=#ffffff;strokeColor=#006EAF;" vertex="1" parent="1">
+                <mxCell id="67" value="Update, delete user util&lt;br&gt;&lt;br&gt;Accept / deny docs util" style="rounded=0;whiteSpace=wrap;html=1;fontSize=16;fillColor=none;fontColor=#ffffff;strokeColor=#006EAF;" parent="1" vertex="1">
                     <mxGeometry x="816" y="2071" width="107" height="147" as="geometry"/>
+                </mxCell>
+                <mxCell id="71" value="" style="edgeStyle=none;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="376" y="331" as="sourcePoint"/>
+                        <mxPoint x="456" y="331" as="targetPoint"/>
+                        <Array as="points"/>
+                    </mxGeometry>
                 </mxCell>
             </root>
         </mxGraphModel>

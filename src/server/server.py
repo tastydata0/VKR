@@ -15,6 +15,7 @@ from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse
 from starlette.authentication import requires
 from starlette.middleware import Middleware
 from starlette.middleware.authentication import AuthenticationMiddleware
+from starlette.background import BackgroundTasks
 import uvicorn
 from docx_generator import generate_doc
 import json
@@ -28,6 +29,7 @@ import database
 from name_translation import fio_to_genitive
 import passwords
 import sheets_api
+from img2pdf import ImageOpenError
 
 from .middlewares import *
 from forms.main_form_fields import form_fields
@@ -114,6 +116,15 @@ async def send_docs_form(request: Request):
     )
 
 
+@app.get("/get_filled_application")
+@requires("authenticated")
+async def get_filled_application(request: Request, background_tasks: BackgroundTasks):
+    filepath = generate_doc(request.user)
+    background_tasks.add_task(os.remove, filepath)
+
+    return FileResponse(filepath, filename="Заявление.docx")
+
+
 @app.get("/")
 @requires("authenticated")
 async def get_form(request: Request):
@@ -146,7 +157,11 @@ async def post_form(request: Request, data: User):
 @app.post("/send_docs")
 @requires("authenticated")
 async def upload_files(request: Request, files: list[UploadFile]):
-    pdf_filename = merge_docs_to_pdf(files, form_user_key(request.user))
+    try:
+        pdf_filename = merge_docs_to_pdf(files, form_user_key(request.user))
+    except ImageOpenError:
+        raise HTTPException(status_code=400, detail="Невозможно открыть изображение")
+
     mail.send_pdf_docs(
         mail_receiver, pdf_filename, request.user.parentEmail, request.user.fullName
     )
@@ -158,9 +173,7 @@ async def register(data: RegistrationData):
     if not database.register_user(data):
         raise HTTPException(status_code=400, detail="Пользователь уже существует")
 
-    return fastapi.responses.RedirectResponse(
-        "/login", status_code=status.HTTP_302_FOUND
-    )
+    return fastapi.responses.RedirectResponse("/login", status_code=302)
 
 
 # @app.get("/download")

@@ -25,6 +25,24 @@ class LoginData(BaseModel):
     password: str
 
 
+class ApplicationDocuments(BaseModel):
+    applicationFiles: list[str]
+    consentFiles: list[str]
+    parentPassportFiles: list[str]
+    childPassportFiles: list[str]
+    parentSnilsFiles: list[str]
+    childSnilsFiles: list[str]
+
+
+class Application(BaseModel):
+    fullName: Optional[str] = Field(
+        None
+    )  # Полное имя на момент подачи заявления (т.к. может измениться)
+    selectedProgram: Optional[str] = Field(None)  # id программы (program-YYYY-MM-DD)
+    documents: Optional[ApplicationDocuments] = Field(None)
+    status: Optional[str] = Field(None)
+
+
 class User(BaseModel):
     fullName: str
     fullNameGenitive: Optional[str] = Field(None)
@@ -38,11 +56,7 @@ class User(BaseModel):
     birthPlace: Optional[str] = Field(None)
     phone: Optional[str] = Field(None)
     parentPhone: Optional[str] = Field(None)
-    selectedProgram: Optional[str] = Field(None)
-    documents: Optional[dict[str, str]] = Field(
-        {"applicationForm": "", "consestToDataProcessing": ""}
-    )
-    application: Optional[dict[str, str]] = Field(None)
+    application: Application = Field(None)
 
 
 class UserMinInfo(BaseModel):

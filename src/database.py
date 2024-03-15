@@ -61,6 +61,16 @@ def modify_user(fullName: str, birthDate: str, newUserData: User):
         return -1  # Пользователь не существует, модификация невозможна
 
 
+def update_user_application(user_key: UserKey, application: Application):
+    if user_exists(user_key.fullName, user_key.birthDate):
+        query = {"fullName": user_key.fullName, "birthDate": user_key.birthDate}
+        new_values = {"$set": {"application": application.dict()}}
+        result = users.update_one(query, new_values)
+        return result.modified_count
+    else:
+        return -1
+
+
 def update_user_application_state(user_key: UserKey, application_state: str):
     if user_exists(user_key.fullName, user_key.birthDate):
         query = {"fullName": user_key.fullName, "birthDate": user_key.birthDate}
@@ -68,7 +78,7 @@ def update_user_application_state(user_key: UserKey, application_state: str):
         result = users.update_one(query, new_values)
         return result.modified_count
     else:
-        return 0
+        return -1
 
 
 def register_user(userData: RegistrationData):

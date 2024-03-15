@@ -1,3 +1,4 @@
+import shutil
 import uuid
 from fastapi import FastAPI, Form, HTTPException, File, UploadFile
 from fastapi import Request
@@ -119,10 +120,19 @@ async def send_docs_form(request: Request):
 @app.get("/get_filled_application")
 @requires("authenticated")
 async def get_filled_application(request: Request, background_tasks: BackgroundTasks):
-    filepath = generate_doc(request.user)
+    filepath = generate_doc(request.user, "application")
     background_tasks.add_task(os.remove, filepath)
 
     return FileResponse(filepath, filename="Заявление.docx")
+
+
+@app.get("/get_filled_consent")
+@requires("authenticated")
+async def get_filled_consent(request: Request, background_tasks: BackgroundTasks):
+    filepath = generate_doc(request.user, "consent")
+    background_tasks.add_task(os.remove, filepath)
+
+    return FileResponse(filepath, filename="Согласие.docx")
 
 
 @app.get("/")
@@ -182,10 +192,35 @@ async def upload_files(
         or len(child_snils_files) == 0
     ):
         raise HTTPException(status_code=400, detail="Не заполнено хотя бы одно поле")
+
     try:
         pdf_filename = merge_docs_to_pdf(all_files, form_user_key(request.user))
     except ImageOpenError:
         raise HTTPException(status_code=400, detail="Невозможно открыть изображение")
+
+    get_filename = lambda upload_file: upload_file.filename
+
+    # Сохраняем все файлы с названием uuid4
+    for f in all_files:
+        filename = uuid.uuid4().hex + os.path.splitext(f.filename)[1]
+        f.file.seek(0)
+        with open(f"data/uploaded_files/{filename}", "wb") as buffer:
+            f.filename = buffer.name
+            shutil.copyfileobj(f.file, buffer)
+
+    application_documents = ApplicationDocuments(
+        applicationFiles=list(map(get_filename, application_files)),
+        consentFiles=list(map(get_filename, consent_files)),
+        parentPassportFiles=list(map(get_filename, parent_passport_files)),
+        childPassportFiles=list(map(get_filename, child_passport_files)),
+        parentSnilsFiles=list(map(get_filename, parent_snils_files)),
+        childSnilsFiles=list(map(get_filename, child_snils_files)),
+    )
+
+    database.update_user_application(
+        user_key=UserKey(**request.user.dict()),
+        application=Application(documents=application_documents),
+    )
 
     mail.send_pdf_docs(
         mail_receiver, pdf_filename, request.user.parentEmail, request.user.fullName

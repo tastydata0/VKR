@@ -9,8 +9,12 @@
       crossorigin="anonymous"
     />
     <style>
-      .thumbnail {
-        margin: 10px;
+      .warning {
+        margin-bottom: 10px;
+        padding: 10px;
+        background-color: #ffc10733;
+        border: 1px solid #ffc107;
+        border-radius: 5px;
       }
     </style>
   </head>
@@ -22,7 +26,8 @@
     {% endblock %} {% block base_with_status_content %}
 
     <div class="container">
-      <h1 class="mt-4">Загрузка файлов</h1>
+      <h1 class="mt-4">Загрузка документов</h1>
+      <hr />
 
       <form
         id="fileUploadForm"
@@ -30,9 +35,13 @@
         method="post"
         enctype="multipart/form-data"
       >
-        <a href="/get_filled_application">Скачать заполненное заявление</a>
         <div class="mb-3">
-          <label for="applicationFiles" class="form-label">Заявление:</label>
+          <label for="applicationFiles" class="form-label"
+            >Заявление на зачисление:</label
+          >
+          <a href="/get_filled_application"
+            >Скачать частично заполненное для вас заявление</a
+          >
           <input
             type="file"
             class="form-control"
@@ -46,7 +55,13 @@
         </div>
 
         <div class="mb-3">
-          <label for="consentFiles" class="form-label">Согласие:</label>
+          <label for="consentFiles" class="form-label"
+            >Согласие на обработку данных:</label
+          >
+
+          <a href="/get_filled_consent"
+            >Скачать частично заполненное для вас согласие</a
+          >
           <input
             type="file"
             class="form-control"
@@ -58,6 +73,8 @@
           />
           <div id="consentFilesThumbnail" class="thumbnail"></div>
         </div>
+
+        <hr />
 
         <div class="mb-3">
           <label for="parentPassportFiles" class="form-label"
@@ -91,6 +108,8 @@
           <div id="childPassportFilesThumbnail" class="thumbnail"></div>
         </div>
 
+        <hr />
+
         <div class="mb-3">
           <label for="parentSnilsFiles" class="form-label"
             >СНИЛС родителя:</label
@@ -121,38 +140,44 @@
           <div id="childSnilsFilesThumbnail" class="thumbnail"></div>
         </div>
 
+        <div class="warning">
+          Пожалуйста, обратите внимание, что документы могут быть отправлены
+          только один раз. После отправки мы будем их рассматривать и уведомим
+          вас о том, что документы были приняты или о проблемах с ними.
+        </div>
+
         <button type="submit" class="btn btn-primary">Загрузить</button>
       </form>
     </div>
-    {% endblock %}
-
     <script>
       const displayThumbnail = (inputId, thumbnailId) => {
         const fileInput = document.getElementById(inputId);
         const thumbnail = document.getElementById(thumbnailId);
         fileInput.addEventListener("change", function () {
-          const file = fileInput.files[0];
-          if (file) {
+          thumbnail.innerHTML = "";
+
+          for (let i = 0; i < fileInput.files.length; i++) {
+            const file = fileInput.files[i];
             const reader = new FileReader();
             reader.onload = function (e) {
               const img = document.createElement("img");
               img.src = e.target.result;
               img.style.maxHeight = "150px";
               img.style.maxWidth = "100%";
-              thumbnail.innerHTML = "";
               thumbnail.appendChild(img);
             };
             reader.readAsDataURL(file);
-          } else {
-            thumbnail.innerHTML = "";
           }
         });
       };
 
-      displayThumbnail("passportFile", "passportThumbnail");
-      displayThumbnail("snilsFile", "snilsThumbnail");
-      displayThumbnail("certificateFile", "certificateThumbnail");
-      displayThumbnail("contractFile", "contractThumbnail");
+      displayThumbnail("applicationFiles", "applicationFilesThumbnail");
+      displayThumbnail("consentFiles", "consentFilesThumbnail");
+      displayThumbnail("parentPassportFiles", "parentPassportFilesThumbnail");
+      displayThumbnail("childPassportFiles", "childPassportFilesThumbnail");
+      displayThumbnail("parentSnilsFiles", "parentSnilsFilesThumbnail");
+      displayThumbnail("childSnilsFiles", "childSnilsFilesThumbnail");
     </script>
+    {% endblock %}
   </body>
 </html>

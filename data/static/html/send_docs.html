@@ -30,52 +30,95 @@
         method="post"
         enctype="multipart/form-data"
       >
+        <a href="/get_filled_application">Скачать заполненное заявление</a>
         <div class="mb-3">
-          <label for="passportFile" class="form-label">Паспорт:</label>
+          <label for="applicationFiles" class="form-label">Заявление:</label>
           <input
             type="file"
             class="form-control"
-            id="passportFile"
-            name="files"
+            id="applicationFiles"
+            name="application_files"
             accept=".pdf, .jpg, .jpeg, .png"
+            multiple
+            required
           />
-          <div id="passportThumbnail" class="thumbnail"></div>
+          <div id="applicationFilesThumbnail" class="thumbnail"></div>
         </div>
 
         <div class="mb-3">
-          <label for="snilsFile" class="form-label">СНИЛС:</label>
+          <label for="consentFiles" class="form-label">Согласие:</label>
           <input
             type="file"
             class="form-control"
-            id="snilsFile"
-            name="files"
+            id="consentFiles"
+            name="consent_files"
             accept=".pdf, .jpg, .jpeg, .png"
+            multiple
+            required
           />
-          <div id="snilsThumbnail" class="thumbnail"></div>
+          <div id="consentFilesThumbnail" class="thumbnail"></div>
         </div>
 
         <div class="mb-3">
-          <label for="certificateFile" class="form-label">Свидетельство:</label>
+          <label for="parentPassportFiles" class="form-label"
+            >Паспорт родителя:</label
+          >
           <input
             type="file"
             class="form-control"
-            id="certificateFile"
-            name="files"
+            id="parentPassportFiles"
+            name="parent_passport_files"
             accept=".pdf, .jpg, .jpeg, .png"
+            multiple
+            required
           />
-          <div id="certificateThumbnail" class="thumbnail"></div>
+          <div id="parentPassportFilesThumbnail" class="thumbnail"></div>
         </div>
 
         <div class="mb-3">
-          <label for="contractFile" class="form-label">Договор:</label>
+          <label for="childPassportFiles" class="form-label"
+            >Паспорт ребенка:</label
+          >
           <input
             type="file"
             class="form-control"
-            id="contractFile"
-            name="files"
+            id="childPassportFiles"
+            name="child_passport_files"
             accept=".pdf, .jpg, .jpeg, .png"
+            multiple
+            required
           />
-          <div id="contractThumbnail" class="thumbnail"></div>
+          <div id="childPassportFilesThumbnail" class="thumbnail"></div>
+        </div>
+
+        <div class="mb-3">
+          <label for="parentSnilsFiles" class="form-label"
+            >СНИЛС родителя:</label
+          >
+          <input
+            type="file"
+            class="form-control"
+            id="parentSnilsFiles"
+            name="parent_snils_files"
+            accept=".pdf, .jpg, .jpeg, .png"
+            multiple
+            required
+          />
+          <div id="parentSnilsFilesThumbnail" class="thumbnail"></div>
+        </div>
+
+        <div class="mb-3">
+          <label for="childSnilsFiles" class="form-label">СНИЛС ребенка:</label>
+          <input
+            type="file"
+            class="form-control"
+            id="childSnilsFiles"
+            name="child_snils_files"
+            accept=".pdf, .jpg, .jpeg, .png"
+            multiple
+            required
+          />
+          <div id="childSnilsFilesThumbnail" class="thumbnail"></div>
         </div>
 
         <button type="submit" class="btn btn-primary">Загрузить</button>

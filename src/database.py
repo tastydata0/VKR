@@ -58,7 +58,7 @@ def modify_user(fullName: str, birthDate: str, newUserData: User):
         result = users.update_one(query, new_values)
         return result.modified_count
     else:
-        return 0  # Пользователь не существует, модификация невозможна
+        return -1  # Пользователь не существует, модификация невозможна
 
 
 def update_user_application_state(user_key: UserKey, application_state: str):

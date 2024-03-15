@@ -15,9 +15,8 @@ def fio_to_genitive(fio: str) -> str:
     lastname, firstname, middlename = tuple(fio.split())
 
     gender = name_to_gender(middlename)
-    cased_lname = p.lastname(lastname, Case.GENITIVE, gender)
-    cased_fname = p.firstname(firstname, Case.GENITIVE, gender)
-    cased_mname = p.middlename(middlename, Case.GENITIVE, gender)
+    cased_lname = p.lastname(lastname, Case.ACCUSATIVE, gender)
+    cased_fname = p.firstname(firstname, Case.ACCUSATIVE, gender)
+    cased_mname = p.middlename(middlename, Case.ACCUSATIVE, gender)
 
     return f"{cased_lname} {cased_fname} {cased_mname}"
-

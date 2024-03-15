@@ -156,19 +156,12 @@ endblock %} {% block base_with_status_content %}
         var xhr = new XMLHttpRequest();
         xhr.open("POST", "/");
         xhr.setRequestHeader("Content-Type", "application/json");
-        xhr.send(JSON.stringify(userData));
-
-        // Обработка ответа сервера
-        xhr.onreadystatechange = function () {
-          if (xhr.readyState === 4 && xhr.status === 200) {
-            console.log("Ответ от сервера:", xhr.responseText);
-            var relativePath = JSON.parse(xhr.responseText).url;
-            var baseUrl = window.location.href; // Получаем текущий URL страницы
-            var fullUrl = new URL(relativePath, baseUrl);
-
-            download(fullUrl.href, "Заявление.docx");
+        xhr.onload = function () {
+          if (xhr.status === 200) {
+            window.location.href = xhr.responseURL;
           }
         };
+        xhr.send(JSON.stringify(userData));
       }
 
       function isValidDate(dateString) {

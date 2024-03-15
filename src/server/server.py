@@ -147,18 +147,43 @@ async def get_form(request: Request):
 @app.post("/")
 @requires("authenticated")
 async def post_form(request: Request, data: User):
-    database.modify_user(request.user.fullName, request.user.birthDate, data)
+    if database.modify_user(request.user.fullName, request.user.birthDate, data) == -1:
+        raise HTTPException(status_code=500, detail="Неизвестная ошибка")
 
-    result_url = "static/docs/" + generate_doc(data)
-    print(result_url)
-    return {"url": result_url}
+    return RedirectResponse("/send_docs", status_code=302)
 
 
 @app.post("/send_docs")
 @requires("authenticated")
-async def upload_files(request: Request, files: list[UploadFile]):
+async def upload_files(
+    request: Request,
+    application_files: list[UploadFile],  # Заявление
+    consent_files: list[UploadFile],  # Согласие на обработку данных
+    parent_passport_files: list[UploadFile],  # паспорт родителя (1 стр + проп.)
+    child_passport_files: list[UploadFile],  # Паспорт ребенка (свидетельство о рожд.)
+    parent_snils_files: list[UploadFile],  # Снилс родителя
+    child_snils_files: list[UploadFile],  # Снилс ребенка
+):
+    all_files = (
+        application_files
+        + consent_files
+        + parent_passport_files
+        + child_passport_files
+        + parent_snils_files
+        + child_snils_files
+    )
+
+    if (
+        len(application_files) == 0
+        or len(consent_files) == 0
+        or len(parent_passport_files) == 0
+        or len(child_passport_files) == 0
+        or len(parent_snils_files) == 0
+        or len(child_snils_files) == 0
+    ):
+        raise HTTPException(status_code=400, detail="Не заполнено хотя бы одно поле")
     try:
-        pdf_filename = merge_docs_to_pdf(files, form_user_key(request.user))
+        pdf_filename = merge_docs_to_pdf(all_files, form_user_key(request.user))
     except ImageOpenError:
         raise HTTPException(status_code=400, detail="Невозможно открыть изображение")
 

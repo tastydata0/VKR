@@ -51,7 +51,7 @@ def user_exists(fullName: str, birthDate: str):
     return user is not None
 
 
-def modify_user(fullName: str, birthDate: str, newUserData: User):
+def modify_user(fullName: str, birthDate: str, newUserData: UserBasicData):
     if user_exists(fullName, birthDate):
         query = {"fullName": fullName, "birthDate": birthDate}
         new_values = {"$set": newUserData.dict()}

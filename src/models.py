@@ -43,7 +43,7 @@ class Application(BaseModel):
     status: Optional[str] = Field(None)
 
 
-class User(BaseModel):
+class UserBasicData(BaseModel):
     fullName: str
     fullNameGenitive: Optional[str] = Field(None)
     parentFullName: Optional[str] = Field(None)
@@ -56,6 +56,9 @@ class User(BaseModel):
     birthPlace: Optional[str] = Field(None)
     phone: Optional[str] = Field(None)
     parentPhone: Optional[str] = Field(None)
+
+
+class User(UserBasicData):
     application: Application = Field(None)
 
 

@@ -4,11 +4,13 @@ import os
 import datetime
 from sheets_api import *
 
-from models import User
+from models import *
 from name_translation import fio_to_genitive
 
 
-def generate_doc(userData: User, template_name: str): # template_name: application, consent, ...
+def generate_doc(
+    userData: UserBasicData, template_name: str
+):  # template_name: application, consent, ...
     template_file_path = f"data/docx_files/{template_name}.docx"
     filename = f"{uuid4()}.docx"
     output_file_path = f"/tmp/{filename}"

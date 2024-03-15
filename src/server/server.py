@@ -68,7 +68,7 @@ def form_user_key_dict(user_data: dict) -> str:
     ].replace(".", "")
 
 
-def form_user_key(user_data: RegistrationData | LoginData | User) -> str:
+def form_user_key(user_data: RegistrationData | LoginData | UserBasicData) -> str:
     return form_user_key_dict(user_data.dict())
 
 
@@ -156,9 +156,12 @@ async def get_form(request: Request):
 
 @app.post("/")
 @requires("authenticated")
-async def post_form(request: Request, data: User):
+async def post_form(request: Request, data: UserBasicData):
     if database.modify_user(request.user.fullName, request.user.birthDate, data) == -1:
-        raise HTTPException(status_code=500, detail="Неизвестная ошибка")
+        raise HTTPException(status_code=500, detail="Неизвестная ошибка 1")
+
+    if database.modify_user(request.user.fullName, request.user.birthDate, data) == -1:
+        raise HTTPException(status_code=500, detail="Неизвестная ошибка 2")
 
     return RedirectResponse("/send_docs", status_code=302)
 
@@ -264,19 +267,6 @@ async def register(data: RegistrationData):
 #     return response
 
 
-# Функция для проверки токена
-def resolve_user_by_token(token: str) -> User:
-    if token is None:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
-    user: User = database.find_user_by_token(token)
-
-    if user is None:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-    return user
-
-
 # Эндпоинт для создания токена
 @app.post("/token")
 async def create_token(form_data: LoginData):
@@ -307,17 +297,10 @@ async def create_token(form_data: LoginData):
 
 
 # Эндпоинт для доступа к данным пользователя
-@app.get("/users/me", response_model=User)
+@app.get("/users/me", response_model=UserBasicData)
 @requires("authenticated")
 async def read_users_me(request: Request):
-    return request.user
-    # access_token = request.cookies.get("access_token")
-
-    # try:
-    #     user = resolve_user_by_token(access_token)
-    #     return user
-    # except HTTPException as e:
-    #     return RedirectResponse(url="/login")
+    return UserBasicData(**request.user.dict())
 
 
 @app.get("/favicon.ico", include_in_schema=False)

@@ -11,3 +11,4 @@ pymorphy3
 petrovich
 python-dotenv
 argon2-cffi
+slowapi

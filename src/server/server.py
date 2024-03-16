@@ -33,6 +33,9 @@ from name_translation import fio_to_genitive
 import passwords
 import sheets_api
 from img2pdf import ImageOpenError
+from slowapi.errors import RateLimitExceeded
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from .middlewares import *
 from forms.main_form_fields import form_fields
@@ -40,10 +43,23 @@ from forms.main_form_fields import form_fields
 from application_stages import application_stages
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
-
 generated_docs_folder = "data/docx_files"
 
 active_tokens = {}
+
+
+def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
+    """
+    Build a simple JSON response that includes the details of the rate limit
+    that was hit. If no limit is hit, the countdown is added to headers.
+    """
+    response = JSONResponse(
+        {"detail": f"Слишком много запросов: {exc.detail}"}, status_code=429
+    )
+    response = request.app.state.limiter._inject_headers(
+        response, request.state.view_rate_limit
+    )
+    return response
 
 
 middleware = [
@@ -51,7 +67,10 @@ middleware = [
     Middleware(RedirectMiddleware),
 ]
 
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(middleware=middleware)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 # app.add_middleware()
 
 app.mount("/static/docs", StaticFiles(directory=generated_docs_folder))
@@ -152,6 +171,7 @@ async def send_docs_form(request: Request):
 
 
 @app.get("/get_filled_application")
+@limiter.limit("1/minute")
 @requires("authenticated")
 async def get_filled_application(request: Request, background_tasks: BackgroundTasks):
     filepath = generate_doc(request.user, "application")
@@ -161,6 +181,7 @@ async def get_filled_application(request: Request, background_tasks: BackgroundT
 
 
 @app.get("/get_filled_consent")
+@limiter.limit("1/minute")
 @requires("authenticated")
 async def get_filled_consent(request: Request, background_tasks: BackgroundTasks):
     filepath = generate_doc(request.user, "consent")
@@ -246,6 +267,7 @@ async def waiting_confirmation(request: Request):
 
 
 @app.post("/application/fill_info")
+@limiter.limit("1/minute")
 @requires("authenticated")
 async def post_form(request: Request, data: UserFillDataSubmission):
     model = MongodbPersistentModel(
@@ -285,6 +307,7 @@ async def post_form(request: Request, data: UserFillDataSubmission):
 
 
 @app.post("/application/fill_docs")
+@limiter.limit("1/minute")
 @requires("authenticated")
 async def upload_files(
     request: Request,
@@ -364,7 +387,8 @@ async def upload_files(
 
 
 @app.post("/registration")
-async def register(data: RegistrationData):
+@limiter.limit("1/minute")
+async def register(request: Request, data: RegistrationData):
     if not database.register_user(data):
         raise HTTPException(status_code=400, detail="Пользователь уже существует")
 

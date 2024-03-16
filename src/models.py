@@ -94,6 +94,7 @@ class ProgramId(BaseModel):
 
 class UserMinInfo(BaseModel):
     fullName: str
+    email: str
 
 
 class DashboardUserInfo(BaseModel):

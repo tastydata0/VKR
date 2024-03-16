@@ -64,19 +64,19 @@ class ApplicationState(StateMachine):
         print("Docs invalid:", message)
 
 
-model = MongodbPersistentModel(
-    UserKey(fullName="Иванов Иван Иванович", birthDate="12.04.2003")
-)
+# model = MongodbPersistentModel(
+#     UserKey(fullName="Иванов Иван Иванович", birthDate="12.04.2003")
+# )
 
-state = ApplicationState(model=model)
-img_path = "cs_statemachine.png"
+# state = ApplicationState(model=model)
+# img_path = "cs_statemachine.png"
 
-state._graph().write_png(img_path)
+# state._graph().write_png(img_path)
 
-state.fill_info()
-state.fill_docs()
-state.docs_invalid("test2")
-state.fill_docs()
-state.approve()
-state.pass_()
-state.graduate()
+# state.fill_info()
+# state.fill_docs()
+# state.docs_invalid("test2")
+# state.fill_docs()
+# state.approve()
+# state.pass_()
+# state.graduate()

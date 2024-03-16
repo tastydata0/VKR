@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional
 from fastapi import File
 from pydantic import BaseModel, Field
@@ -40,7 +41,7 @@ class Application(BaseModel):
     )  # Полное имя на момент подачи заявления (т.к. может измениться)
     selectedProgram: Optional[str] = Field(None)  # id программы (program-YYYY-MM-DD)
     documents: Optional[ApplicationDocuments] = Field(None)
-    status: Optional[str] = Field(None)
+    status: Optional[str] = Field("filling_info")
 
 
 class UserBasicData(BaseModel):
@@ -59,11 +60,41 @@ class UserBasicData(BaseModel):
 
 
 class User(UserBasicData):
-    application: Application = Field(None)
+    application: Application = Field(Application())
+
+
+class ProgramId(BaseModel):
+    baseName: str
+    year: int
+    month: int
+    day: int
+
+    def __str__(self) -> str:
+        return f"{self.baseName}-{self.year}-{self.month:<2}-{self.day:<2}"
+
+    @property
+    def id(self) -> str:
+        return str(self)
+
+    def __lt__(self, other) -> bool:
+        return date(self.year, self.month, self.day) < date(
+            other.year, other.month, other.day
+        )
+
+    @staticmethod
+    def from_raw_string(raw_string: str) -> "ProgramId":
+        parts = raw_string.split("-")
+        return ProgramId(
+            baseName=parts[0],
+            year=int(parts[1]),
+            month=int(parts[2]),
+            day=int(parts[3]),
+        )
 
 
 class UserMinInfo(BaseModel):
     fullName: str
+    email: str
 
 
 class UserKey(BaseModel):
@@ -74,18 +105,13 @@ class UserKey(BaseModel):
 
 class Program(BaseModel):
     id: str
-    brief: str
+    brief: str  # C++, Python, Java, ...
     details: str
     hoursAud: int
     hoursHome: int
     iconUrl: str
-
-
-# class Docs(BaseModel):
-#     passportFile: File
-#     snilsFile: File
-#     certificateFile: File
-#     contractFile: File
+    difficulty: int  # 0, 1, 2, 3
+    cost: int
 
 
 # Модель данных для полей формы
@@ -95,3 +121,14 @@ class FormField(BaseModel):
     name: str
     type: str = "text"
     placeholder: str
+
+
+import database
+
+
+class UserFillDataSubmission(UserBasicData):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        database.validate_program_id_existence(kwargs.get("selectedProgram"))
+
+    selectedProgram: str

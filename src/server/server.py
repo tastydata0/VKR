@@ -24,6 +24,8 @@ from docs_to_pdf import merge_docs_to_pdf
 from mail_service import Mail
 from fastapi.staticfiles import StaticFiles
 from fastapi import status
+from src import application_state
+from src.persistent_model import MongodbPersistentModel
 import src.sheets_api
 from models import *
 import database
@@ -102,15 +104,35 @@ async def login_form(request: Request):
     return templates.TemplateResponse("login.html", {"request": request, "data": data})
 
 
+async def redirect_according_to_application_state(
+    state: application_state.ApplicationState,
+):
+    if state.current_state.id == "filling_info":
+        return RedirectResponse("/")
+    elif state.current_state.id == "filling_docs":
+        return RedirectResponse("/send_docs")
+    elif state.current_state.id == "waiting_confirmation":
+        return RedirectResponse("/waiting_confirmation")
+    else:
+        return RedirectResponse("/error")
+
+
 @app.get("/send_docs")
 @requires("authenticated")
 async def send_docs_form(request: Request):
-    data = {"message": "Заполните форму регистрации"}
+    model = MongodbPersistentModel(
+        UserKey(fullName=request.user.fullName, birthDate=request.user.birthDate),
+    )
+
+    state = application_state.ApplicationState(model=model)
+
+    if state.current_state.id != "filling_docs":
+        return await redirect_according_to_application_state(state)
+
     return templates.TemplateResponse(
         "send_docs.html",
         {
             "request": request,
-            "data": data,
             "application_stages": application_stages,
             "user": UserMinInfo(**request.user.dict()),
         },
@@ -138,17 +160,19 @@ async def get_filled_consent(request: Request, background_tasks: BackgroundTasks
 @app.get("/")
 @requires("authenticated")
 async def get_form(request: Request):
+    model = MongodbPersistentModel(
+        UserKey(fullName=request.user.fullName, birthDate=request.user.birthDate),
+    )
+
+    state = application_state.ApplicationState(model=model)
+
+    if state.current_state.id not in ("filling_info", "filling_docs"):
+        return await redirect_according_to_application_state(state)
+
     known_data = request.user.dict()
     if known_data["fullNameGenitive"] is None:
         known_data["fullNameGenitive"] = fio_to_genitive(known_data["fullName"])
 
-    # Создать заявление, если его нет
-    if known_data["application"] is None:
-        application = Application(fullName=known_data["fullName"])
-        database.update_user_application(UserKey(**known_data), application)
-        known_data["application"] = application
-
-    print(known_data)
     return templates.TemplateResponse(
         "fill_data.html",
         {
@@ -163,31 +187,54 @@ async def get_form(request: Request):
     )
 
 
+@app.get("/waiting_confirmation")
+@requires("authenticated")
+async def waiting_confirmation(request: Request):
+    return templates.TemplateResponse(
+        "waiting_confirmation.html",
+        {
+            "request": request,
+            "application_stages": application_stages,
+            "user": UserMinInfo(**request.user.dict()),
+        },
+    )
+
+
 @app.post("/")
 @requires("authenticated")
 async def post_form(request: Request, data: UserFillDataSubmission):
+    model = MongodbPersistentModel(
+        UserKey(fullName=request.user.fullName, birthDate=request.user.birthDate),
+    )
+
+    state = application_state.ApplicationState(model=model)
+
+    if state.current_state.id not in ("filling_info", "filling_docs"):
+        return redirect_according_to_application_state(state)
+
     user_data = UserBasicData(**data.dict())
-    application_data = Application(**data.dict())
 
     if (
-        database.update_user_application(
-            UserKey(**request.user.dict()), application_data
+        database.modify_user(request.user.fullName, request.user.birthDate, user_data)
+        == -1
+    ):
+        raise HTTPException(
+            status_code=500,
+            detail="Не удалось изменить данные пользователя. Обратитесь к администратору",
+        )
+
+    if (
+        database.update_user_application_program_id(
+            UserKey(**request.user.dict()), program_id=data.selectedProgram
         )
         == -1
     ):
-        raise HTTPException(status_code=500, detail="Неизвестная ошибка 3")
+        raise HTTPException(
+            status_code=500,
+            detail="Не удалось обновить заявление. Обратитесь к администратору",
+        )
 
-    if (
-        database.modify_user(request.user.fullName, request.user.birthDate, user_data)
-        == -1
-    ):
-        raise HTTPException(status_code=500, detail="Неизвестная ошибка 1")
-
-    if (
-        database.modify_user(request.user.fullName, request.user.birthDate, user_data)
-        == -1
-    ):
-        raise HTTPException(status_code=500, detail="Неизвестная ошибка 2")
+    state.fill_info()
 
     return RedirectResponse("/send_docs", status_code=302)
 
@@ -222,6 +269,18 @@ async def upload_files(
     ):
         raise HTTPException(status_code=400, detail="Не заполнено хотя бы одно поле")
 
+    model = MongodbPersistentModel(
+        UserKey(fullName=request.user.fullName, birthDate=request.user.birthDate),
+    )
+
+    state = application_state.ApplicationState(model=model)
+
+    if state.current_state.id not in ("filling_docs"):
+        raise HTTPException(
+            status_code=400,
+            detail="Нельзя отправлять документы на этапе " + state.current_state.name,
+        )
+
     try:
         pdf_filename = merge_docs_to_pdf(all_files, form_user_key(request.user))
     except ImageOpenError:
@@ -246,10 +305,12 @@ async def upload_files(
         childSnilsFiles=list(map(get_filename, child_snils_files)),
     )
 
-    database.update_user_application(
+    database.update_user_application_documents(
         user_key=UserKey(**request.user.dict()),
-        application=Application(documents=application_documents),
+        documents=application_documents,
     )
+
+    state.fill_docs()
 
     mail.send_pdf_docs(
         mail_receiver, pdf_filename, request.user.parentEmail, request.user.fullName

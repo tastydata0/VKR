@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+import pydantic
 from pymongo import MongoClient
 from models import *
 import dotenv
@@ -18,6 +19,7 @@ client = MongoClient(
 db = client["codeschool"]
 users = db["users"]
 tokens = db["tokens"]
+programs = db["programs"]
 
 
 def _setup_db():
@@ -61,10 +63,11 @@ def modify_user(fullName: str, birthDate: str, newUserData: UserBasicData):
         return -1  # Пользователь не существует, модификация невозможна
 
 
-def update_user_application(user_key: UserKey, application: Application):
+def update_user_application_field(user_key: UserKey, field: str, value):
     if user_exists(user_key.fullName, user_key.birthDate):
         query = {"fullName": user_key.fullName, "birthDate": user_key.birthDate}
-        new_values = {"$set": {"application": application.dict()}}
+        new_values = {"$set": {f"application.{field}": value}}
+        print(f"{query} {new_values}")
         result = users.update_one(query, new_values)
         return result.modified_count
     else:
@@ -72,13 +75,25 @@ def update_user_application(user_key: UserKey, application: Application):
 
 
 def update_user_application_state(user_key: UserKey, application_state: str):
+    return update_user_application_field(user_key, "status", application_state)
+
+
+# Почему-то при использовании update_user_application_field dict добавляется в виде строки
+def update_user_application_documents(
+    user_key: UserKey, documents: ApplicationDocuments
+):
     if user_exists(user_key.fullName, user_key.birthDate):
         query = {"fullName": user_key.fullName, "birthDate": user_key.birthDate}
-        new_values = {"$set": {"application": {"state": application_state}}}
+        new_values = {"$set": {f"application.documents": documents.dict()}}
+        print(f"{query} {new_values}")
         result = users.update_one(query, new_values)
         return result.modified_count
     else:
         return -1
+
+
+def update_user_application_program_id(user_key: UserKey, program_id: str):
+    return update_user_application_field(user_key, "program_id", program_id)
 
 
 def register_user(userData: RegistrationData):
@@ -113,6 +128,21 @@ def find_user_by_token(token: str):
     if raw_user_data is None:
         return None
     return User(**raw_user_data)
+
+
+# Programs
+def validate_program_id_existence(program_id_raw: str) -> None:
+    # Проверить, что программа актуальна и что она существует
+    query = {"id": program_id_raw, "relevant": True}
+    result = programs.find_one(query)
+    if result is None:
+        raise ValueError(f"Program {program_id_raw} doesn't exist or not relevant")
+
+    print("Program exists")
+
+
+def load_programs() -> list[Program]:
+    return list(programs.find({"relevant": True}, {"_id": 0}))
 
 
 _setup_db()

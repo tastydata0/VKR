@@ -1,0 +1,21 @@
+{% extends "base_with_status.html" %} {% block title %} Подача заявления {%
+endblock %} {% block base_with_status_content %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+
+  <body>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+    <p>
+      Ваша заявка успешно отправлена. Ожидайте подтверждения. Мы пришлем
+      сообщение на почту: {{user.email}}
+    </p>
+  </body>
+</html>
+
+{% endblock %}

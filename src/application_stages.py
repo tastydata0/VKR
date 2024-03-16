@@ -8,7 +8,11 @@ application_stages = [
     ApplicationStage(
         stageName="Загрузка документов", stageStatus="todo", stageHref="/send_docs"
     ),
-    ApplicationStage(stageName="Ожидание подтверждения", stageStatus="todo"),
+    ApplicationStage(
+        stageName="Ожидание подтверждения",
+        stageStatus="todo",
+        stageHref="/waiting_confirmation",
+    ),
     ApplicationStage(stageName="Заявление принято", stageStatus="todo"),
     ApplicationStage(
         stageName="Не прошел конкурс на программу", stageStatus="negative"

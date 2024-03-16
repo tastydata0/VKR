@@ -78,22 +78,15 @@ def update_user_application_state(user_key: UserKey, application_state: str):
     return update_user_application_field(user_key, "status", application_state)
 
 
-# Почему-то при использовании update_user_application_field dict добавляется в виде строки
 def update_user_application_documents(
     user_key: UserKey, documents: ApplicationDocuments
 ):
-    if user_exists(user_key.fullName, user_key.birthDate):
-        query = {"fullName": user_key.fullName, "birthDate": user_key.birthDate}
-        new_values = {"$set": {f"application.documents": documents.dict()}}
-        print(f"{query} {new_values}")
-        result = users.update_one(query, new_values)
-        return result.modified_count
-    else:
-        return -1
+    print(documents.json())
+    return update_user_application_field(user_key, "documents", documents.dict())
 
 
 def update_user_application_program_id(user_key: UserKey, program_id: str):
-    return update_user_application_field(user_key, "program_id", program_id)
+    return update_user_application_field(user_key, "selectedProgram", program_id)
 
 
 def register_user(userData: RegistrationData):

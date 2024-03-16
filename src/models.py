@@ -94,7 +94,18 @@ class ProgramId(BaseModel):
 
 class UserMinInfo(BaseModel):
     fullName: str
-    email: str
+
+
+class DashboardUserInfo(BaseModel):
+    fullName: str
+    email: Optional[str] = Field(None)
+    parentEmail: str
+    school: str
+    schoolClass: int
+    phone: Optional[str] = Field(None)
+    parentPhone: Optional[str] = Field(None)
+    applicationSelectedProgram: str | None
+    applicationStatus: str | None
 
 
 class UserKey(BaseModel):

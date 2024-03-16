@@ -19,7 +19,7 @@ class ApplicationState(StateMachine):
 
     start_application = waiting_for_applications.to(filling_info)
 
-    fill_info = filling_info.to(filling_docs)
+    fill_info = filling_info.to(filling_docs) | filling_docs.to(filling_docs)
 
     fill_docs = filling_docs.to(waiting_confirmation)
     change_info = filling_docs.to(filling_info) | waiting_confirmation.to(filling_info)

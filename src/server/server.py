@@ -104,20 +104,32 @@ async def login_form(request: Request):
     return templates.TemplateResponse("login.html", {"request": request, "data": data})
 
 
-async def redirect_according_to_application_state(
+def redirect_according_to_application_state(
     state: application_state.ApplicationState,
 ):
     if state.current_state.id == "filling_info":
-        return RedirectResponse("/")
+        return RedirectResponse("/application/fill_info")
     elif state.current_state.id == "filling_docs":
-        return RedirectResponse("/send_docs")
+        return RedirectResponse("/application/fill_docs")
     elif state.current_state.id == "waiting_confirmation":
-        return RedirectResponse("/waiting_confirmation")
+        return RedirectResponse("/application/waiting_confirmation")
     else:
         return RedirectResponse("/error")
 
 
-@app.get("/send_docs")
+@app.get("/application")
+@requires("authenticated")
+async def application_get(request: Request):
+    model = MongodbPersistentModel(
+        UserKey(fullName=request.user.fullName, birthDate=request.user.birthDate),
+    )
+
+    state = application_state.ApplicationState(model=model)
+
+    return redirect_according_to_application_state(state)
+
+
+@app.get("/application/fill_docs")
 @requires("authenticated")
 async def send_docs_form(request: Request):
     model = MongodbPersistentModel(
@@ -127,7 +139,7 @@ async def send_docs_form(request: Request):
     state = application_state.ApplicationState(model=model)
 
     if state.current_state.id != "filling_docs":
-        return await redirect_according_to_application_state(state)
+        return redirect_according_to_application_state(state)
 
     return templates.TemplateResponse(
         "send_docs.html",
@@ -157,7 +169,7 @@ async def get_filled_consent(request: Request, background_tasks: BackgroundTasks
     return FileResponse(filepath, filename="Согласие.docx")
 
 
-@app.get("/")
+@app.get("/application/fill_info")
 @requires("authenticated")
 async def get_form(request: Request):
     model = MongodbPersistentModel(
@@ -167,7 +179,7 @@ async def get_form(request: Request):
     state = application_state.ApplicationState(model=model)
 
     if state.current_state.id not in ("filling_info", "filling_docs"):
-        return await redirect_according_to_application_state(state)
+        return redirect_according_to_application_state(state)
 
     known_data = request.user.dict()
     if known_data["fullNameGenitive"] is None:
@@ -187,7 +199,7 @@ async def get_form(request: Request):
     )
 
 
-@app.get("/waiting_confirmation")
+@app.get("/application/waiting_confirmation")
 @requires("authenticated")
 async def waiting_confirmation(request: Request):
     return templates.TemplateResponse(
@@ -200,7 +212,40 @@ async def waiting_confirmation(request: Request):
     )
 
 
-@app.post("/")
+@app.get("/")
+@requires("authenticated")
+async def waiting_confirmation(request: Request):
+    applicationSelectedProgram = None
+    applicationStatus = None
+    if request.user.application is not None:
+        model = MongodbPersistentModel(
+            UserKey(fullName=request.user.fullName, birthDate=request.user.birthDate),
+        )
+
+        state = application_state.ApplicationState(model=model)
+        applicationStatus = state.current_state.name
+
+        print(request.user.application.dict())
+
+        applicationSelectedProgram = request.user.application.dict().get(
+            "selectedProgram", None
+        )
+
+    return templates.TemplateResponse(
+        "dashboard.html",
+        {
+            "request": request,
+            "application_stages": application_stages,
+            "user": DashboardUserInfo(
+                **request.user.dict(),
+                applicationSelectedProgram=applicationSelectedProgram,
+                applicationStatus=applicationStatus,
+            ),
+        },
+    )
+
+
+@app.post("/application/fill_info")
 @requires("authenticated")
 async def post_form(request: Request, data: UserFillDataSubmission):
     model = MongodbPersistentModel(
@@ -236,10 +281,10 @@ async def post_form(request: Request, data: UserFillDataSubmission):
 
     state.fill_info()
 
-    return RedirectResponse("/send_docs", status_code=302)
+    return RedirectResponse("/application/fill_docs", status_code=302)
 
 
-@app.post("/send_docs")
+@app.post("/application/fill_docs")
 @requires("authenticated")
 async def upload_files(
     request: Request,

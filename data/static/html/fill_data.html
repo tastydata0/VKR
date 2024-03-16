@@ -48,10 +48,11 @@ endblock %} {% block base_with_status_content %}
             {% for program in programs %}
             <div class="form-check">
               <input class="form-check-input program-radio"
-              style="margin-bottom: 8px;" type="radio" name="selectedProgram"
+              style="margin-bottom: 8px" type="radio" name="selectedProgram"
               id="{{ program.id }}" value="{{ program.id }}"
               data-program-difficulty="{{ program.difficulty }}" {% if
-              known_data.selectedProgram==program.id %}checked{% endif %}>
+              selectedProgram == program.id %}checked{% endif %} />
+
               <label class="form-check-label" for="{{ program.id }}">
                 {{ program.brief }}
               </label>
@@ -242,7 +243,7 @@ endblock %} {% block base_with_status_content %}
       $('input[type="radio"].program-radio').change(setProgramInfo);
 
       // Проверяем, есть ли выбранная программа в known_data
-      const selectedProgramId = '{{ known_data.selectedProgram }}';
+      const selectedProgramId = '{{ selectedProgram }}';
 
       console.log(selectedProgramId);
 

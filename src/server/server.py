@@ -141,13 +141,22 @@ async def get_form(request: Request):
     known_data = request.user.dict()
     if known_data["fullNameGenitive"] is None:
         known_data["fullNameGenitive"] = fio_to_genitive(known_data["fullName"])
+
+    # Создать заявление, если его нет
+    if known_data["application"] is None:
+        application = Application(fullName=known_data["fullName"])
+        database.update_user_application(UserKey(**known_data), application)
+        known_data["application"] = application
+
+    print(known_data)
     return templates.TemplateResponse(
         "fill_data.html",
         {
             "request": request,
             "form_fields": form_fields,
             "known_data": known_data,
-            "programs": sheets_api.load_programs(),
+            "selectedProgram": known_data["application"]["selectedProgram"],
+            "programs": database.load_programs(),
             "application_stages": application_stages,
             "user": UserMinInfo(**request.user.dict()),
         },
@@ -156,11 +165,28 @@ async def get_form(request: Request):
 
 @app.post("/")
 @requires("authenticated")
-async def post_form(request: Request, data: UserBasicData):
-    if database.modify_user(request.user.fullName, request.user.birthDate, data) == -1:
+async def post_form(request: Request, data: UserFillDataSubmission):
+    user_data = UserBasicData(**data.dict())
+    application_data = Application(**data.dict())
+
+    if (
+        database.update_user_application(
+            UserKey(**request.user.dict()), application_data
+        )
+        == -1
+    ):
+        raise HTTPException(status_code=500, detail="Неизвестная ошибка 3")
+
+    if (
+        database.modify_user(request.user.fullName, request.user.birthDate, user_data)
+        == -1
+    ):
         raise HTTPException(status_code=500, detail="Неизвестная ошибка 1")
 
-    if database.modify_user(request.user.fullName, request.user.birthDate, data) == -1:
+    if (
+        database.modify_user(request.user.fullName, request.user.birthDate, user_data)
+        == -1
+    ):
         raise HTTPException(status_code=500, detail="Неизвестная ошибка 2")
 
     return RedirectResponse("/send_docs", status_code=302)

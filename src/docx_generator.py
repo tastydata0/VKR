@@ -17,8 +17,8 @@ def generate_doc(
 
     program_info = list(
         filter(
-            lambda program: program["id"] == userData.selectedProgram,
-            load_programs(),
+            lambda program: program["id"] == userData.application.selectedProgram,
+            database.load_programs(),
         )
     )[0]
 

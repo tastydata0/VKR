@@ -5,8 +5,6 @@ from fastapi import Request
 import fastapi
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse
-import openpyxl
-import tempfile
 import os
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
@@ -19,19 +17,15 @@ from starlette.middleware.authentication import AuthenticationMiddleware
 from starlette.background import BackgroundTasks
 import uvicorn
 from docx_generator import generate_doc
-import json
 from docs_to_pdf import merge_docs_to_pdf
 from mail_service import Mail
 from fastapi.staticfiles import StaticFiles
-from fastapi import status
 from src import application_state
 from src.persistent_model import MongodbPersistentModel
-import src.sheets_api
 from models import *
 import database
 from name_translation import fio_to_genitive
 import passwords
-import sheets_api
 from img2pdf import ImageOpenError
 from slowapi.errors import RateLimitExceeded
 from slowapi import Limiter
@@ -68,10 +62,10 @@ middleware = [
 ]
 
 limiter = Limiter(key_func=get_remote_address)
+limiter.enabled = False
 app = FastAPI(middleware=middleware)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
-# app.add_middleware()
 
 app.mount("/static/docs", StaticFiles(directory=generated_docs_folder))
 app.mount("/static/html", StaticFiles(directory="data/static/html"))
@@ -223,6 +217,15 @@ async def get_form(request: Request):
 @app.get("/application/waiting_confirmation")
 @requires("authenticated")
 async def waiting_confirmation(request: Request):
+    model = MongodbPersistentModel(
+        UserKey(fullName=request.user.fullName, birthDate=request.user.birthDate),
+    )
+
+    state = application_state.ApplicationState(model=model)
+
+    if state.current_state.id != "waiting_confirmation":
+        return redirect_according_to_application_state(state)
+
     return templates.TemplateResponse(
         "waiting_confirmation.html",
         {
@@ -251,6 +254,11 @@ async def waiting_confirmation(request: Request):
         applicationSelectedProgram = request.user.application.dict().get(
             "selectedProgram", None
         )
+
+        if applicationSelectedProgram is not None:
+            applicationSelectedProgram = database.resolve_program_by_id(
+                applicationSelectedProgram
+            )["brief"]
 
     return templates.TemplateResponse(
         "dashboard.html",

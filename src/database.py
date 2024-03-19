@@ -128,14 +128,15 @@ def validate_program_id_existence(program_id_raw: str) -> None:
     # Проверить, что программа актуальна и что она существует
     query = {"id": program_id_raw, "relevant": True}
     result = programs.find_one(query)
-    if result is None:
-        raise ValueError(f"Program {program_id_raw} doesn't exist or not relevant")
-
-    print("Program exists")
+    return result is not None
 
 
-def load_programs() -> list[Program]:
+def load_programs() -> list[dict]:
     return list(programs.find({"relevant": True}, {"_id": 0}))
+
+
+def resolve_program_by_id(id: str) -> dict:
+    return programs.find_one({"id": id}, {"_id": 0})
 
 
 _setup_db()

@@ -8,6 +8,10 @@ IS_APPLICATIONS_STARTED = True
 
 
 class ApplicationState(StateMachine):
+    @classmethod
+    def has_state_by_name(cls, name: str):
+        return hasattr(cls, name) and type(getattr(cls, name)) == State
+
     waiting_for_applications = State("Ожидание начала сбора заявлений", initial=True)
     filling_info = State("Ввод данных и выбор программы")
     filling_docs = State("Загрузка документов")

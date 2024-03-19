@@ -1,7 +1,18 @@
 from datetime import date
+import re
 from typing import Optional
-from fastapi import File
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+from application_state import ApplicationState
+
+
+class Regexes:
+    email = re.compile(
+        r"([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\"([]!#-[^-~ \t]|(\\[\t -~]))+\")@([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\[[\t -Z^-~]*])"
+    )
+
+    birth_date = re.compile(
+        r"(^(((0[1-9]|1[0-9]|2[0-8])\.(0[1-9]|1[012]))|((29|30|31)[\/](0[13578]|1[02]))|((29|30)\.(0[4,6,9]|11)))\.(19|[2-9][0-9])\d\d$)|(^29\.02\.(19|[2-9][0-9])(00|04|08|12|16|20|24|28|32|36|40|44|48|52|56|60|64|68|72|76|80|84|88|92|96)$)"
+    )
 
 
 class ApplicationStage(BaseModel):
@@ -26,6 +37,19 @@ class LoginData(BaseModel):
     password: str
 
 
+class SelectedProgram(BaseModel):
+    selectedProgram: Optional[str] = Field(None)
+
+    @field_validator("selectedProgram")
+    @classmethod
+    def validate_selected_program(cls, value):
+        from database import validate_program_id_existence
+
+        if not validate_program_id_existence(value):
+            raise ValueError(f"Программы {value} не существует или она неактуальна")
+        return value
+
+
 class ApplicationDocuments(BaseModel):
     applicationFiles: list[str]
     consentFiles: list[str]
@@ -35,17 +59,22 @@ class ApplicationDocuments(BaseModel):
     childSnilsFiles: list[str]
 
 
-class Application(BaseModel):
+class Application(SelectedProgram):
     fullName: Optional[str] = Field(
         None
     )  # Полное имя на момент подачи заявления (т.к. может измениться)
-    selectedProgram: Optional[str] = Field(None)  # id программы (program-YYYY-MM-DD)
     documents: Optional[ApplicationDocuments] = Field(None)
-    status: Optional[str] = Field("filling_info")
+    status: Optional[str] = Field("filling_info", validate_default=True)
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, value):
+        if not ApplicationState.has_state_by_name(value):
+            raise ValueError(f"Статуса заявления {value} не существует")
+        return value
 
 
-class UserBasicData(BaseModel):
-    fullName: str
+class UserMutableData(BaseModel):
     fullNameGenitive: Optional[str] = Field(None)
     parentFullName: Optional[str] = Field(None)
     parentAddress: Optional[str] = Field(None)
@@ -53,10 +82,35 @@ class UserBasicData(BaseModel):
     parentEmail: str
     school: str
     schoolClass: int
-    birthDate: str
     birthPlace: Optional[str] = Field(None)
     phone: Optional[str] = Field(None)
     parentPhone: Optional[str] = Field(None)
+
+    @field_validator("email", "parentEmail")
+    @classmethod
+    def validate_email(cls, value):
+        if re.fullmatch(Regexes.email, value) is None:
+            raise ValueError("Некорректная почта")
+        return value
+
+
+class UserBasicData(UserMutableData):
+    fullName: str
+    birthDate: str
+
+    @field_validator("fullName")
+    @classmethod
+    def validate_full_name(cls, value):
+        if len(value) == 0:
+            raise ValueError("Имя не может быть пустым")
+        return value
+
+    @field_validator("birthDate")
+    @classmethod
+    def validate_birth_date(cls, value):  # 12.04.2003
+        if re.fullmatch(Regexes.birth_date, value) is None:
+            raise ValueError("Неверный формат даты рождения")
+        return value
 
 
 class User(UserBasicData):
@@ -135,12 +189,5 @@ class FormField(BaseModel):
     placeholder: str
 
 
-import database
-
-
-class UserFillDataSubmission(UserBasicData):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        database.validate_program_id_existence(kwargs.get("selectedProgram"))
-
-    selectedProgram: str
+class UserFillDataSubmission(UserBasicData, SelectedProgram):
+    ...

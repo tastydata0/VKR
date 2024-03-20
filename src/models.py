@@ -1,7 +1,8 @@
 from datetime import date
 import re
 from typing import Optional
-from pydantic import BaseModel, Field, field_validator
+from bson import ObjectId
+from pydantic import BaseModel, Field, validator
 from application_state import ApplicationState
 
 
@@ -40,7 +41,7 @@ class LoginData(BaseModel):
 class SelectedProgram(BaseModel):
     selectedProgram: Optional[str] = Field(None)
 
-    @field_validator("selectedProgram")
+    @validator("selectedProgram")
     @classmethod
     def validate_selected_program(cls, value):
         from database import validate_program_id_existence
@@ -48,6 +49,11 @@ class SelectedProgram(BaseModel):
         if not validate_program_id_existence(value):
             raise ValueError(f"Программы {value} не существует или она неактуальна")
         return value
+
+    def get_brief_name(self):
+        from database import resolve_program_by_id
+
+        return resolve_program_by_id(self.selectedProgram)["brief"]
 
 
 class ApplicationDocuments(BaseModel):
@@ -57,6 +63,7 @@ class ApplicationDocuments(BaseModel):
     childPassportFiles: list[str]
     parentSnilsFiles: list[str]
     childSnilsFiles: list[str]
+    mergedPdf: str
 
 
 class Application(SelectedProgram):
@@ -64,9 +71,12 @@ class Application(SelectedProgram):
         None
     )  # Полное имя на момент подачи заявления (т.к. может измениться)
     documents: Optional[ApplicationDocuments] = Field(None)
-    status: Optional[str] = Field("filling_info", validate_default=True)
+    status: Optional[str] = Field(
+        ApplicationState.filling_docs.id, validate_default=True
+    )
+    rejectionReason: Optional[str] = Field(None)
 
-    @field_validator("status")
+    @validator("status")
     @classmethod
     def validate_status(cls, value):
         if not ApplicationState.has_state_by_name(value):
@@ -86,7 +96,7 @@ class UserMutableData(BaseModel):
     phone: Optional[str] = Field(None)
     parentPhone: Optional[str] = Field(None)
 
-    @field_validator("email", "parentEmail")
+    @validator("email", "parentEmail")
     @classmethod
     def validate_email(cls, value):
         if re.fullmatch(Regexes.email, value) is None:
@@ -98,14 +108,14 @@ class UserBasicData(UserMutableData):
     fullName: str
     birthDate: str
 
-    @field_validator("fullName")
+    @validator("fullName")
     @classmethod
     def validate_full_name(cls, value):
         if len(value) == 0:
             raise ValueError("Имя не может быть пустым")
         return value
 
-    @field_validator("birthDate")
+    @validator("birthDate")
     @classmethod
     def validate_birth_date(cls, value):  # 12.04.2003
         if re.fullmatch(Regexes.birth_date, value) is None:
@@ -113,7 +123,26 @@ class UserBasicData(UserMutableData):
         return value
 
 
+class AdminApprovalDto(BaseModel):
+    userId: str
+    status: str
+    reason: Optional[str] = None
+
+    @validator("status")
+    @classmethod
+    def validate_status(cls, value):
+        if not value in ("approved", "rejected"):
+            raise ValueError(f"Статуса ответ администратора '{value}' не существует")
+        return value
+
+
 class User(UserBasicData):
+    def __init__(self, *args, **kwargs):
+        if not "id" in kwargs:
+            kwargs.setdefault("id", str(kwargs.get("_id")))
+        super().__init__(*args, **kwargs)
+
+    id: str
     application: Application = Field(Application())
 
 

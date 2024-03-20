@@ -65,14 +65,14 @@ class MongodbPersistentModel(AbstractPersistentModel):
     that reads and writes to a MongoDB collection.
     """
 
-    def __init__(self, user_key: UserKey):
+    def __init__(self, user_id: str):
         super().__init__()
-        self.user_key = user_key
+        self.user_id = user_id
 
     def _read_state(self):
         # TODO: передавать напрямую, пофиксив database
         try:
-            application = database.find_user(**self.user_key.dict()).application
+            application = database.find_user(self.user_id).application
             return None if application is None else application.status
         except Exception as e:
             logging.error(e, exc_info=True)
@@ -80,5 +80,5 @@ class MongodbPersistentModel(AbstractPersistentModel):
 
     def _write_state(self, value):
         database.update_user_application_state(
-            user_key=self.user_key, application_state=value
+            user_id=self.user_id, application_state=value
         )

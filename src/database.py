@@ -1,11 +1,18 @@
 from datetime import datetime
 import json
+import pathlib
+import typing
+import uuid
 import pydantic
 from pymongo import MongoClient
+from pymongo.cursor import Cursor
+import pandas as pd
 from models import *
 import dotenv
 import os
-from passwords import get_password_hash
+from passwords import get_password_hash, verify_password
+from bson import ObjectId
+
 
 dotenv.load_dotenv(".env")
 username = os.getenv("DB_USER")
@@ -30,32 +37,53 @@ def _setup_db():
         print("Индекс уже существует")
 
 
-def _find_user_with_password(fullName: str, birthDate: str):
-    return users.find_one({"fullName": fullName, "birthDate": birthDate})
+def _find_user_with_password(user_id: str):
+    return users.find_one({"_id": ObjectId(user_id)})
 
 
-def find_user(fullName: str, birthDate: str) -> User | None:
-    raw_user_data = _find_user_with_password(fullName=fullName, birthDate=birthDate)
+def find_user(user_id: str) -> User | None:
+    raw_user_data = _find_user_with_password(user_id)
     if raw_user_data is None:
         return None
     return User(**raw_user_data)
 
 
-def find_user_creds(fullName: str, birthDate: str) -> LoginData:
-    raw_user_data = _find_user_with_password(fullName=fullName, birthDate=birthDate)
+def find_user_by_login_data(login_data: LoginData) -> User | None:
+    raw_user_data = users.find_one(
+        {"fullName": login_data.fullName, "birthDate": login_data.birthDate}
+    )
+
+    if raw_user_data is None or not verify_password(
+        password=login_data.password, hash=raw_user_data["password"]
+    ):
+        return None
+
+    return User(**raw_user_data)
+
+
+def find_user_creds(user_id: str) -> LoginData:
+    raw_user_data = _find_user_with_password(user_id)
     if raw_user_data is None:
         return None
     return LoginData(**raw_user_data)
 
 
-def user_exists(fullName: str, birthDate: str):
-    user = find_user(fullName, birthDate)
-    return user is not None
+def find_waiting_users() -> list[User]:
+    return [
+        User(**user)
+        for user in users.find(
+            {"application.status": ApplicationState.waiting_confirmation.id}
+        )
+    ]
 
 
-def modify_user(fullName: str, birthDate: str, newUserData: UserBasicData):
-    if user_exists(fullName, birthDate):
-        query = {"fullName": fullName, "birthDate": birthDate}
+def user_exists(user_id: str) -> bool:
+    return _find_user_with_password(user_id) is not None
+
+
+def modify_user(user_id: str, newUserData: UserBasicData):
+    if user_exists(user_id):
+        query = {"_id": ObjectId(user_id)}
         new_values = {"$set": newUserData.dict()}
         result = users.update_one(query, new_values)
         return result.modified_count
@@ -63,46 +91,53 @@ def modify_user(fullName: str, birthDate: str, newUserData: UserBasicData):
         return -1  # Пользователь не существует, модификация невозможна
 
 
-def update_user_application_field(user_key: UserKey, field: str, value):
-    if user_exists(user_key.fullName, user_key.birthDate):
-        query = {"fullName": user_key.fullName, "birthDate": user_key.birthDate}
+def update_user_application_field(user_id: str, field: str, value):
+    if user_exists(user_id):
+        query = {"_id": ObjectId(user_id)}
         new_values = {"$set": {f"application.{field}": value}}
-        print(f"{query} {new_values}")
         result = users.update_one(query, new_values)
         return result.modified_count
     else:
         return -1
 
 
-def update_user_application_state(user_key: UserKey, application_state: str):
-    return update_user_application_field(user_key, "status", application_state)
+def update_user_application_state(user_id: str, application_state: str):
+    return update_user_application_field(user_id, "status", application_state)
 
 
-def update_user_application_documents(
-    user_key: UserKey, documents: ApplicationDocuments
-):
-    print(documents.json())
-    return update_user_application_field(user_key, "documents", documents.dict())
+def update_user_application_documents(user_id: str, documents: ApplicationDocuments):
+    return update_user_application_field(user_id, "documents", documents.dict())
 
 
-def update_user_application_program_id(user_key: UserKey, program_id: str):
-    return update_user_application_field(user_key, "selectedProgram", program_id)
+def update_user_application_program_id(user_id: str, program_id: str):
+    return update_user_application_field(user_id, "selectedProgram", program_id)
 
 
-def register_user(userData: RegistrationData):
+def update_user_application_rejection_reason(user_id: str, rejection_reason: str):
+    return update_user_application_field(
+        user_id, "lastRejectionReason", rejection_reason
+    )
+
+
+def register_user(userData: RegistrationData) -> str | None:
     # Хэширование пароля
     userData.password = get_password_hash(userData.password)
 
     userData = userData.dict()
-    if not user_exists(userData["fullName"], userData["birthDate"]):
+    if (
+        users.find_one(
+            {"firstName": userData["fullName"], "birthDate": userData["birthDate"]}
+        )
+        is None
+    ):
         result = users.insert_one(userData)
-        return result.inserted_id
+        return str(result.inserted_id)
     else:
         return None  # Пользователь уже существует
 
 
-def add_auth_token(fullName: str, birthDate: str, token: str):
-    raw_user_data = _find_user_with_password(fullName, birthDate)
+def add_auth_token(user_id: str, token: str):
+    raw_user_data = _find_user_with_password(user_id)
     user_id = raw_user_data["_id"]
     return tokens.insert_one(
         {"user_id": user_id, "created_at": datetime.utcnow(), "token": token}
@@ -120,7 +155,8 @@ def find_user_by_token(token: str):
     raw_user_data = users.find_one({"_id": token_info["user_id"]})
     if raw_user_data is None:
         return None
-    return User(**raw_user_data)
+    res = User(**raw_user_data)
+    return res
 
 
 # Programs
@@ -137,6 +173,18 @@ def load_programs() -> list[dict]:
 
 def resolve_program_by_id(id: str) -> dict:
     return programs.find_one({"id": id}, {"_id": 0})
+
+
+def _export_users_csv(cursor: Cursor, fields: list[str]) -> pathlib.Path:
+    output_path = pathlib.Path("export_" + uuid.uuid4().hex).with_suffix(".csv")
+    pd.DataFrame(cursor).to_csv(output_path, columns=fields, index=False)
+    return output_path
+
+
+def export_users_csv(model_name: typing.Type[BaseModel]) -> pathlib.Path:
+    cursor = users.find({})
+    basic_fields = list(model_name.__fields__.keys())
+    return _export_users_csv(cursor, basic_fields)
 
 
 _setup_db()

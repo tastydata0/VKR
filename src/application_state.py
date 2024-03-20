@@ -1,8 +1,5 @@
 from dataclasses import dataclass
 from statemachine import StateMachine, State
-from models import UserKey
-
-from persistent_model import MongodbPersistentModel
 
 IS_APPLICATIONS_STARTED = True
 
@@ -53,9 +50,11 @@ class ApplicationState(StateMachine):
         print(self.current_state.name)
 
     def on_enter_approved(self):
+        # Отправить письмо
         print(self.current_state.name)
 
     def on_enter_not_passed(self):
+        # Отправить письмо
         print(self.current_state.name)
 
     def on_enter_passed(self):
@@ -65,6 +64,7 @@ class ApplicationState(StateMachine):
         print(self.current_state.name)
 
     def before_docs_invalid(self, message: str = ""):
+        # Отправить письмо
         print("Docs invalid:", message)
 
 

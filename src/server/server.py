@@ -77,16 +77,6 @@ mail_receiver = "alex.zv.ev@gmail.com"
 templates = Jinja2Templates(directory="data/static/html")
 
 
-def form_user_key_dict(user_data: dict) -> str:
-    return user_data["fullName"].lower().replace(" ", "").replace("ё", "е") + user_data[
-        "birthDate"
-    ].replace(".", "")
-
-
-def form_user_key(user_data: RegistrationData | LoginData | UserBasicData) -> str:
-    return form_user_key_dict(user_data.dict())
-
-
 @app.get("/status", response_class=HTMLResponse)
 async def status(request: Request):
     return templates.TemplateResponse(
@@ -133,9 +123,7 @@ def redirect_according_to_application_state(
 @app.get("/application")
 @requires("authenticated")
 async def application_get(request: Request):
-    model = MongodbPersistentModel(
-        UserKey(fullName=request.user.fullName, birthDate=request.user.birthDate),
-    )
+    model = MongodbPersistentModel(request.user.id)
 
     state = application_state.ApplicationState(model=model)
 
@@ -146,7 +134,7 @@ async def application_get(request: Request):
 @requires("authenticated")
 async def send_docs_form(request: Request):
     model = MongodbPersistentModel(
-        UserKey(fullName=request.user.fullName, birthDate=request.user.birthDate),
+        request.user.id,
     )
 
     state = application_state.ApplicationState(model=model)
@@ -188,7 +176,7 @@ async def get_filled_consent(request: Request, background_tasks: BackgroundTasks
 @requires("authenticated")
 async def get_form(request: Request):
     model = MongodbPersistentModel(
-        UserKey(fullName=request.user.fullName, birthDate=request.user.birthDate),
+        request.user.id,
     )
 
     state = application_state.ApplicationState(model=model)
@@ -218,7 +206,7 @@ async def get_form(request: Request):
 @requires("authenticated")
 async def waiting_confirmation(request: Request):
     model = MongodbPersistentModel(
-        UserKey(fullName=request.user.fullName, birthDate=request.user.birthDate),
+        request.user.id,
     )
 
     state = application_state.ApplicationState(model=model)
@@ -243,7 +231,7 @@ async def waiting_confirmation(request: Request):
     applicationStatus = None
     if request.user.application is not None:
         model = MongodbPersistentModel(
-            UserKey(fullName=request.user.fullName, birthDate=request.user.birthDate),
+            request.user.id,
         )
 
         state = application_state.ApplicationState(model=model)
@@ -279,7 +267,7 @@ async def waiting_confirmation(request: Request):
 @requires("authenticated")
 async def post_form(request: Request, data: UserFillDataSubmission):
     model = MongodbPersistentModel(
-        UserKey(fullName=request.user.fullName, birthDate=request.user.birthDate),
+        request.user.id,
     )
 
     state = application_state.ApplicationState(model=model)
@@ -289,10 +277,7 @@ async def post_form(request: Request, data: UserFillDataSubmission):
 
     user_data = UserBasicData(**data.dict())
 
-    if (
-        database.modify_user(request.user.fullName, request.user.birthDate, user_data)
-        == -1
-    ):
+    if database.modify_user(request.user.id, user_data) == -1:
         raise HTTPException(
             status_code=500,
             detail="Не удалось изменить данные пользователя. Обратитесь к администратору",
@@ -300,7 +285,7 @@ async def post_form(request: Request, data: UserFillDataSubmission):
 
     if (
         database.update_user_application_program_id(
-            UserKey(**request.user.dict()), program_id=data.selectedProgram
+            user_id=request.user.id, program_id=data.selectedProgram
         )
         == -1
     ):
@@ -346,7 +331,7 @@ async def upload_files(
         raise HTTPException(status_code=400, detail="Не заполнено хотя бы одно поле")
 
     model = MongodbPersistentModel(
-        UserKey(fullName=request.user.fullName, birthDate=request.user.birthDate),
+        request.user.id,
     )
 
     state = application_state.ApplicationState(model=model)
@@ -358,7 +343,7 @@ async def upload_files(
         )
 
     try:
-        pdf_filename = merge_docs_to_pdf(all_files, form_user_key(request.user))
+        pdf_filename = merge_docs_to_pdf(all_files, request.user.id)
     except ImageOpenError:
         raise HTTPException(status_code=400, detail="Невозможно открыть изображение")
 
@@ -379,19 +364,22 @@ async def upload_files(
         childPassportFiles=list(map(get_filename, child_passport_files)),
         parentSnilsFiles=list(map(get_filename, parent_snils_files)),
         childSnilsFiles=list(map(get_filename, child_snils_files)),
+        mergedPdf=pdf_filename,
     )
 
     database.update_user_application_documents(
-        user_key=UserKey(**request.user.dict()),
+        user_id=request.user.id,
         documents=application_documents,
     )
 
     state.fill_docs()
 
-    mail.send_pdf_docs(
-        mail_receiver, pdf_filename, request.user.parentEmail, request.user.fullName
-    )
-    return FileResponse(pdf_filename, media_type="application/pdf")
+    # mail.send_pdf_docs(
+    #     mail_receiver, pdf_filename, request.user.parentEmail, request.user.fullName
+    # )
+
+    # return FileResponse(pdf_filename, media_type="application/pdf")
+    return RedirectResponse("/application/waiting_confirmation", status_code=302)
 
 
 @app.post("/registration")
@@ -425,7 +413,7 @@ async def register(request: Request, data: RegistrationData):
 #     response = FileResponse(
 #         file_path,
 #         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-#     )
+# )
 #     response.headers["Content-Disposition"] = "attachment; filename=users.xlsx"
 
 #     return response
@@ -434,42 +422,68 @@ async def register(request: Request, data: RegistrationData):
 # Эндпоинт для создания токена
 @app.post("/token")
 async def create_token(form_data: LoginData):
-    user_with_pass = database._find_user_with_password(
-        form_data.fullName, form_data.birthDate
-    )
+    user = database.find_user_by_login_data(form_data)
 
-    if user_with_pass is None or not passwords.verify_password(
-        password=form_data.password, hash=user_with_pass["password"]
-    ):
+    if user is None:
         raise HTTPException(
             status_code=400,
-            detail="Incorrect username or password",
+            detail="Неверные данные или пароль",
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token = str(uuid.uuid4())
-    database.add_auth_token(
-        user_with_pass["fullName"], user_with_pass["birthDate"], access_token
-    )
+    database.add_auth_token(user.id, access_token)
+
     response = fastapi.responses.RedirectResponse(url="/users/me", status_code=302)
     response.set_cookie("access_token", access_token, httponly=True)
-
-    # Сохраняем активный токен в словаре с временем создания
-    creation_time = datetime.now()
-    active_tokens[access_token] = (form_user_key(form_data), creation_time)
 
     return response
 
 
 # Эндпоинт для доступа к данным пользователя
-@app.get("/users/me", response_model=UserBasicData)
+@app.get("/users/me")
 @requires("authenticated")
 async def read_users_me(request: Request):
-    return UserBasicData(**request.user.dict())
+    return request.user.dict()
 
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     return FileResponse("data/static/favicon.ico")
+
+
+@app.get("/admin/approve")
+async def admin_approve(request: Request):
+    return templates.TemplateResponse(
+        "admin_approve.html",
+        {"request": request, "users": database.find_waiting_users()},
+    )
+
+
+@app.post("/admin/approve")
+async def admin_approve(data: AdminApprovalDto):
+    print(data)
+    # ПО id установить в Application поле lastRejectionReason, если это rejection
+
+    if data.status == "approved":
+        database.update_user_application_state(
+            user_id=data.userId, application_state=ApplicationState.approved.id
+        )
+    elif data.status == "rejected":
+        database.update_user_application_state(
+            user_id=data.userId, application_state=ApplicationState.filling_info.id
+        )
+
+        database.update_user_application_rejection_reason(
+            user_id=data.userId, rejection_reason=data.reason
+        )
+
+
+@app.get("/admin/get_pdf_docs")
+async def admin_get_pdf_docs(request: Request, user_id: str):
+    return FileResponse(
+        database.find_user(user_id).application.documents.mergedPdf,
+        media_type="application/pdf",
+    )
 
 
 def register_exception(app: FastAPI):

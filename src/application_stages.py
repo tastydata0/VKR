@@ -17,7 +17,11 @@ application_stages = [
         stageStatus="todo",
         stageHref="/application/waiting_confirmation",
     ),
-    ApplicationStage(stageName="Заявление принято", stageStatus="todo"),
+    ApplicationStage(
+        stageName="Заявление принято",
+        stageStatus="todo",
+        stageHref="/application/approved",
+    ),
     ApplicationStage(
         stageName="Не прошел конкурс на программу", stageStatus="negative"
     ),

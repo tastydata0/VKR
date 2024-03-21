@@ -110,12 +110,14 @@ async def login_form(request: Request):
 def redirect_according_to_application_state(
     state: application_state.ApplicationState,
 ):
-    if state.current_state.id == "filling_info":
+    if state.current_state.id == ApplicationState.filling_info.id:
         return RedirectResponse("/application/fill_info")
-    elif state.current_state.id == "filling_docs":
+    elif state.current_state.id == ApplicationState.filling_docs.id:
         return RedirectResponse("/application/fill_docs")
-    elif state.current_state.id == "waiting_confirmation":
+    elif state.current_state.id == ApplicationState.waiting_confirmation.id:
         return RedirectResponse("/application/waiting_confirmation")
+    elif state.current_state.id == ApplicationState.approved.id:
+        return RedirectResponse("/application/approved")
     else:
         return RedirectResponse("/error")
 
@@ -216,6 +218,28 @@ async def waiting_confirmation(request: Request):
 
     return templates.TemplateResponse(
         "waiting_confirmation.html",
+        {
+            "request": request,
+            "application_stages": application_stages,
+            "user": UserMinInfo(**request.user.dict()),
+        },
+    )
+
+
+@app.get("/application/approved")
+@requires("authenticated")
+async def waiting_confirmation(request: Request):
+    model = MongodbPersistentModel(
+        request.user.id,
+    )
+
+    state = application_state.ApplicationState(model=model)
+
+    if state.current_state.id != "approved":
+        return redirect_according_to_application_state(state)
+
+    return templates.TemplateResponse(
+        "approved.html",
         {
             "request": request,
             "application_stages": application_stages,
@@ -358,13 +382,21 @@ async def upload_files(
             shutil.copyfileobj(f.file, buffer)
 
     application_documents = ApplicationDocuments(
-        applicationFiles=list(map(get_filename, application_files)),
-        consentFiles=list(map(get_filename, consent_files)),
-        parentPassportFiles=list(map(get_filename, parent_passport_files)),
-        childPassportFiles=list(map(get_filename, child_passport_files)),
-        parentSnilsFiles=list(map(get_filename, parent_snils_files)),
-        childSnilsFiles=list(map(get_filename, child_snils_files)),
-        mergedPdf=pdf_filename,
+        applicationFiles=[
+            Document(filename=get_filename(f)) for f in application_files
+        ],
+        consentFiles=[Document(filename=get_filename(f)) for f in consent_files],
+        parentPassportFiles=[
+            Document(filename=get_filename(f)) for f in parent_passport_files
+        ],
+        childPassportFiles=[
+            Document(filename=get_filename(f)) for f in child_passport_files
+        ],
+        parentSnilsFiles=[
+            Document(filename=get_filename(f)) for f in parent_snils_files
+        ],
+        childSnilsFiles=[Document(filename=get_filename(f)) for f in child_snils_files],
+        mergedPdf=Document(filename=pdf_filename),
     )
 
     database.update_user_application_documents(

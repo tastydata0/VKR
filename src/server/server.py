@@ -539,7 +539,7 @@ async def admin_approve(data: AdminApprovalDto):
 @app.get("/admin/get_pdf_docs")
 async def admin_get_pdf_docs(request: Request, user_id: str):
     return FileResponse(
-        database.find_user(user_id).application.documents.mergedPdf,
+        database.find_user(user_id).application.documents.mergedPdf.filename,
         media_type="application/pdf",
     )
 

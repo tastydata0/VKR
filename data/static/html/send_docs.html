@@ -29,6 +29,13 @@
       <h1 class="mt-4">Загрузка документов</h1>
       <hr />
 
+      {% if lastRejectionReason %}
+      <div class="warning mt-4">
+        Внимание! Документы и/или данные были отклонены. Причина: {{
+        lastRejectionReason }}
+      </div>
+      {% endif %}
+
       <form
         id="fileUploadForm"
         action="/application/fill_docs"

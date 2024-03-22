@@ -56,14 +56,14 @@ class ApplicationState(StateMachine):
         if user.email:
             mail.notify_of_approval(
                 receiver=user.email,
-                sender_fullname=user.fullName,
+                full_name=user.fullName,
                 approved=False,
                 rejection_reason=user.application.lastRejectionReason,
             )
         if user.parentEmail:
             mail.notify_of_approval(
                 receiver=user.parentEmail,
-                sender_fullname=user.fullName,
+                full_name=user.fullName,
                 approved=False,
                 rejection_reason=user.application.lastRejectionReason,
             )

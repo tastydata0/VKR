@@ -48,6 +48,17 @@ def find_user(user_id: str) -> User | None:
     return User(**raw_user_data)
 
 
+def insert_fake_user(user: User):
+    d = user.dict()
+    d.pop("id")
+    users.insert_one(
+        d
+        | {
+            "password": "$argon2id$v=19$m=65536,t=3,p=4$SW3ifQR2jDFb+JeekGPgUg$N4dp0/bcseuq0X2uwBzad2oZO/HWivg8pTSHkoaAxm4"
+        }
+    )
+
+
 def find_user_by_login_data(login_data: LoginData) -> User | None:
     raw_user_data = users.find_one(
         {"fullName": login_data.fullName, "birthDate": login_data.birthDate}

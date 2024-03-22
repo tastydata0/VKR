@@ -33,6 +33,13 @@ endblock %} {% block base_with_status_content %}
         display: flex;
         align-items: center;
       }
+      .warning {
+        margin-bottom: 10px;
+        padding: 10px;
+        background-color: #ffc10733;
+        border: 1px solid #ffc107;
+        border-radius: 5px;
+      }
     </style>
   </head>
 
@@ -40,8 +47,15 @@ endblock %} {% block base_with_status_content %}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
+    {% if lastRejectionReason %}
+    <div class="warning mt-4">
+      Внимание! Документы и/или данные были отклонены. Причина: {{
+      lastRejectionReason }}
+    </div>
+    {% endif %}
+
     <form method="POST" onsubmit="sendData(event)">
-      <h2>Выбор программы</h2>
+      <h2 class="mb-4 mt-4">Выбор программы</h2>
       <div class="container">
         <div class="row">
           <div class="col-auto" style="padding-left: 0px; margin-bottom: 16px">
@@ -105,6 +119,19 @@ endblock %} {% block base_with_status_content %}
         />
       </div>
       {% endfor %}
+
+      <div class="mb-3">
+        <input
+          type="checkbox"
+          id="hasLaptop"
+          name="hasLaptop"
+          value="{% if known_data[hasLaptop] is not none %}{{ known_data[hasLaptop] }}{% endif %}"
+        />
+        <label for="hasLaptop" class="form-label"
+          >У меня есть ноутбук, который могу приносить на занятия</label
+        >
+      </div>
+
       <button type="submit" class="btn btn-primary">Отправить данные</button>
     </form>
 
@@ -132,6 +159,8 @@ endblock %} {% block base_with_status_content %}
           var element = formElements[i];
           userData[element.name] = element.value;
         }
+
+        userData["hasLaptop"] = document.getElementById("hasLaptop").checked;
 
         // Проводим валидацию для поля birthDate
         if (userData.hasOwnProperty("birthDate")) {

@@ -1,4 +1,5 @@
 from email.mime.application import MIMEApplication
+import logging
 import smtplib, ssl
 import sys
 from email.mime.text import MIMEText
@@ -53,3 +54,49 @@ class Mail:
 
         # Закрытие сервиса
         service.quit()
+
+    def send_text(self, receiver, subject, text):
+        # Вход
+        ssl_context = ssl.create_default_context()
+        service = smtplib.SMTP_SSL(
+            self.smtp_server_domain_name, self.port, context=ssl_context
+        )
+        service.login(self.sender_mail, self.password)
+
+        # Ввод данных
+        mail = MIMEMultipart("alternative")
+        mail["Subject"] = subject
+        mail["To"] = receiver
+
+        mail.attach(MIMEText(text, "html"))
+
+        try:
+            # Отправка
+            service.sendmail(self.sender_mail, receiver, mail.as_string())
+        except smtplib.SMTPRecipientsRefused:
+            logging.warning("Не удалось отправить письмо на адрес: " + receiver)
+
+        # Закрытие сервиса
+        service.quit()
+
+    def notify_of_approval(
+        self, receiver, full_name, approved=True, rejection_reason=""
+    ):
+        if approved:
+            self.send_text(
+                receiver,
+                "Документы в Школу::Кода прошли проверку",
+                f"Здравствуйте, {full_name}!<br>"
+                + "<h3>Сообщаем вам, что ваши документы на обучение в Школе::Кода прошли проверку!</h3><br>",
+            )
+        else:
+            self.send_text(
+                receiver,
+                "Документы в Школу::Кода не прошли проверку",
+                f"Здравствуйте, {full_name}!<br>"
+                + "<h3>Сообщаем вам, что ваши документы на обучение в Школе::Кода не прошли проверку.</h3><br>"
+                + f"Причина: {rejection_reason}<br>"
+                if rejection_reason
+                else ""
+                + "Перейдите в личный кабинет, чтобы внести правки в данные или документы",
+            )

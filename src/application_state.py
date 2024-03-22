@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from statemachine import StateMachine, State
+from mail_service import Mail
 
 IS_APPLICATIONS_STARTED = True
 
@@ -29,7 +30,7 @@ class ApplicationState(StateMachine):
     )
 
     approve = waiting_confirmation.to(approved)
-    docs_invalid = waiting_confirmation.to(filling_docs)
+    data_invalid = waiting_confirmation.to(filling_docs)
 
     not_pass = approved.to(not_passed)
     pass_ = approved.to(passed)
@@ -49,8 +50,24 @@ class ApplicationState(StateMachine):
     def on_enter_waiting_confirmation(self):
         print(self.current_state.name)
 
-    def on_enter_approved(self):
+    def on_enter_approved(self, user):
         # Отправить письмо
+        mail = Mail()
+        if user.email:
+            mail.notify_of_approval(
+                receiver=user.email,
+                sender_fullname=user.fullName,
+                approved=False,
+                rejection_reason=user.application.lastRejectionReason,
+            )
+        if user.parentEmail:
+            mail.notify_of_approval(
+                receiver=user.parentEmail,
+                sender_fullname=user.fullName,
+                approved=False,
+                rejection_reason=user.application.lastRejectionReason,
+            )
+
         print(self.current_state.name)
 
     def on_enter_not_passed(self):
@@ -63,9 +80,24 @@ class ApplicationState(StateMachine):
     def on_enter_graduated(self):
         print(self.current_state.name)
 
-    def before_docs_invalid(self, message: str = ""):
+    def before_data_invalid(self, user):
         # Отправить письмо
-        print("Docs invalid:", message)
+
+        mail = Mail()
+        if user.email:
+            mail.notify_of_approval(
+                receiver=user.email,
+                full_name=user.fullName,
+                approved=False,
+                rejection_reason=user.application.lastRejectionReason,
+            )
+        if user.parentEmail:
+            mail.notify_of_approval(
+                receiver=user.parentEmail,
+                full_name=user.fullName,
+                approved=False,
+                rejection_reason=user.application.lastRejectionReason,
+            )
 
 
 # model = MongodbPersistentModel(

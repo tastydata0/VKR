@@ -151,6 +151,7 @@ async def send_docs_form(request: Request):
         {
             "request": request,
             "application_stages": application_stages,
+            "lastRejectionReason": request.user.application.lastRejectionReason,
             "user": UserMinInfo(**request.user.dict()),
         },
     )
@@ -199,6 +200,7 @@ async def get_form(request: Request):
             "form_fields": form_fields,
             "known_data": known_data,
             "selectedProgram": known_data["application"]["selectedProgram"],
+            "lastRejectionReason": known_data["application"]["lastRejectionReason"],
             "programs": database.load_programs(),
             "application_stages": application_stages,
             "user": UserMinInfo(**request.user.dict()),
@@ -509,10 +511,19 @@ async def admin_approve(data: AdminApprovalDto):
     print(data)
     # ПО id установить в Application поле lastRejectionReason, если это rejection
 
+    model = MongodbPersistentModel(
+        data.userId,
+    )
+
+    state = application_state.ApplicationState(model=model)
+
     if data.status == "approved":
         database.update_user_application_state(
             user_id=data.userId, application_state=ApplicationState.approved.id
         )
+
+        state.approve(database.find_user(data.userId))
+
     elif data.status == "rejected":
         database.update_user_application_state(
             user_id=data.userId, application_state=ApplicationState.filling_info.id
@@ -521,6 +532,8 @@ async def admin_approve(data: AdminApprovalDto):
         database.update_user_application_rejection_reason(
             user_id=data.userId, rejection_reason=data.reason
         )
+
+        state.data_invalid(database.find_user(data.userId))
 
 
 @app.get("/admin/get_pdf_docs")

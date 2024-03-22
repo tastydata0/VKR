@@ -4,11 +4,15 @@ from fastapi import HTTPException
 
 captcha_links = {}
 
+MAX_CAPTHCHAS_PER_IP = 20
+
 
 def create_captcha(client_ip: str):
     img, text = img_captcha()
     captcha_links.setdefault(client_ip, [])
     captcha_links[client_ip].append(text.lower())
+    if len(captcha_links[client_ip]) > MAX_CAPTHCHAS_PER_IP:
+        captcha_links[client_ip].pop(0)
     print(captcha_links)
     return img
 

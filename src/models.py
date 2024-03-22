@@ -18,6 +18,16 @@ class Regexes:
     name = re.compile("[а-яА-Я ]+")
 
 
+def validate_name(name: str, can_be_empty=True):
+    if not can_be_empty and len(name) == 0:
+        raise ValueError("Имя не может быть пустым")
+    elif len(name) == 0:
+        return name
+    if Regexes.name.fullmatch(name) is None:
+        raise ValueError("Некорректное имя: " + name)
+    return name
+
+
 class ApplicationStage(BaseModel):
     stageName: str
     stageStatus: str  # current, passed, todo, negative
@@ -32,6 +42,18 @@ class RegistrationData(BaseModel):
     schoolClass: int
     birthDate: str
     password: str
+
+    @validator("fullName")
+    @classmethod
+    def validate_full_name(cls, value):
+        return validate_name(value, can_be_empty=False)
+
+    @validator("email")
+    @classmethod
+    def validate_email(cls, value):
+        if Regexes.email.fullmatch(value) is None:
+            raise ValueError("Некорректная почта: " + value)
+        return value
 
 
 class LoginData(BaseModel):
@@ -81,7 +103,7 @@ class Application(SelectedProgram):
     status: Optional[str] = Field(
         ApplicationState.filling_docs.id, validate_default=True
     )
-    rejectionReason: Optional[str] = Field(None)
+    lastRejectionReason: Optional[str] = Field(None)
 
     @validator("status")
     @classmethod
@@ -107,8 +129,15 @@ class UserMutableData(BaseModel):
     @validator("email", "parentEmail")
     @classmethod
     def validate_email(cls, value):
-        if re.fullmatch(Regexes.email, value) is None:
+        if Regexes.email.fullmatch(value) is None:
             raise ValueError("Некорректная почта")
+        return value
+
+    @validator("parentFullName")
+    @classmethod
+    def validate_full_name_genitive(cls, value):
+        if value is not None:
+            return validate_name(value)
         return value
 
 
@@ -126,7 +155,7 @@ class UserBasicData(UserMutableData):
     @validator("birthDate")
     @classmethod
     def validate_birth_date(cls, value):  # 12.04.2003
-        if re.fullmatch(Regexes.birth_date, value) is None:
+        if Regexes.birth_date.fullmatch(value) is None:
             raise ValueError("Неверный формат даты рождения")
         return value
 

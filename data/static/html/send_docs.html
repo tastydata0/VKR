@@ -139,6 +139,17 @@
           />
           <div id="childSnilsFilesThumbnail" class="thumbnail"></div>
         </div>
+        <div class="mb-3">
+          <label for="captcha">Введите сообщение с картинки:</label><br />
+          <img id="captchaImg" class="mb-2" src="/captcha" />
+          <input
+            type="text"
+            class="form-control"
+            id="captcha"
+            name="captcha"
+            required
+          />
+        </div>
 
         <div class="warning">
           Пожалуйста, обратите внимание, что документы могут быть отправлены
@@ -150,6 +161,66 @@
       </form>
     </div>
     <script>
+      document
+        .getElementById("fileUploadForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+
+          // Upload files via xhr
+          const data = new FormData();
+          for (const file of document.getElementById("applicationFiles")
+            .files) {
+            data.append("application_files", file);
+          }
+          for (const file of document.getElementById("consentFiles").files) {
+            data.append("consent_files", file);
+          }
+          for (const file of document.getElementById("parentPassportFiles")
+            .files) {
+            data.append("parent_passport_files", file);
+          }
+          for (const file of document.getElementById("childPassportFiles")
+            .files) {
+            data.append("child_passport_files", file);
+          }
+          for (const file of document.getElementById("parentSnilsFiles")
+            .files) {
+            data.append("parent_snils_files", file);
+          }
+          for (const file of document.getElementById("childSnilsFiles").files) {
+            data.append("child_snils_files", file);
+          }
+
+          console.log(data);
+
+          var xhr = new XMLHttpRequest();
+          xhr.open(
+            "POST",
+            "/application/fill_docs?captcha=" +
+              document.getElementById("captcha").value,
+            true
+          );
+
+          xhr.send(data);
+
+          // Обновить капчу (препятствуем кэшу через getTime)
+          document.getElementById("captchaImg").src =
+            "/captcha?" + new Date().getTime();
+
+          xhr.onload = function () {
+            if (xhr.status === 200) {
+              // Обработка успешного запроса
+              window.location.href = xhr.responseURL;
+            } else {
+              // Обработка ошибки запроса
+              alert(
+                "Ошибка отправки документов: " +
+                  JSON.parse(xhr.responseText).detail
+              );
+            }
+          };
+        });
+
       const displayThumbnail = (inputId, thumbnailId) => {
         const fileInput = document.getElementById(inputId);
         const thumbnail = document.getElementById(thumbnailId);

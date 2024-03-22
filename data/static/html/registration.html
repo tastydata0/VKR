@@ -109,6 +109,17 @@ base_content %}
             placeholder="ДД.ММ.ГГГГ"
           />
         </div>
+        <div class="form-group">
+          <label for="captcha">Введите сообщение с картинки:</label><br />
+          <img id="captchaImg" class="mb-2" src="/captcha" />
+          <input
+            type="text"
+            class="form-control"
+            id="captcha"
+            name="captcha"
+            required
+          />
+        </div>
         <button type="submit" class="btn btn-primary">
           Зарегистрироваться
         </button>
@@ -162,17 +173,27 @@ base_content %}
           };
 
           var xhr = new XMLHttpRequest();
-          xhr.open("POST", "/registration", true);
+          xhr.open(
+            "POST",
+            "/registration?captcha=" + document.getElementById("captcha").value,
+            true
+          );
+
           xhr.setRequestHeader(
             "Content-Type",
             "application/json;charset=UTF-8"
           );
           xhr.send(JSON.stringify(data));
 
+          // Обновить капчу (препятствуем кэшу через getTime)
+          document.getElementById("captchaImg").src =
+            "/captcha?" + new Date().getTime();
+
           xhr.onload = function () {
             if (xhr.status === 200) {
               // Обработка успешного запроса
               alert("Регистрация прошла успешно!");
+              window.location.href = xhr.responseURL;
             } else {
               // Обработка ошибки запроса
               alert(

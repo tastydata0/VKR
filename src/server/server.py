@@ -1,7 +1,8 @@
 import shutil
 import uuid
-from fastapi import FastAPI, Form, HTTPException, File, UploadFile
+from fastapi import FastAPI, Form, HTTPException, File, Response, UploadFile
 from fastapi import Request
+from fastapi.responses import StreamingResponse
 import fastapi
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse
@@ -32,6 +33,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 from .middlewares import *
+from .captcha import *
 from forms.main_form_fields import form_fields
 
 from application_stages import application_stages
@@ -334,7 +336,10 @@ async def upload_files(
     child_passport_files: list[UploadFile],  # Паспорт ребенка (свидетельство о рожд.)
     parent_snils_files: list[UploadFile],  # Снилс родителя
     child_snils_files: list[UploadFile],  # Снилс ребенка
+    captcha: str,
 ):
+    check_captcha(request.client.host, captcha)
+
     all_files = (
         application_files
         + consent_files
@@ -416,7 +421,9 @@ async def upload_files(
 
 @app.post("/registration")
 @limiter.limit("1/minute")
-async def register(request: Request, data: RegistrationData):
+async def register(request: Request, data: RegistrationData, captcha: str):
+    check_captcha(request.client.host, captcha)
+
     if not database.register_user(data):
         raise HTTPException(status_code=400, detail="Пользователь уже существует")
 
@@ -483,6 +490,12 @@ async def favicon():
     return FileResponse("data/static/favicon.ico")
 
 
+@app.get("/captcha", summary="captcha", name="captcha")
+def get_captcha(request: Request):
+    captcha_img = create_captcha(request.client.host)
+    return StreamingResponse(content=captcha_img, media_type="image/jpeg")
+
+
 @app.get("/admin/approve")
 async def admin_approve(request: Request):
     return templates.TemplateResponse(
@@ -515,6 +528,14 @@ async def admin_get_pdf_docs(request: Request, user_id: str):
     return FileResponse(
         database.find_user(user_id).application.documents.mergedPdf,
         media_type="application/pdf",
+    )
+
+
+@app.get("/admin/competition")
+async def admin_competition(request: Request):
+    return templates.TemplateResponse(
+        "admin_competition.html",
+        {"request": request, "users": database.find_waiting_users()},
     )
 
 

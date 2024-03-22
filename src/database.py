@@ -126,7 +126,7 @@ def register_user(userData: RegistrationData) -> str | None:
     userData = userData.dict()
     if (
         users.find_one(
-            {"firstName": userData["fullName"], "birthDate": userData["birthDate"]}
+            {"fullName": userData["fullName"], "birthDate": userData["birthDate"]}
         )
         is None
     ):

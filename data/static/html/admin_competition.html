@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Подтверждение документов</title>
+    <title>Конкурс</title>
     <link
       href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
       rel="stylesheet"
@@ -11,7 +10,7 @@
   </head>
   <body>
     <div class="container">
-      <h2>Подтверждение документов</h2>
+      <h2>Конкурс</h2>
       <div class="row">
         <div class="col">
           <table class="table">
@@ -23,7 +22,6 @@
                 <th>Почта родителя</th>
                 <th>Телефон</th>
                 <th>Программа обучения</th>
-                <th>Ссылка на документы</th>
                 <th>Подтвердить</th>
                 <th>Отклонить</th>
               </tr>
@@ -39,11 +37,6 @@
                 <td>{{ user.parentEmail }}</td>
                 <td>{{ user.phone }}</td>
                 <td>{{ user.application.selectedProgram }}</td>
-                <td>
-                  <a href="/admin/get_pdf_docs?user_id={{ user.id }}"
-                    >Документы</a
-                  >
-                </td>
                 <td>
                   <button
                     class="btn btn-success confirm-btn"
@@ -157,7 +150,7 @@
             reason: reason,
           };
 
-          fetch("/admin/approve", {
+          fetch("/admin/competition", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

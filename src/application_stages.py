@@ -25,6 +25,10 @@ application_stages = [
     ApplicationStage(
         stageName="Не прошел конкурс на программу", stageStatus="negative"
     ),
-    ApplicationStage(stageName="Зачислен на программу", stageStatus="todo"),
+    ApplicationStage(
+        stageName="Зачислен на программу",
+        stageStatus="todo",
+        stageHref="/application/passed",
+    ),
     ApplicationStage(stageName="Программа пройдена", stageStatus="todo"),
 ]

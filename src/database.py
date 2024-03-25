@@ -7,6 +7,7 @@ import pydantic
 from pymongo import MongoClient
 from pymongo.cursor import Cursor
 import pandas as pd
+import statemachine
 from models import *
 import dotenv
 import os
@@ -79,13 +80,8 @@ def find_user_creds(user_id: str) -> LoginData:
     return LoginData(**raw_user_data)
 
 
-def find_waiting_users() -> list[User]:
-    return [
-        User(**user)
-        for user in users.find(
-            {"application.status": ApplicationState.waiting_confirmation.id}
-        )
-    ]
+def find_users_with_status(status: statemachine.State) -> list[User]:
+    return [User(**user) for user in users.find({"application.status": status.id})]
 
 
 def user_exists(user_id: str) -> bool:

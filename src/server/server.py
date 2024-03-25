@@ -120,6 +120,8 @@ def redirect_according_to_application_state(
         return RedirectResponse("/application/waiting_confirmation")
     elif state.current_state.id == ApplicationState.approved.id:
         return RedirectResponse("/application/approved")
+    elif state.current_state.id == ApplicationState.passed.id:
+        return RedirectResponse("/application/passed")
     else:
         return RedirectResponse("/error")
 
@@ -217,7 +219,7 @@ async def waiting_confirmation(request: Request):
 
     state = application_state.ApplicationState(model=model)
 
-    if state.current_state.id != "waiting_confirmation":
+    if state.current_state.id != ApplicationState.waiting_confirmation.id:
         return redirect_according_to_application_state(state)
 
     return templates.TemplateResponse(
@@ -239,11 +241,33 @@ async def waiting_confirmation(request: Request):
 
     state = application_state.ApplicationState(model=model)
 
-    if state.current_state.id != "approved":
+    if state.current_state.id != ApplicationState.approved.id:
         return redirect_according_to_application_state(state)
 
     return templates.TemplateResponse(
         "approved.html",
+        {
+            "request": request,
+            "application_stages": application_stages,
+            "user": UserMinInfo(**request.user.dict()),
+        },
+    )
+
+
+@app.get("/application/passed")
+@requires("authenticated")
+async def passed(request: Request):
+    state = application_state.ApplicationState(
+        model=MongodbPersistentModel(
+            request.user.id,
+        )
+    )
+
+    if state.current_state.id != ApplicationState.passed.id:
+        return redirect_according_to_application_state(state)
+
+    return templates.TemplateResponse(
+        "passed.html",
         {
             "request": request,
             "application_stages": application_stages,
@@ -502,38 +526,35 @@ def get_captcha(request: Request):
 async def admin_approve(request: Request):
     return templates.TemplateResponse(
         "admin_approve.html",
-        {"request": request, "users": database.find_waiting_users()},
+        {
+            "request": request,
+            "users": database.find_users_with_status(
+                ApplicationState.waiting_confirmation
+            ),
+        },
     )
 
 
 @app.post("/admin/approve")
-async def admin_approve(data: AdminApprovalDto):
+async def admin_approve_post(data: AdminApprovalDto):
     print(data)
     # ПО id установить в Application поле lastRejectionReason, если это rejection
 
-    model = MongodbPersistentModel(
-        data.userId,
+    state = application_state.ApplicationState(
+        model=MongodbPersistentModel(
+            data.userId,
+        )
     )
 
-    state = application_state.ApplicationState(model=model)
-
     if data.status == "approved":
-        database.update_user_application_state(
-            user_id=data.userId, application_state=ApplicationState.approved.id
-        )
-
         state.approve(database.find_user(data.userId))
 
     elif data.status == "rejected":
-        database.update_user_application_state(
-            user_id=data.userId, application_state=ApplicationState.filling_info.id
-        )
+        state.data_invalid(database.find_user(data.userId))
 
         database.update_user_application_rejection_reason(
             user_id=data.userId, rejection_reason=data.reason
         )
-
-        state.data_invalid(database.find_user(data.userId))
 
 
 @app.get("/admin/get_pdf_docs")
@@ -548,8 +569,32 @@ async def admin_get_pdf_docs(request: Request, user_id: str):
 async def admin_competition(request: Request):
     return templates.TemplateResponse(
         "admin_competition.html",
-        {"request": request, "users": database.find_waiting_users()},
+        {
+            "request": request,
+            "users": database.find_users_with_status(ApplicationState.approved),
+        },
     )
+
+
+@app.post("/admin/competition")
+async def admin_competition_post(data: AdminApprovalDto):
+    # ПО id установить в Application поле lastRejectionReason, если это rejection
+
+    state = application_state.ApplicationState(
+        model=MongodbPersistentModel(
+            data.userId,
+        )
+    )
+
+    if data.status == "approved":
+        state.pass_(database.find_user(data.userId))
+
+    elif data.status == "rejected":
+        state.not_pass(database.find_user(data.userId))
+
+        database.update_user_application_rejection_reason(
+            user_id=data.userId, rejection_reason=data.reason
+        )
 
 
 def register_exception(app: FastAPI):
@@ -558,7 +603,6 @@ def register_exception(app: FastAPI):
         request: Request, exc: RequestValidationError
     ):
         exc_str = f"{exc}".replace("\n", " ").replace("   ", " ")
-        # or logger.error(f'{exc}')
         print(request, exc_str)
         content = {"status_code": 10422, "message": exc_str, "data": None}
         return JSONResponse(content=content, status_code=422)

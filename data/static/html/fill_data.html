@@ -254,18 +254,14 @@ endblock %} {% block base_with_status_content %}
               starsContainer.appendChild(star);
           }
 
-          const programIcon = document.getElementById("program-icon");
-          programIcon.src = currentSelectedProgram.iconUrl;
-          programIcon.alt = currentSelectedProgram.brief;
+        $("#program-icon").attr("src", currentSelectedProgram.iconUrl);
+        $("#program-icon").attr("alt", currentSelectedProgram.brief);
 
-          const programHours = document.getElementById("program-hours");
-          programHours.innerHTML = `${currentSelectedProgram.hoursAud + currentSelectedProgram.hoursHome} часов (${currentSelectedProgram.hoursAud} аудиторных)`
+        $("#program-hours").text(`${currentSelectedProgram.hoursAud + currentSelectedProgram.hoursHome} часов (${currentSelectedProgram.hoursAud} аудиторных)`)
 
-          const programCost = document.getElementById("program-cost");
-          programCost.innerHTML = `Стоимость: ${currentSelectedProgram.cost}`
+        $("#program-cost").text(`Стоимость: ${currentSelectedProgram.cost}`);
 
-          const programDescription = document.getElementById("program-description");
-          programDescription.textContent = currentSelectedProgram.details;
+        $("#program-description").text(currentSelectedProgram.details);
       }
 
       const programs = {{ programs | tojson | safe }};

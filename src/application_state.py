@@ -15,7 +15,7 @@ class ApplicationState(StateMachine):
     filling_docs = State("Загрузка документов")
     waiting_confirmation = State("Ожидание подтверждения")
     approved = State("Заявление принято")
-    not_passed = State("Не прошел конкурс на программу", final=True)
+    not_passed = State("Не прошел конкурс на программу")
     passed = State("Зачислен на программу")
     graduated = State("Программа пройдена", final=True)
 
@@ -25,8 +25,12 @@ class ApplicationState(StateMachine):
 
     fill_docs = filling_docs.to(waiting_confirmation)
     change_info = filling_docs.to(filling_info) | waiting_confirmation.to(filling_info)
-    program_cancelled = filling_docs.to(filling_info) | waiting_confirmation.to(
-        filling_info
+    program_cancelled = (
+        filling_docs.to(filling_info)
+        | waiting_confirmation.to(filling_info)
+        | approved.to(filling_info)
+        | not_passed.to(filling_info)
+        | passed.to(filling_info)
     )
 
     approve = waiting_confirmation.to(approved)

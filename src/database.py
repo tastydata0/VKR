@@ -28,6 +28,7 @@ db = client["codeschool"]
 users = db["users"]
 tokens = db["tokens"]
 programs = db["programs"]
+admins = db["admins"]
 
 
 def _setup_db():
@@ -60,6 +61,10 @@ def insert_fake_user(user: User):
     )
 
 
+def upsert_admin(admin: Admin):
+    admins.update_one({"email": admin.email}, {"$set": admin.dict()}, upsert=True)
+
+
 def find_user_by_login_data(login_data: LoginData) -> User | None:
     raw_user_data = users.find_one(
         {"fullName": login_data.fullName, "birthDate": login_data.birthDate}
@@ -71,6 +76,17 @@ def find_user_by_login_data(login_data: LoginData) -> User | None:
         return None
 
     return User(**raw_user_data)
+
+
+def find_admin_by_login_data(login_data: AdminLoginDto) -> AdminWithId | None:
+    raw_admin_data = admins.find_one({"email": login_data.email})
+
+    if raw_admin_data is None or not verify_password(
+        password=login_data.password, hash=raw_admin_data["password"]
+    ):
+        return None
+
+    return AdminWithId(**raw_admin_data, id=str(raw_admin_data["_id"]))
 
 
 def find_user_creds(user_id: str) -> LoginData:
@@ -143,11 +159,14 @@ def register_user(userData: RegistrationData) -> str | None:
         return None  # Пользователь уже существует
 
 
-def add_auth_token(user_id: str, token: str):
-    raw_user_data = _find_user_with_password(user_id)
-    user_id = raw_user_data["_id"]
+def add_auth_token(user_id: str, token: str, role: str = "user"):
     return tokens.insert_one(
-        {"user_id": user_id, "created_at": datetime.utcnow(), "token": token}
+        {
+            "user_id": user_id,
+            "created_at": datetime.utcnow(),
+            "token": token,
+            "role": role,
+        }
     )
 
 
@@ -157,12 +176,23 @@ def find_auth_token(token: str):
 
 def find_user_by_token(token: str):
     token_info = find_auth_token(token)
-    if token_info is None:
+    if token_info is None or token_info["role"] != "user":
         return None
-    raw_user_data = users.find_one({"_id": token_info["user_id"]})
+    raw_user_data = users.find_one({"_id": ObjectId(token_info["user_id"])})
     if raw_user_data is None:
         return None
     res = User(**raw_user_data)
+    return res
+
+
+def find_admin_by_token(token: str):
+    token_info = find_auth_token(token)
+    if token_info is None or token_info["role"] != "admin":
+        return None
+    raw_admin_data = admins.find_one({"_id": ObjectId(token_info["user_id"])})
+    if raw_admin_data is None:
+        return None
+    res = Admin(**raw_admin_data, id=str(raw_admin_data["_id"]))
     return res
 
 

@@ -173,6 +173,28 @@ class AdminApprovalDto(BaseModel):
         return value
 
 
+class Admin(BaseModel):
+    email: str
+    password: str
+    role: str
+
+    @validator("email")
+    @classmethod
+    def validate_email(cls, value):
+        if Regexes.email.fullmatch(value) is None:
+            raise ValueError("Некорректная почта")
+        return value
+
+
+class AdminWithId(Admin):
+    id: str
+
+
+class AdminLoginDto(BaseModel):
+    email: str
+    password: str
+
+
 class User(UserBasicData):
     def __init__(self, *args, **kwargs):
         if not "id" in kwargs:

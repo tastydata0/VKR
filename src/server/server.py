@@ -65,7 +65,7 @@ middleware = [
 
 limiter = Limiter(key_func=get_remote_address)
 limiter.enabled = False
-app = FastAPI(middleware=middleware)
+app = FastAPI(middleware=middleware, debug=True)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
@@ -504,6 +504,39 @@ async def create_token(form_data: LoginData):
     return response
 
 
+@app.get("/admin/login")
+async def login(request: Request):
+    return templates.TemplateResponse("admin_login.html", {"request": request})
+
+
+@app.post("/admin/token")
+async def create_admin_token(form_data: AdminLoginDto):
+    user = database.find_admin_by_login_data(form_data)
+
+    if user is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Неверные данные или пароль",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    access_token = str(uuid.uuid4())
+    database.add_auth_token(user.id, access_token, role="admin")
+
+    response = fastapi.responses.RedirectResponse(
+        url="/admin/dashboard", status_code=302
+    )
+    response.set_cookie("access_token", access_token, httponly=True)
+
+    return response
+
+
+@app.get("/admin/dashboard")
+@requires("admin")
+async def admin_dashboard(request: Request):
+    return templates.TemplateResponse("admin_dashboard.html", {"request": request})
+
+
 # Эндпоинт для доступа к данным пользователя
 @app.get("/users/me")
 @requires("authenticated")
@@ -523,6 +556,7 @@ def get_captcha(request: Request):
 
 
 @app.get("/admin/approve")
+@requires("admin")
 async def admin_approve(request: Request):
     return templates.TemplateResponse(
         "admin_approve.html",
@@ -536,7 +570,8 @@ async def admin_approve(request: Request):
 
 
 @app.post("/admin/approve")
-async def admin_approve_post(data: AdminApprovalDto):
+@requires("admin")
+async def admin_approve_post(request: Request, data: AdminApprovalDto):
     print(data)
     # ПО id установить в Application поле lastRejectionReason, если это rejection
 
@@ -558,6 +593,7 @@ async def admin_approve_post(data: AdminApprovalDto):
 
 
 @app.get("/admin/get_pdf_docs")
+@requires("admin")
 async def admin_get_pdf_docs(request: Request, user_id: str):
     return FileResponse(
         database.find_user(user_id).application.documents.mergedPdf.filename,
@@ -566,6 +602,7 @@ async def admin_get_pdf_docs(request: Request, user_id: str):
 
 
 @app.get("/admin/competition")
+@requires("admin")
 async def admin_competition(request: Request):
     return templates.TemplateResponse(
         "admin_competition.html",
@@ -577,7 +614,8 @@ async def admin_competition(request: Request):
 
 
 @app.post("/admin/competition")
-async def admin_competition_post(data: AdminApprovalDto):
+@requires("admin")
+async def admin_competition_post(request: Request, data: AdminApprovalDto):
     # ПО id установить в Application поле lastRejectionReason, если это rejection
 
     state = application_state.ApplicationState(

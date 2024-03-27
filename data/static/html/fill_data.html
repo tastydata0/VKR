@@ -121,13 +121,9 @@ endblock %} {% block base_with_status_content %}
       {% endfor %}
 
       <div class="mb-3">
-        <input
-          type="checkbox"
-          id="hasLaptop"
-          name="hasLaptop"
-          value="{% if known_data[hasLaptop] is not none %}{{ known_data[hasLaptop] }}{% endif %}"
-        />
-        <label for="hasLaptop" class="form-label"
+        <input type="checkbox" id="hasLaptop" name="hasLaptop" {% if
+        known_data[hasLaptop] %} checked {% endif %}" />
+        <label for="hasLaptop" class="form-label ml-1"
           >У меня есть ноутбук, который могу приносить на занятия</label
         >
       </div>

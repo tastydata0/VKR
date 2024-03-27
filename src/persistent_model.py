@@ -6,14 +6,6 @@ import database
 
 
 class AbstractPersistentModel(ABC):
-    """Abstract Base Class for persistent models.
-
-    Subclasses should implement concrete strategies for:
-
-    - `_read_state`: Read the state from the concrete persistent layer.
-    - `_write_state`: Write the state from the concrete persistent layer.
-    """
-
     def __init__(self):
         self._state = None
 
@@ -40,37 +32,12 @@ class AbstractPersistentModel(ABC):
         ...
 
 
-class FilePersistentModel(AbstractPersistentModel):
-    """A concrete implementation of a storage strategy for a Model
-    that reads and writes to a file.
-    """
-
-    def __init__(self, file):
-        super().__init__()
-        self.file = file
-
-    def _read_state(self):
-        self.file.seek(0)
-        state = self.file.read().strip()
-        return state if state != "" else None
-
-    def _write_state(self, value):
-        self.file.seek(0)
-        self.file.truncate(0)
-        self.file.write(value)
-
-
 class MongodbPersistentModel(AbstractPersistentModel):
-    """A concrete implementation of a storage strategy for a Model
-    that reads and writes to a MongoDB collection.
-    """
-
     def __init__(self, user_id: str):
         super().__init__()
         self.user_id = user_id
 
     def _read_state(self):
-        # TODO: передавать напрямую, пофиксив database
         try:
             application = database.find_user(self.user_id).application
             return None if application is None else application.status

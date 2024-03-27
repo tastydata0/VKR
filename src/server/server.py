@@ -130,9 +130,7 @@ def redirect_according_to_application_state(
 @app.get("/application")
 @requires("authenticated")
 async def application_get(request: Request):
-    model = MongodbPersistentModel(request.user.id)
-
-    state = application_state.ApplicationState(model=model)
+    state = application_state.ApplicationState(model=MongodbPersistentModel(request.user.id))
 
     return redirect_according_to_application_state(state)
 

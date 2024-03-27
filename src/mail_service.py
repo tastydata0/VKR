@@ -56,14 +56,12 @@ class Mail:
         service.quit()
 
     def send_text(self, receiver, subject, text):
-        # Вход
         ssl_context = ssl.create_default_context()
         service = smtplib.SMTP_SSL(
             self.smtp_server_domain_name, self.port, context=ssl_context
         )
         service.login(self.sender_mail, self.password)
 
-        # Ввод данных
         mail = MIMEMultipart("alternative")
         mail["Subject"] = subject
         mail["To"] = receiver
@@ -71,12 +69,10 @@ class Mail:
         mail.attach(MIMEText(text, "html"))
 
         try:
-            # Отправка
             service.sendmail(self.sender_mail, receiver, mail.as_string())
         except smtplib.SMTPRecipientsRefused:
             logging.warning("Не удалось отправить письмо на адрес: " + receiver)
 
-        # Закрытие сервиса
         service.quit()
 
     def notify_of_approval(

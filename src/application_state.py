@@ -19,6 +19,17 @@ class ApplicationState(StateMachine):
     passed = State("Зачислен на программу")
     graduated = State("Программа пройдена", final=True)
 
+    @staticmethod
+    def state_index(state: State):
+        return [
+            ApplicationState.waiting_for_applications,
+            ApplicationState.filling_info,
+            ApplicationState.filling_docs,
+            ApplicationState.waiting_confirmation,
+            ApplicationState.approved,
+            ApplicationState.passed,
+        ].index(state)
+
     start_application = waiting_for_applications.to(filling_info)
 
     fill_info = filling_info.to(filling_docs) | filling_docs.to(filling_docs)

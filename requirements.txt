@@ -8,7 +8,7 @@ starlette
 openpyxl
 img2pdf
 pymorphy3
-petrovich
+pytrovich
 python-dotenv
 argon2-cffi
 slowapi

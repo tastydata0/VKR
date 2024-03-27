@@ -5,7 +5,7 @@ import datetime
 from sheets_api import *
 
 from models import *
-from name_translation import fio_to_genitive
+from name_translation import fio_to_accusative
 
 
 def generate_doc(
@@ -27,7 +27,7 @@ def generate_doc(
     variables = {
         "{ПРЕДСТАВИТЕЛЬ_ФИО}": userData.parentFullName,  # | "ФИО родителя",
         "{ПРЕДСТАВИТЕЛЬ_АДРЕС}": userData.parentAddress,  # | "Адрес родителя",
-        "{РЕБЕНОК_ФИО_РОД_ПАДЕЖ}": fio_to_genitive(
+        "{РЕБЕНОК_ФИО_РОД_ПАДЕЖ}": fio_to_accusative(
             userData.fullName
         ),  # | "ФИО ребенка",
         "{ПРОГРАММА}": program_info["details"],

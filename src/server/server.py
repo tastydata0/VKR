@@ -26,7 +26,7 @@ from src import application_state
 from src.persistent_model import MongodbPersistentModel
 from models import *
 import database
-from name_translation import fio_to_genitive
+from name_translation import fio_to_accusative
 import passwords
 from img2pdf import ImageOpenError
 from slowapi.errors import RateLimitExceeded
@@ -37,7 +37,7 @@ from .middlewares import *
 from .captcha import *
 from forms.main_form_fields import form_fields
 
-from application_stages import application_stages
+from application_stages import get_stages_according_to_state
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 generated_docs_folder = "data/docx_files"
@@ -76,18 +76,22 @@ app.mount("/static/icons", StaticFiles(directory="data/static/icons"))
 templates = Jinja2Templates(directory="data/static/html")
 
 
-@app.get("/status", response_class=HTMLResponse)
-async def status(request: Request):
-    return templates.TemplateResponse(
-        "status.html", {"request": request, "application_stages": application_stages}
+def application_stages_by_user_id(user_id):
+    return get_stages_according_to_state(
+        state=application_state.ApplicationState(
+            model=MongodbPersistentModel(user_id=user_id)
+        ).current_state
     )
 
 
-@app.get("/other")
-async def application_status(request: Request):
+@app.get("/status", response_class=HTMLResponse)
+async def status(request: Request):
     return templates.TemplateResponse(
-        "base_with_status.html",
-        {"request": request, "application_stages": application_stages},
+        "status.html",
+        {
+            "request": request,
+            "application_stages": application_stages_by_user_id(request.user.id),
+        },
     )
 
 
@@ -149,7 +153,7 @@ async def send_docs_form(request: Request):
         "send_docs.html",
         {
             "request": request,
-            "application_stages": application_stages,
+            "application_stages": application_stages_by_user_id(request.user.id),
             "lastRejectionReason": request.user.application.lastRejectionReason,
             "user": UserMinInfo(**request.user.dict()),
         },
@@ -190,7 +194,7 @@ async def get_form(request: Request):
 
     known_data = request.user.dict()
     if known_data["fullNameGenitive"] is None:
-        known_data["fullNameGenitive"] = fio_to_genitive(known_data["fullName"])
+        known_data["fullNameGenitive"] = fio_to_accusative(known_data["fullName"])
 
     return templates.TemplateResponse(
         "fill_data.html",
@@ -201,7 +205,7 @@ async def get_form(request: Request):
             "selectedProgram": known_data["application"]["selectedProgram"],
             "lastRejectionReason": known_data["application"]["lastRejectionReason"],
             "programs": database.load_programs(),
-            "application_stages": application_stages,
+            "application_stages": application_stages_by_user_id(request.user.id),
             "user": UserMinInfo(**request.user.dict()),
         },
     )
@@ -223,7 +227,7 @@ async def waiting_confirmation(request: Request):
         "waiting_confirmation.html",
         {
             "request": request,
-            "application_stages": application_stages,
+            "application_stages": application_stages_by_user_id(request.user.id),
             "user": UserMinInfo(**request.user.dict()),
         },
     )
@@ -245,7 +249,7 @@ async def waiting_confirmation(request: Request):
         "approved.html",
         {
             "request": request,
-            "application_stages": application_stages,
+            "application_stages": application_stages_by_user_id(request.user.id),
             "user": UserMinInfo(**request.user.dict()),
         },
     )
@@ -267,7 +271,7 @@ async def passed(request: Request):
         "passed.html",
         {
             "request": request,
-            "application_stages": application_stages,
+            "application_stages": application_stages_by_user_id(request.user.id),
             "user": UserMinInfo(**request.user.dict()),
         },
     )
@@ -301,7 +305,7 @@ async def waiting_confirmation(request: Request):
         "dashboard.html",
         {
             "request": request,
-            "application_stages": application_stages,
+            "application_stages": application_stages_by_user_id(request.user.id),
             "user": DashboardUserInfo(
                 **request.user.dict(),
                 applicationSelectedProgram=applicationSelectedProgram,

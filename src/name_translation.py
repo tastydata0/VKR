@@ -1,22 +1,24 @@
-from petrovich.main import Petrovich
-from petrovich.enums import Case, Gender
-import pymorphy3
+from pytrovich.detector import PetrovichGenderDetector
+from pytrovich.enums import NamePart, Gender, Case
+from pytrovich.maker import PetrovichDeclinationMaker
 
-morph = pymorphy3.MorphAnalyzer()
-p = Petrovich()
-
-
-def name_to_gender(name: str) -> Gender:
-    parsed_word = morph.parse(name)[0]
-    return Gender.MALE if parsed_word.tag.gender == "masc" else Gender.FEMALE
+maker = PetrovichDeclinationMaker()
+detector = PetrovichGenderDetector()
 
 
-def fio_to_genitive(fio: str) -> str:
+def name_to_gender(fio: str) -> Gender:
+    lastname, firstname, middlename = tuple(fio.split())
+    return detector.detect(
+        firstname=firstname, middlename=middlename, lastname=lastname
+    )
+
+
+def fio_to_accusative(fio: str) -> str:
     lastname, firstname, middlename = tuple(fio.split())
 
-    gender = name_to_gender(middlename)
-    cased_lname = p.lastname(lastname, Case.ACCUSATIVE, gender)
-    cased_fname = p.firstname(firstname, Case.ACCUSATIVE, gender)
-    cased_mname = p.middlename(middlename, Case.ACCUSATIVE, gender)
+    gender = name_to_gender(fio)
+    cased_lname = maker.make(NamePart.LASTNAME, gender, Case.ACCUSATIVE, lastname)
+    cased_fname = maker.make(NamePart.FIRSTNAME, gender, Case.ACCUSATIVE, firstname)
+    cased_mname = maker.make(NamePart.MIDDLENAME, gender, Case.ACCUSATIVE, middlename)
 
     return f"{cased_lname} {cased_fname} {cased_mname}"

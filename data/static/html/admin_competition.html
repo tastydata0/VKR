@@ -143,14 +143,14 @@
             });
           });
 
-        function sendDecision(button, userId, status, reason = null) {
+function sendDecision(button, userId, status, reason = null) {
           var data = {
             userId: userId,
             status: status,
             reason: reason,
           };
 
-          fetch("/admin/competition", {
+          fetch("/admin/approve", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -158,12 +158,13 @@
             body: JSON.stringify(data),
           })
             .then((response) => {
-              if (!response.ok) {
-                throw new Error("Network response was not ok");
-              }
-              return response.json();
+              return Promise.all([response.json(), response.ok]);
             })
-            .then((data) => {
+            .then(([data, ok]) => {
+              if (!ok) {
+                throw new Error(data.detail);
+              }
+
               console.log("Решение успешно отправлено на сервер:", data);
               // Удаление строки из таблицы
               var row = button.closest("tr");
@@ -171,6 +172,8 @@
             })
             .catch((error) => {
               console.error("Ошибка при отправке решения:", error);
+              alert(error);
+              location.reload();
             });
         }
       });

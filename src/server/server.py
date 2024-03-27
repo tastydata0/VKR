@@ -593,14 +593,21 @@ async def admin_approve_post(request: Request, data: AdminApprovalDto):
         )
     )
 
-    if data.status == "approved":
-        state.approve(database.find_user(data.userId))
+    try:
+        if data.status == "approved":
+            state.approve(database.find_user(data.userId))
 
-    elif data.status == "rejected":
-        state.data_invalid(database.find_user(data.userId))
+        elif data.status == "rejected":
+            state.data_invalid(database.find_user(data.userId))
 
-        database.update_user_application_rejection_reason(
-            user_id=data.userId, rejection_reason=data.reason
+            database.update_user_application_rejection_reason(
+                user_id=data.userId, rejection_reason=data.reason
+            )
+    except statemachine.exceptions.TransitionNotAllowed:
+        raise HTTPException(
+            status_code=400,
+            detail="Не удалось изменить состояние заявки. Скорее всего, ученик только что отозвал заявку. Текущее состояние: "
+            + state.current_state.name,
         )
 
 

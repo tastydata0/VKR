@@ -16,6 +16,7 @@ from starlette.authentication import requires
 from starlette.middleware import Middleware
 from starlette.middleware.authentication import AuthenticationMiddleware
 from starlette.background import BackgroundTasks
+import statemachine
 import uvicorn
 from docx_generator import generate_doc
 from docs_to_pdf import merge_docs_to_pdf
@@ -70,12 +71,8 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
 app.mount("/static/docs", StaticFiles(directory=generated_docs_folder))
-app.mount("/static/html", StaticFiles(directory="data/static/html"))
 app.mount("/static/icons", StaticFiles(directory="data/static/icons"))
 
-
-mail = Mail()
-mail_receiver = "alex.zv.ev@gmail.com"
 templates = Jinja2Templates(directory="data/static/html")
 
 
@@ -437,12 +434,25 @@ async def upload_files(
 
     state.fill_docs()
 
-    # mail.send_pdf_docs(
-    #     mail_receiver, pdf_filename, request.user.parentEmail, request.user.fullName
-    # )
-
-    # return FileResponse(pdf_filename, media_type="application/pdf")
     return RedirectResponse("/application/waiting_confirmation", status_code=302)
+
+
+@app.post("/refill_data")
+@requires("authenticated")
+async def refill_data(request: Request):
+    state = application_state.ApplicationState(
+        model=MongodbPersistentModel(request.user.id)
+    )
+
+    try:
+        state.change_info()
+    except statemachine.exceptions.TransitionNotAllowed:
+        raise HTTPException(
+            status_code=400,
+            detail="Нельзя сделать это на этапе: " + state.current_state.name,
+        )
+
+    return Response(status_code=200)
 
 
 @app.post("/registration")
@@ -534,7 +544,9 @@ async def create_admin_token(form_data: AdminLoginDto):
 @app.get("/admin/dashboard")
 @requires("admin")
 async def admin_dashboard(request: Request):
-    return templates.TemplateResponse("admin_dashboard.html", {"request": request})
+    return templates.TemplateResponse(
+        "admin_dashboard.html", {"request": request, "admin_email": request.user.email}
+    )
 
 
 # Эндпоинт для доступа к данным пользователя

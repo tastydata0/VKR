@@ -35,7 +35,7 @@ class RedirectMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         response = await call_next(request)
         if response.status_code == 403:  # Forbidden
-            if "admin" in request.url:
+            if "admin" in str(request.url):
                 return RedirectResponse("/admin/login")
 
             return RedirectResponse("/login")

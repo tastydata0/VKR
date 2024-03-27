@@ -8,11 +8,39 @@ endblock %} {% block base_with_status_content %}
   </head>
 
   <body>
+    <h2 class="mt-4">Документы прошли проверку!</h2>
     <p>
-      Документы и данные успешно прошли проверку! Вы включены в конкурс. Мы
-      пришлем сообщение на почту: {{user.email}} <br />ГУГЛ ТАБЛИЦА
+      Документы и данные успешно прошли проверку! Вы включены в конкурс. Мы пришлем
+      сообщение на почту: <pre><b>{{user.email}}</b></pre>
     </p>
+    <h3>Отозвать заявку?</h3>
+    <p>
+      Если вы хотите выбрать другую программу или случайно ввели не те данные
+      или загрузили не те документы, то можете отозвать подтверждение и прямо
+      сейчас внести изменения.
+    </p>
+    <a class="btn btn-danger" id="cancel_btn">Отозвать заявку</a>
   </body>
+
+  <script>
+    $("#cancel_btn").click(() => {
+      // Prompt
+      if (confirm("Вы уверены, что хотите отозвать заявку?")) {
+        fetch("/refill_data", {
+          method: "POST",
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Network response was not ok");
+            }
+            window.location.href = '/application';
+          })
+          .catch((error) => {
+            console.error("Ошибка при отправке решения:", error);
+          });
+      }
+    });
+  </script>
 </html>
 
 {% endblock %}

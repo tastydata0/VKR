@@ -24,7 +24,7 @@ class ApplicationState(StateMachine):
     fill_info = filling_info.to(filling_docs) | filling_docs.to(filling_docs)
 
     fill_docs = filling_docs.to(waiting_confirmation)
-    change_info = filling_docs.to(filling_info) | waiting_confirmation.to(filling_info)
+    change_info = approved.to(filling_info) | waiting_confirmation.to(filling_info)
     program_cancelled = (
         filling_docs.to(filling_info)
         | waiting_confirmation.to(filling_info)

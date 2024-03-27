@@ -8,11 +8,39 @@ endblock %} {% block base_with_status_content %}
   </head>
 
   <body>
+    <h2 class="mt-4">Заявка отправлена!</h2>
     <p>
       Ваша заявка успешно отправлена. Ожидайте подтверждения. Мы пришлем
-      сообщение на почту: {{user.email}}
+      сообщение на почту: <pre><b>{{user.email}}</b></pre>
     </p>
+    <h3>Отозвать заявку?</h3>
+    <p>
+      Если вы хотите выбрать другую программу или случайно ввели не те данные
+      или загрузили не те документы, то можете отозвать подтверждение и прямо
+      сейчас внести изменения.
+    </p>
+    <a class="btn btn-danger" id="cancel_btn">Отозвать заявку</a>
   </body>
+
+  <script>
+    $("#cancel_btn").click(() => {
+      // Prompt
+      if (confirm("Вы уверены, что хотите отозвать заявку?")) {
+        fetch("/refill_data", {
+          method: "POST",
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Network response was not ok");
+            }
+            window.location.href = '/application';
+          })
+          .catch((error) => {
+            console.error("Ошибка при отправке решения:", error);
+          });
+      }
+    });
+  </script>
 </html>
 
 {% endblock %}

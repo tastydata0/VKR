@@ -1,6 +1,6 @@
 from datetime import date, datetime
 import re
-from typing import Optional
+from typing import Literal, Optional
 from bson import ObjectId
 from pydantic import BaseModel, Field, validator
 from application_state import ApplicationState
@@ -70,7 +70,7 @@ class SelectedProgram(BaseModel):
     def validate_selected_program(cls, value):
         from database import validate_program_id_existence
 
-        if not validate_program_id_existence(value):
+        if value is not None and not validate_program_id_existence(value):
             raise ValueError(f"Программы {value} не существует или она неактуальна")
         return value
 
@@ -85,13 +85,16 @@ class Document(BaseModel):
     timestamp: Optional[datetime] = Field(datetime.now().replace(microsecond=0))
 
 
-class ApplicationDocuments(BaseModel):
-    applicationFiles: list[Document]
-    consentFiles: list[Document]
+class PersonalDocuments(BaseModel):
     parentPassportFiles: list[Document]
     childPassportFiles: list[Document]
     parentSnilsFiles: list[Document]
     childSnilsFiles: list[Document]
+
+
+class ApplicationDocuments(PersonalDocuments):
+    applicationFiles: list[Document]
+    consentFiles: list[Document]
     mergedPdf: Document
 
 
@@ -125,6 +128,7 @@ class UserMutableData(BaseModel):
     phone: Optional[str] = Field(None)
     parentPhone: Optional[str] = Field(None)
     hasLaptop: Optional[bool] = Field(None)
+    latestDocs: Optional[PersonalDocuments] = Field(None)
 
     @validator("email", "parentEmail")
     @classmethod

@@ -114,6 +114,16 @@ def modify_user(user_id: str, newUserData: UserBasicData):
         return -1  # Пользователь не существует, модификация невозможна
 
 
+def update_user_latest_documents(user_id: str, documents: PersonalDocuments):
+    if user_exists(user_id):
+        query = {"_id": ObjectId(user_id)}
+        new_values = {"$set": {"latestDocs": documents.dict()}}
+        result = users.update_one(query, new_values)
+        return result.modified_count
+    else:
+        return -1
+
+
 def update_user_application_field(user_id: str, field: str, value):
     if user_exists(user_id):
         query = {"_id": ObjectId(user_id)}

@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
+import starlette
 from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse
 from starlette.authentication import requires
 from starlette.middleware import Middleware
@@ -130,7 +131,9 @@ def redirect_according_to_application_state(
 @app.get("/application")
 @requires("authenticated")
 async def application_get(request: Request):
-    state = application_state.ApplicationState(model=MongodbPersistentModel(request.user.id))
+    state = application_state.ApplicationState(
+        model=MongodbPersistentModel(request.user.id)
+    )
 
     return redirect_according_to_application_state(state)
 
@@ -147,6 +150,8 @@ async def send_docs_form(request: Request):
     if state.current_state.id != "filling_docs":
         return redirect_according_to_application_state(state)
 
+    print(request.user.application.documents)
+
     return templates.TemplateResponse(
         "send_docs.html",
         {
@@ -154,6 +159,7 @@ async def send_docs_form(request: Request):
             "application_stages": application_stages_by_user_id(request.user.id),
             "lastRejectionReason": request.user.application.lastRejectionReason,
             "user": UserMinInfo(**request.user.dict()),
+            "documents": request.user.application.documents,
         },
     )
 
@@ -357,38 +363,46 @@ async def upload_files(
     request: Request,
     application_files: list[UploadFile],  # Заявление
     consent_files: list[UploadFile],  # Согласие на обработку данных
-    parent_passport_files: list[UploadFile],  # паспорт родителя (1 стр + проп.)
-    child_passport_files: list[UploadFile],  # Паспорт ребенка (свидетельство о рожд.)
-    parent_snils_files: list[UploadFile],  # Снилс родителя
-    child_snils_files: list[UploadFile],  # Снилс ребенка
+    parent_passport_files: list[UploadFile | str],  # паспорт родителя (1 стр + проп.)
+    child_passport_files: list[UploadFile | str],  # Паспорт ребенка (свидетельство)
+    parent_snils_files: list[UploadFile | str],  # Снилс родителя
+    child_snils_files: list[UploadFile | str],  # Снилс ребенка
     captcha: str,
 ):
+    """
+    Поскольку fastapi тут принимает только списком, мы принимаем либо списки UploadFile
+    либо список ["use_existing"]. Последний означает, что надо взять ранее загруженный документ.
+    """
     check_captcha(request.client.host, captcha)
 
-    all_files = (
-        application_files
-        + consent_files
-        + parent_passport_files
-        + child_passport_files
-        + parent_snils_files
-        + child_snils_files
-    )
+    def ensure_field_filled(field):
+        print(field)
+        if len(field) == 0:
+            raise HTTPException(status_code=400, detail="Необходимо загрузить документ")
+        elif all(
+            (isinstance(elem, starlette.datastructures.UploadFile) for elem in field)
+        ):
+            pass
+        elif field == ["use_existing"]:
+            pass
+        else:
+            raise HTTPException(status_code=400, detail="Некорректный тип поля")
 
-    if (
-        len(application_files) == 0
-        or len(consent_files) == 0
-        or len(parent_passport_files) == 0
-        or len(child_passport_files) == 0
-        or len(parent_snils_files) == 0
-        or len(child_snils_files) == 0
+    for field in (
+        application_files,
+        consent_files,
+        parent_passport_files,
+        child_passport_files,
+        parent_snils_files,
+        child_snils_files,
     ):
-        raise HTTPException(status_code=400, detail="Не заполнено хотя бы одно поле")
+        ensure_field_filled(field)
 
-    model = MongodbPersistentModel(
-        request.user.id,
+    state = application_state.ApplicationState(
+        model=MongodbPersistentModel(
+            request.user.id,
+        )
     )
-
-    state = application_state.ApplicationState(model=model)
 
     if state.current_state.id not in ("filling_docs"):
         raise HTTPException(
@@ -396,37 +410,114 @@ async def upload_files(
             detail="Нельзя отправлять документы на этапе " + state.current_state.name,
         )
 
+    def save_file(file: UploadFile) -> Document:
+        filename = os.path.join(
+            "data/uploaded_files", uuid.uuid4().hex + os.path.splitext(file.filename)[1]
+        )
+        file.file.seek(0)
+        with open(filename, "wb") as buffer:
+            file.filename = buffer.name
+            shutil.copyfileobj(file.file, buffer)
+
+        return Document(filename=filename)
+
+    def upload_files_to_local_files(
+        files: list[UploadFile],
+    ) -> list[Document]:
+        documents = []
+        for file in files:
+            if file.file:
+                documents.append(save_file(file))
+        return documents
+
+    if parent_passport_files == ["use_existing"]:
+        if (
+            request.user.application.documents is None
+            or request.user.application.documents.parentPassportFiles is None
+        ):
+            raise HTTPException(
+                status_code=400, detail="Необходимо заполнить паспорт родителя"
+            )
+        parent_passport_local_files = (
+            request.user.application.documents.parentPassportFiles
+        )
+    else:
+        parent_passport_local_files = upload_files_to_local_files(parent_passport_files)
+
+    if child_passport_files == ["use_existing"]:
+        if (
+            request.user.application.documents is None
+            or request.user.application.documents.childPassportFiles is None
+        ):
+            raise HTTPException(
+                status_code=400, detail="Необходимо заполнить паспорт ребенка"
+            )
+        child_passport_local_files = (
+            request.user.application.documents.childPassportFiles
+        )
+    else:
+        child_passport_local_files = upload_files_to_local_files(child_passport_files)
+
+    if parent_snils_files == ["use_existing"]:
+        if (
+            request.user.application.documents is None
+            or request.user.application.documents.parentSnilsFiles is None
+        ):
+            raise HTTPException(
+                status_code=400, detail="Необходимо заполнить СНИЛС родителя"
+            )
+        parent_snils_local_files = request.user.application.documents.parentSnilsFiles
+    else:
+        parent_snils_local_files = upload_files_to_local_files(parent_snils_files)
+
+    if child_snils_files == ["use_existing"]:
+        if (
+            request.user.application.documents is None
+            or request.user.application.documents.childSnilsFiles is None
+        ):
+            raise HTTPException(
+                status_code=400, detail="Необходимо заполнить СНИЛС ребенка"
+            )
+        child_snils_local_files = request.user.application.documents.childSnilsFiles
+    else:
+        child_snils_local_files = upload_files_to_local_files(child_snils_files)
+
+    application_local_files = upload_files_to_local_files(application_files)
+    consent_local_files = upload_files_to_local_files(consent_files)
+
+    all_files = (
+        application_local_files
+        + consent_local_files
+        + parent_passport_local_files
+        + child_passport_local_files
+        + parent_snils_local_files
+        + child_snils_local_files
+    )
+
+    print(all_files)
+
     try:
         pdf_filename = merge_docs_to_pdf(all_files, request.user.id)
     except ImageOpenError:
         raise HTTPException(status_code=400, detail="Невозможно открыть изображение")
 
-    get_filename = lambda upload_file: upload_file.filename
-
-    # Сохраняем все файлы с названием uuid4
-    for f in all_files:
-        filename = uuid.uuid4().hex + os.path.splitext(f.filename)[1]
-        f.file.seek(0)
-        with open(f"data/uploaded_files/{filename}", "wb") as buffer:
-            f.filename = buffer.name
-            shutil.copyfileobj(f.file, buffer)
+    personal_documents = PersonalDocuments(
+        parentPassportFiles=parent_passport_local_files,
+        childPassportFiles=child_passport_local_files,
+        parentSnilsFiles=parent_snils_local_files,
+        childSnilsFiles=child_snils_local_files,
+    )
 
     application_documents = ApplicationDocuments(
-        applicationFiles=[
-            Document(filename=get_filename(f)) for f in application_files
-        ],
-        consentFiles=[Document(filename=get_filename(f)) for f in consent_files],
-        parentPassportFiles=[
-            Document(filename=get_filename(f)) for f in parent_passport_files
-        ],
-        childPassportFiles=[
-            Document(filename=get_filename(f)) for f in child_passport_files
-        ],
-        parentSnilsFiles=[
-            Document(filename=get_filename(f)) for f in parent_snils_files
-        ],
-        childSnilsFiles=[Document(filename=get_filename(f)) for f in child_snils_files],
+        applicationFiles=application_local_files,
+        consentFiles=consent_local_files,
+        **personal_documents.dict(),
         mergedPdf=Document(filename=pdf_filename),
+    )
+
+    database.update_user_latest_documents(
+        user_id=request.user.id,
+        documents=personal_documents,
     )
 
     database.update_user_application_documents(

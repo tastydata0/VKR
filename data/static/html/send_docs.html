@@ -41,6 +41,7 @@
         action="/application/fill_docs"
         method="post"
         enctype="multipart/form-data"
+        novalidate
       >
         <div class="mb-3">
           <label for="applicationFiles" class="form-label"
@@ -97,6 +98,13 @@
             required
           />
           <div id="parentPassportFilesThumbnail" class="thumbnail"></div>
+          {% if documents.parentPassportFiles %}
+          <input type="checkbox" id="parentPassportFilesUseExisting" checked />
+          <label for="parentPassportFilesUseExisting" class="form-label ml-1"
+            >Использовать ранее загруженный документ
+            {{documents.parentPassportFiles[0].timestamp}}</label
+          >
+          {% endif %}
         </div>
 
         <div class="mb-3">
@@ -113,6 +121,13 @@
             required
           />
           <div id="childPassportFilesThumbnail" class="thumbnail"></div>
+          {% if documents.childPassportFiles %}
+          <input type="checkbox" id="childPassportFilesUseExisting" checked />
+          <label for="childPassportFilesUseExisting" class="form-label ml-1"
+            >Использовать ранее загруженный документ
+            {{documents.childPassportFiles[0].timestamp}}</label
+          >
+          {% endif %}
         </div>
 
         <hr />
@@ -131,6 +146,13 @@
             required
           />
           <div id="parentSnilsFilesThumbnail" class="thumbnail"></div>
+          {% if documents.parentSnilsFiles %}
+          <input type="checkbox" id="parentSnilsFilesUseExisting" checked />
+          <label for="parentSnilsFilesUseExisting" class="form-label ml-1"
+            >Использовать ранее загруженный документ
+            {{documents.parentSnilsFiles[0].timestamp}}</label
+          >
+          {% endif %}
         </div>
 
         <div class="mb-3">
@@ -145,6 +167,13 @@
             required
           />
           <div id="childSnilsFilesThumbnail" class="thumbnail"></div>
+          {% if documents.childSnilsFiles %}
+          <input type="checkbox" id="childSnilsFilesUseExisting" checked />
+          <label for="childSnilsFilesUseExisting" class="form-label ml-1"
+            >Использовать ранее загруженный документ
+            {{documents.childSnilsFiles[0].timestamp}}</label
+          >
+          {% endif %}
         </div>
         <div class="mb-3">
           <label for="captcha">Введите сообщение с картинки:</label><br />
@@ -167,12 +196,39 @@
       </form>
     </div>
     <script>
+      function refreshFileUploadVisibility(id) {
+        if ($(`#${id}UseExisting`).is(":checked")) {
+          $(`#${id}`).hide();
+          $(`#${id}Thumbnail`).hide();
+        } else {
+          $(`#${id}`).show();
+          $(`#${id}Thumbnail`).show();
+        }
+      }
+
+      $("#parentPassportFilesUseExisting").change(function () {
+        refreshFileUploadVisibility("parentPassportFiles");
+      });
+      $("#childPassportFilesUseExisting").change(function () {
+        refreshFileUploadVisibility("childPassportFiles");
+      });
+      $("#parentSnilsFilesUseExisting").change(function () {
+        refreshFileUploadVisibility("parentSnilsFiles");
+      });
+      $("#childSnilsFilesUseExisting").change(function () {
+        refreshFileUploadVisibility("childSnilsFiles");
+      });
+
+      refreshFileUploadVisibility("parentPassportFiles");
+      refreshFileUploadVisibility("childPassportFiles");
+      refreshFileUploadVisibility("parentSnilsFiles");
+      refreshFileUploadVisibility("childSnilsFiles");
+
       document
         .getElementById("fileUploadForm")
         .addEventListener("submit", function (event) {
           event.preventDefault();
 
-          // Upload files via xhr
           const data = new FormData();
           for (const file of document.getElementById("applicationFiles")
             .files) {
@@ -181,20 +237,62 @@
           for (const file of document.getElementById("consentFiles").files) {
             data.append("consent_files", file);
           }
-          for (const file of document.getElementById("parentPassportFiles")
-            .files) {
-            data.append("parent_passport_files", file);
+          if ($("#parentPassportFilesUseExisting").is(":checked")) {
+            data.append("parent_passport_files", "use_existing");
+          } else {
+            for (const file of document.getElementById("parentPassportFiles")
+              .files) {
+              data.append("parent_passport_files", file);
+            }
           }
-          for (const file of document.getElementById("childPassportFiles")
-            .files) {
-            data.append("child_passport_files", file);
+          if ($("#childPassportFilesUseExisting").is(":checked")) {
+            data.append("child_passport_files", "use_existing");
+          } else {
+            for (const file of document.getElementById("childPassportFiles")
+              .files) {
+              data.append("child_passport_files", file);
+            }
           }
-          for (const file of document.getElementById("parentSnilsFiles")
-            .files) {
-            data.append("parent_snils_files", file);
+          if ($("#parentSnilsFilesUseExisting").is(":checked")) {
+            data.append("parent_snils_files", "use_existing");
+          } else {
+            for (const file of document.getElementById("parentSnilsFiles")
+              .files) {
+              data.append("parent_snils_files", file);
+            }
           }
-          for (const file of document.getElementById("childSnilsFiles").files) {
-            data.append("child_snils_files", file);
+          if ($("#childSnilsFilesUseExisting").is(":checked")) {
+            data.append("child_snils_files", "use_existing");
+          } else {
+            for (const file of document.getElementById("childSnilsFiles")
+              .files) {
+              data.append("child_snils_files", file);
+            }
+          }
+
+          if (!data.has("application_files")) {
+            alert("Необходимо загрузить заявление");
+            return;
+          }
+          if (!data.has("consent_files")) {
+            alert("Необходимо загрузить согласие");
+            return;
+          }
+          if (!data.has("parent_passport_files")) {
+            alert("Необходимо заполнить паспорт родителя");
+            return;
+          }
+          if (!data.has("child_passport_files")) {
+            alert("Необходимо заполнить паспорт ребенка");
+            return;
+          }
+          if (!data.has("parent_snils_files")) {
+            alert("Необходимо заполнить СНИЛС родителя");
+            return;
+          }
+          if (!data.has("child_snils_files")) {
+            alert("Необходимо заполнить СНИЛС ребенка");
+            return;
           }
 
           console.log(data);
@@ -215,10 +313,8 @@
 
           xhr.onload = function () {
             if (xhr.status === 200) {
-              // Обработка успешного запроса
               window.location.href = xhr.responseURL;
             } else {
-              // Обработка ошибки запроса
               alert(
                 "Ошибка отправки документов: " +
                   JSON.parse(xhr.responseText).detail

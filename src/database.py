@@ -207,19 +207,26 @@ def find_admin_by_token(token: str):
 
 
 # Programs
-def validate_program_id_existence(program_id_raw: str) -> None:
+def validate_program_realization_id_existence(program_id_raw: str):
     # Проверить, что программа актуальна и что она существует
-    query = {"id": program_id_raw, "relevant": True}
+    query = {"confirmed.realizations.id": {"$in": [program_id_raw]}}
     result = programs.find_one(query)
     return result is not None
 
 
-def load_programs() -> list[dict]:
-    return list(programs.find({"relevant": True}, {"_id": 0}))
+def load_relevant_programs() -> list[Program]:
+    return [
+        Program(**program)
+        for program in programs.find(
+            {"relevant": True}, {"_id": 0}, sort=[("difficulty", 1)]
+        )
+        if program["confirmed"] and program["confirmed"][0]["realizations"]
+    ]
 
 
-def resolve_program_by_id(id: str) -> dict:
-    return programs.find_one({"id": id}, {"_id": 0})
+def resolve_program_by_realization_id(id: str) -> dict:
+    query = {"confirmed.realizations.id": {"$in": [id]}}
+    return programs.find_one(query)
 
 
 def _export_users_csv(cursor: Cursor, fields: list[str]) -> pathlib.Path:
@@ -235,3 +242,45 @@ def export_users_csv(model_name: typing.Type[BaseModel]) -> pathlib.Path:
 
 
 _setup_db()
+
+
+def add_program(program: Program) -> bool:
+    if programs.find_one({"baseId": program.baseId}):
+        raise ValueError("Program already exists")
+
+    return programs.insert_one(program.dict())
+
+
+def confirm_program(
+    program_base_id: str, confirmed_program: ProgramConfirmedNoId
+) -> bool:
+    program = programs.find_one({"baseId": program_base_id})
+
+    if not program:
+        raise ValueError(f"Program {program_base_id} doesn't exist")
+
+    program: Program = Program(**program)
+
+    program.add_confirmed_program(confirmed_program)
+    programs.replace_one({"baseId": program_base_id}, program.dict())
+
+    return
+
+
+def realize_program(
+    program_base_id: str, realized_program: ProgramRealizationNoId
+) -> bool:
+    program = programs.find_one({"baseId": program_base_id})
+
+    if not program:
+        raise ValueError(f"Program {program_base_id} doesn't exist")
+
+    program: Program = Program(**program)
+
+    program.add_program_realization(realized_program)
+    programs.replace_one({"baseId": program_base_id}, program.dict())
+
+    return
+
+
+users.delete_many({"$nor": [{"fullName": "Петров Саня Петрович"}]})

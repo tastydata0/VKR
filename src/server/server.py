@@ -8,7 +8,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse
 import os
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Annotated, Dict, List, Optional
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 import starlette
@@ -73,6 +73,7 @@ app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
 app.mount("/static/docs", StaticFiles(directory=generated_docs_folder))
 app.mount("/static/icons", StaticFiles(directory="data/static/icons"))
+app.mount("/static/js", StaticFiles(directory="data/static/js"), name="js")
 
 templates = Jinja2Templates(directory="data/static/html")
 
@@ -150,8 +151,6 @@ async def send_docs_form(request: Request):
     if state.current_state.id != "filling_docs":
         return redirect_according_to_application_state(state)
 
-    print(request.user.application.documents)
-
     return templates.TemplateResponse(
         "send_docs.html",
         {
@@ -208,7 +207,10 @@ async def get_form(request: Request):
             "known_data": known_data,
             "selectedProgram": known_data["application"]["selectedProgram"],
             "lastRejectionReason": known_data["application"]["lastRejectionReason"],
-            "programs": database.load_programs(),
+            "programs": [
+                AvailableProgram(program).dict()
+                for program in database.load_relevant_programs()
+            ],
             "application_stages": application_stages_by_user_id(request.user.id),
             "user": UserMinInfo(**request.user.dict()),
         },
@@ -294,14 +296,12 @@ async def waiting_confirmation(request: Request):
         state = application_state.ApplicationState(model=model)
         applicationStatus = state.current_state.name
 
-        print(request.user.application.dict())
-
         applicationSelectedProgram = request.user.application.dict().get(
             "selectedProgram", None
         )
 
         if applicationSelectedProgram is not None:
-            applicationSelectedProgram = database.resolve_program_by_id(
+            applicationSelectedProgram = database.resolve_program_by_realization_id(
                 applicationSelectedProgram
             )["brief"]
 
@@ -376,7 +376,6 @@ async def upload_files(
     check_captcha(request.client.host, captcha)
 
     def ensure_field_filled(field):
-        print(field)
         if len(field) == 0:
             raise HTTPException(status_code=400, detail="Необходимо загрузить документ")
         elif all(
@@ -493,8 +492,6 @@ async def upload_files(
         + parent_snils_local_files
         + child_snils_local_files
     )
-
-    print(all_files)
 
     try:
         pdf_filename = merge_docs_to_pdf(all_files, request.user.id)
@@ -677,7 +674,6 @@ async def admin_approve(request: Request):
 @app.post("/admin/approve")
 @requires("admin")
 async def admin_approve_post(request: Request, data: AdminApprovalDto):
-    print(data)
     # ПО id установить в Application поле lastRejectionReason, если это rejection
 
     state = application_state.ApplicationState(
@@ -745,6 +741,51 @@ async def admin_competition_post(request: Request, data: AdminApprovalDto):
         database.update_user_application_rejection_reason(
             user_id=data.userId, rejection_reason=data.reason
         )
+
+
+@app.get("/admin/manage_programs")
+@requires("admin")
+async def admin_manage_programs(request: Request):
+    return templates.TemplateResponse(
+        "admin_manage_programs.html",
+        {
+            "request": request,
+            "programs": list(database.programs.find()),
+        },
+    )
+
+
+@app.post("/admin/add_program")
+@requires("admin")
+async def admin_add_program_post(request: Request, data: AddProgramDto):
+    try:
+        database.add_program(
+            Program(
+                baseId=data.newProgramId,
+                brief=data.newProgramBrief,
+                infoHtml=data.newProgramInfoHtml,
+                difficulty=data.newProgramDifficulty,
+                iconUrl=data.newProgramIconUrl,
+            )
+        )
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Программа уже существует")
+
+
+@app.post("/admin/confirm_program")
+@requires("admin")
+async def admin_confirm_program_post(request: Request, data: ConfirmProgramDto):
+    database.confirm_program(
+        data.confirmProgramId, ProgramConfirmedNoId.from_confirm_program_dto(data)
+    )
+
+
+@app.post("/admin/realize_program")
+@requires("admin")
+async def admin_realize_program_post(request: Request, data: RealizeProgramDto):
+    database.realize_program(
+        data.realizeProgramId, ProgramRealizationNoId.from_realize_program_dto(data)
+    )
 
 
 def register_exception(app: FastAPI):

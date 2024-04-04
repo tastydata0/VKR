@@ -63,11 +63,15 @@ endblock %} {% block base_with_status_content %}
             <div class="form-check">
               <input class="form-check-input program-radio"
               style="margin-bottom: 8px" type="radio" name="selectedProgram"
-              id="{{ program.id }}" value="{{ program.id }}"
-              data-program-difficulty="{{ program.difficulty }}" {% if
-              selectedProgram == program.id %}checked{% endif %} />
+              id="{{ program.lastRealizationId }}" value="{{
+              program.lastRealizationId }}" data-program-difficulty="{{
+              program.difficulty }}" {% if selectedProgram ==
+              program.lastRealizationId %}checked{% endif %} />
 
-              <label class="form-check-label" for="{{ program.id }}">
+              <label
+                class="form-check-label"
+                for="{{ program.lastRealizationId }}"
+              >
                 {{ program.brief }}
               </label>
             </div>
@@ -94,7 +98,6 @@ endblock %} {% block base_with_status_content %}
                   class="program-icon"
                   width="96"
                   height="96"
-                  src="[URL иконки]"
                 />
               </div>
             </div>
@@ -128,7 +131,9 @@ endblock %} {% block base_with_status_content %}
         >
       </div>
 
-      <button type="submit" class="btn btn-primary">Отправить данные</button>
+      <button type="submit" class="btn btn-primary mb-4">
+        Отправить данные
+      </button>
     </form>
 
     <script>
@@ -232,7 +237,7 @@ endblock %} {% block base_with_status_content %}
           console.log("Сложность программы: " + programDifficulty);
 
           // Найдем выбранную программу по ID
-          const currentSelectedProgram = programs.find(program => program.id === programId);
+          const currentSelectedProgram = programs.find(program => program.lastRealizationId === programId);
 
           // Установим информацию о программе
           document.getElementById("program-title").textContent = currentSelectedProgram.brief;
@@ -257,10 +262,11 @@ endblock %} {% block base_with_status_content %}
 
         $("#program-cost").text(`Стоимость: ${currentSelectedProgram.cost}`);
 
-        $("#program-description").text(currentSelectedProgram.details);
+        $("#program-description").html(currentSelectedProgram.infoHtml);
       }
 
       const programs = {{ programs | tojson | safe }};
+      console.log(programs)
       $('input[type="radio"].program-radio').change(setProgramInfo);
 
       // Проверяем, есть ли выбранная программа в known_data
@@ -270,10 +276,10 @@ endblock %} {% block base_with_status_content %}
 
       // Если выбранная программа есть, устанавливаем данные о ней
       if ((!selectedProgramId || selectedProgramId == 'None') && programs.length > 0) {
-          $('input[name="selectedProgram"][value="' + programs[0].id + '"]').prop('checked', true);
+          $('input[name="selectedProgram"][value="' + programs[0].lastRealizationId + '"]').prop('checked', true);
           setProgramInfo();
       } else if (selectedProgramId) {
-          const selectedProgram = programs.find(program => program.id === selectedProgramId);
+          const selectedProgram = programs.find(program => program.lastRealizationId === selectedProgramId);
 
           if (selectedProgram) {
               // Вызываем функцию, которая устанавливает данные о программе
@@ -294,7 +300,7 @@ endblock %} {% block base_with_status_content %}
 
       // Предзагрузка изображения звездочки
       const starImage = new Image();
-      starImage.src = 'star.png';
+      starImage.src = 'https://img.icons8.com/fluency-systems-filled/48/star.png';
 
       /*const buttons = document.querySelectorAll(".program-radio");
       buttons.forEach(button => {

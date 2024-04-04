@@ -1,6 +1,6 @@
 from datetime import date, datetime
 import re
-from typing import Literal, Optional
+from typing import Optional
 from bson import ObjectId
 from pydantic import BaseModel, Field, validator
 from application_state import ApplicationState
@@ -18,16 +18,6 @@ class Regexes:
     name = re.compile("[а-яА-Я ]+")
 
 
-def validate_name(name: str, can_be_empty=True):
-    if not can_be_empty and len(name) == 0:
-        raise ValueError("Имя не может быть пустым")
-    elif len(name) == 0:
-        return name
-    if Regexes.name.fullmatch(name) is None:
-        raise ValueError("Некорректное имя: " + name)
-    return name
-
-
 class ApplicationStage(BaseModel):
     stageName: str
     stageStatus: str  # current, passed, todo, negative
@@ -35,30 +25,18 @@ class ApplicationStage(BaseModel):
 
 
 class RegistrationData(BaseModel):
-    fullName: str
-    email: str
+    fullName: str = Field(regex=Regexes.name, min_length=1, max_length=100)
+    email: str = Field(regex=Regexes.email)
     parentEmail: str
     school: str
     schoolClass: int
     birthDate: str
     password: str
 
-    @validator("fullName")
-    @classmethod
-    def validate_full_name(cls, value):
-        return validate_name(value, can_be_empty=False)
-
-    @validator("email")
-    @classmethod
-    def validate_email(cls, value):
-        if Regexes.email.fullmatch(value) is None:
-            raise ValueError("Некорректная почта: " + value)
-        return value
-
 
 class LoginData(BaseModel):
     birthDate: str
-    fullName: str
+    fullName: str = Field(regex=Regexes.name, min_length=1, max_length=100)
     password: str
 
 
@@ -68,16 +46,16 @@ class SelectedProgram(BaseModel):
     @validator("selectedProgram")
     @classmethod
     def validate_selected_program(cls, value):
-        from database import validate_program_id_existence
+        from database import validate_program_realization_id_existence
 
-        if value is not None and not validate_program_id_existence(value):
+        if value is not None and not validate_program_realization_id_existence(value):
             raise ValueError(f"Программы {value} не существует или она неактуальна")
         return value
 
     def get_brief_name(self):
-        from database import resolve_program_by_id
+        from database import resolve_program_by_realization_id
 
-        return resolve_program_by_id(self.selectedProgram)["brief"]
+        return resolve_program_by_realization_id(self.selectedProgram)["brief"]
 
 
 class Document(BaseModel):
@@ -118,10 +96,12 @@ class Application(SelectedProgram):
 
 class UserMutableData(BaseModel):
     fullNameGenitive: Optional[str] = Field(None)
-    parentFullName: Optional[str] = Field(None)
+    parentFullName: Optional[str] = Field(
+        None, regex=Regexes.name, min_length=1, max_length=100
+    )
     parentAddress: Optional[str] = Field(None)
-    email: Optional[str] = Field(None)
-    parentEmail: str
+    email: Optional[str] = Field(None, regex=Regexes.email)
+    parentEmail: str = Field(regex=Regexes.email)
     school: str
     schoolClass: int
     birthPlace: Optional[str] = Field(None)
@@ -129,20 +109,6 @@ class UserMutableData(BaseModel):
     parentPhone: Optional[str] = Field(None)
     hasLaptop: Optional[bool] = Field(None)
     latestDocs: Optional[PersonalDocuments] = Field(None)
-
-    @validator("email", "parentEmail")
-    @classmethod
-    def validate_email(cls, value):
-        if Regexes.email.fullmatch(value) is None:
-            raise ValueError("Некорректная почта")
-        return value
-
-    @validator("parentFullName")
-    @classmethod
-    def validate_full_name_genitive(cls, value):
-        if value is not None:
-            return validate_name(value)
-        return value
 
 
 class UserBasicData(UserMutableData):
@@ -178,7 +144,7 @@ class AdminApprovalDto(BaseModel):
 
 
 class Admin(BaseModel):
-    email: str
+    email: str = Field(regex=Regexes.email)
     password: str
     role: str
 
@@ -261,17 +227,6 @@ class UserKey(BaseModel):
     birthDate: str
 
 
-class Program(BaseModel):
-    id: str
-    brief: str  # C++, Python, Java, ...
-    details: str
-    hoursAud: int
-    hoursHome: int
-    iconUrl: str
-    difficulty: int  # 0, 1, 2, 3
-    cost: int
-
-
 # Модель данных для полей формы
 class FormField(BaseModel):
     id: str
@@ -283,3 +238,136 @@ class FormField(BaseModel):
 
 class UserFillDataSubmission(UserBasicData, SelectedProgram):
     ...
+
+
+"""
+Python
+    py-2022-09-01
+        py-2022-09-01-rel-2022-10-10
+        py-2022-09-01-rel-2023-10-10
+    py-2024-09-01
+"""
+
+DATE_STRFTIME_FORMAT = "%Y-%m-%d"
+
+
+class ProgramRealizationId(BaseModel):
+    id: str = Field(
+        regex="[^-]+-[0-9]{4}-[0-9]{2}-[0-9]{2}-rel-[0-9]{4}-[0-9]{2}-[0-9]{2}"
+    )
+
+
+class RealizeProgramDto(BaseModel):
+    realizeProgramId: str  # py
+    realizeDate: str
+
+
+class ProgramRealizationNoId(BaseModel):
+    realizationDate: datetime = Field(datetime.now().replace(microsecond=0))
+
+    @staticmethod
+    def from_realize_program_dto(dto: RealizeProgramDto):
+        return ProgramRealizationNoId(
+            realizationDate=datetime.strptime(dto.realizeDate, "%d.%m.%Y")
+        )
+
+
+class ProgramRealization(ProgramRealizationNoId, ProgramRealizationId):
+    ...
+
+
+class ConfirmProgramDto(BaseModel):
+    confirmProgramId: str  # py
+    confirmProgramFormalName: str
+    confirmDate: str
+    confirmProgramCost: int
+    confirmProgramHoursAud: int
+    confirmProgramHoursHome: int
+
+
+# Утвержденная в документах программа
+class ProgramConfirmedNoId(BaseModel):
+    formalName: str  # Основы программирования на Python
+    cost: int
+    hoursAud: int
+    hoursHome: int
+    confirmDate: datetime = Field(datetime.now().replace(microsecond=0))
+    realizations: Optional[list[ProgramRealization]] = Field([])
+
+    @staticmethod
+    def from_confirm_program_dto(dto: ConfirmProgramDto):
+        return ProgramConfirmedNoId(
+            formalName=dto.confirmProgramFormalName,
+            cost=dto.confirmProgramCost,
+            hoursAud=dto.confirmProgramHoursAud,
+            hoursHome=dto.confirmProgramHoursHome,
+            confirmDate=datetime.strptime(dto.confirmDate, "%d.%m.%Y"),
+        )
+
+
+class ProgramConfirmed(ProgramConfirmedNoId):
+    id: str = Field(regex="[^-]+-[0-9]{4}-[0-9]{2}-[0-9]{2}")
+
+
+class Program(BaseModel):
+    baseId: str  # py
+    brief: str  # Python
+    infoHtml: str  # Основы программирования на Python. Подробнее на <a href="python.org"></a>
+    difficulty: int = Field(ge=0, le=3)
+    iconUrl: str
+    confirmed: list[ProgramConfirmed] = Field([])
+    relevant: bool = Field(True)
+
+    def add_confirmed_program(self, program: ProgramConfirmedNoId):
+        self.confirmed.append(
+            ProgramConfirmed(
+                id=f"{self.baseId}-{program.confirmDate.strftime(DATE_STRFTIME_FORMAT)}",
+                **program.dict(),
+            )
+        )
+
+        self.confirmed.sort(key=lambda x: x.confirmDate, reverse=True)
+
+    def add_program_realization(self, realization: ProgramRealizationNoId):
+        self.confirmed[0].realizations.append(
+            ProgramRealization(
+                id=f"{self.confirmed[-1].id}-rel-{realization.realizationDate.strftime(DATE_STRFTIME_FORMAT)}",
+                **realization.dict(),
+            )
+        )
+
+        self.confirmed[0].realizations.sort(
+            key=lambda x: x.realizationDate, reverse=True
+        )
+
+    def relevant_realization(self) -> ProgramRealization:
+        return self.confirmed[0].realizations[0]
+
+
+class AddProgramDto(BaseModel):
+    newProgramId: str
+    newProgramBrief: str
+    newProgramDifficulty: int
+    newProgramInfoHtml: str
+    newProgramIconUrl: str
+
+
+class AvailableProgram(BaseModel):
+    def __init__(self, program: Program):
+        super().__init__(
+            **program.dict(),
+            **(program.confirmed[0].dict()),
+            lastConfirmedId=program.confirmed[0].id,
+            lastRealizationId=program.confirmed[0].realizations[0].id,
+        )
+
+    lastConfirmedId: str
+    lastRealizationId: str
+    brief: str
+    infoHtml: str
+    difficulty: int = Field(ge=0, le=3)
+    iconUrl: str
+    formalName: str
+    cost: int
+    hoursAud: int
+    hoursHome: int

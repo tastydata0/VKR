@@ -7,7 +7,6 @@ from bson import ObjectId
 from pydantic import BaseModel, Field, validator
 from application_state import ApplicationState
 
-
 class Regexes:
     email = re.compile(
         r"([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\"([]!#-[^-~ \t]|(\\[\t -~]))+\")@([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\[[\t -Z^-~]*])"
@@ -63,6 +62,8 @@ class SelectedProgram(BaseModel):
 class Document(BaseModel):
     filename: str
     timestamp: Optional[datetime] = Field(datetime.now().replace(microsecond=0))
+    encryptionKey: str
+    encryptionVersion: int = Field(1)
 
     @validator("filename")
     @classmethod
@@ -70,6 +71,15 @@ class Document(BaseModel):
         if not os.path.exists(value):
             logging.warning(f"Файла {value} не существует")
         return value
+
+    def read_file(self) -> bytes:
+        from encryption import read_encrypted_document
+        return read_encrypted_document(self)
+
+    @classmethod
+    def save_file(cls, filename: str, data: bytes) -> "Document":
+        from encryption import save_file_encrypted
+        return save_file_encrypted(filename, data)
 
 
 def files_existence_checker(files: list[Document] | Document):

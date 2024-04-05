@@ -36,6 +36,7 @@ from slowapi.util import get_remote_address
 
 from .middlewares import *
 from .captcha import *
+import encryption
 from forms.main_form_fields import form_fields
 
 from application_stages import get_stages_according_to_state
@@ -423,24 +424,18 @@ async def upload_files(
             detail="Нельзя отправлять документы на этапе " + state.current_state.name,
         )
 
-    def save_file(file: UploadFile) -> Document:
-        filename = os.path.join(
-            "data/uploaded_files", uuid.uuid4().hex + os.path.splitext(file.filename)[1]
-        )
-        file.file.seek(0)
-        with open(filename, "wb") as buffer:
-            file.filename = buffer.name
-            shutil.copyfileobj(file.file, buffer)
-
-        return Document(filename=filename)
-
     def upload_files_to_local_files(
         files: list[UploadFile],
     ) -> list[Document]:
         documents = []
         for file in files:
             if file.file:
-                documents.append(save_file(file))
+                file.file.seek(0)
+                filename = os.path.join(
+                    "data/uploaded_files",
+                    uuid.uuid4().hex + os.path.splitext(file.filename)[1],
+                )
+                documents.append(Document.save_file(filename, file.file.read()))
         return documents
 
     if parent_passport_files == ["use_existing"]:
@@ -508,7 +503,7 @@ async def upload_files(
     )
 
     try:
-        pdf_filename = merge_docs_to_pdf(all_files, request.user.id)
+        pdf_document = merge_docs_to_pdf(all_files, request.user.id)
     except ImageOpenError:
         raise HTTPException(status_code=400, detail="Невозможно открыть изображение")
 
@@ -523,7 +518,7 @@ async def upload_files(
         applicationFiles=application_local_files,
         consentFiles=consent_local_files,
         **personal_documents.dict(),
-        mergedPdf=Document(filename=pdf_filename),
+        mergedPdf=pdf_document,
     )
 
     database.update_user_latest_documents(
@@ -717,8 +712,8 @@ async def admin_approve_post(request: Request, data: AdminApprovalDto):
 @app.get("/admin/get_pdf_docs")
 @requires("admin")
 async def admin_get_pdf_docs(request: Request, user_id: str):
-    return FileResponse(
-        database.find_user(user_id).application.documents.mergedPdf.filename,
+    return Response(
+        content=database.find_user(user_id).application.documents.mergedPdf.read_file(),
         media_type="application/pdf",
     )
 

@@ -6,6 +6,7 @@ from fastapi import UploadFile
 import logging
 import hashlib
 from models import Document
+import encryption
 
 # Директория для сохранения загруженных файлов
 upload_dir = "data/uploaded_files"
@@ -22,10 +23,8 @@ if not os.path.exists(pdf_dir):
     os.mkdir(pdf_dir)
 
 
-def merge_docs_to_pdf(files: List[Document], file_prefix="") -> str:
+def merge_docs_to_pdf(files: List[Document], file_prefix="") -> Document:
     pdf_filename = os.path.join(pdf_dir, f"{file_prefix}_{uuid.uuid4().hex}.pdf")
+    images = [doc.read_file() for doc in files]
 
-    with open(pdf_filename, "wb") as pdf_file:
-        pdf_file.write(img2pdf.convert([doc.filename for doc in files]))
-
-    return pdf_filename
+    return Document.save_file(pdf_filename, img2pdf.convert(images))

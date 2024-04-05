@@ -30,6 +30,7 @@ users = db["users"]
 tokens = db["tokens"]
 programs = db["programs"]
 admins = db["admins"]
+config_db = db["config"]
 
 
 def _setup_db():
@@ -161,6 +162,10 @@ def update_user_application_documents(user_id: str, documents: ApplicationDocume
 
 def update_user_application_program_id(user_id: str, program_id: str):
     return update_user_application_field(user_id, "selectedProgram", program_id)
+
+
+def update_user_application_discounts(user_id: str, discounts: list[str]):
+    return update_user_application_field(user_id, "discounts", discounts)
 
 
 def update_user_application_rejection_reason(user_id: str, rejection_reason: str):
@@ -300,4 +305,5 @@ def realize_program(
     return
 
 
-users.delete_many({"$nor": [{"fullName": "Петров Саня Петрович"}]})
+def get_all_discounts() -> list[str]:
+    return config_db.find_one()["discounts"]

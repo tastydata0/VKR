@@ -140,6 +140,7 @@ class Application(SelectedProgram):
         ApplicationState.filling_docs.id, validate_default=True
     )
     lastRejectionReason: Optional[str] = Field(None)
+    discounts: Optional[list[str]] = Field([])
 
     @validator("status")
     @classmethod
@@ -292,7 +293,7 @@ class FormField(BaseModel):
 
 
 class UserFillDataSubmission(UserBasicData, SelectedProgram):
-    ...
+    discounts: Optional[list[str]] = Field([])
 
 
 """

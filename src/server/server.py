@@ -199,6 +199,8 @@ async def get_form(request: Request):
     if known_data["fullNameGenitive"] is None:
         known_data["fullNameGenitive"] = fio_to_accusative(known_data["fullName"])
 
+    print(known_data)
+
     return templates.TemplateResponse(
         "fill_data.html",
         {
@@ -213,6 +215,8 @@ async def get_form(request: Request):
             ],
             "application_stages": application_stages_by_user_id(request.user.id),
             "user": UserMinInfo(**request.user.dict()),
+            "discounts": database.get_all_discounts(),
+            "selectedDiscounts": known_data["application"]["discounts"],
         },
     )
 
@@ -348,9 +352,19 @@ async def post_form(request: Request, data: UserFillDataSubmission):
     ):
         raise HTTPException(
             status_code=500,
-            detail="Не удалось обновить заявление. Обратитесь к администратору",
+            detail="Не удалось обновить заявление (программа). Обратитесь к администратору",
         )
 
+    if (
+        database.update_user_application_discounts(
+            user_id=request.user.id, discounts=data.discounts
+        )
+        == -1
+    ):
+        raise HTTPException(
+            status_code=500,
+            detail="Не удалось обновить заявление (скидки). Обратитесь к администратору",
+        )
     state.fill_info()
 
     return RedirectResponse("/application/fill_docs", status_code=302)

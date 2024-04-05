@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+import logging
 import pathlib
 import typing
 import uuid
@@ -139,6 +140,22 @@ def update_user_application_state(user_id: str, application_state: str):
 
 
 def update_user_application_documents(user_id: str, documents: ApplicationDocuments):
+    # Удаляем старые версии документов
+    old_docs = find_user(user_id).application.documents
+    if old_docs:
+        old_files = [file.filename for file in old_docs.all_files]
+        current_filenames = [file.filename for file in documents.all_files]
+        files_to_delete: list[str] = [
+            filename for filename in old_files if filename not in current_filenames
+        ]
+        for filename in files_to_delete:
+            if not os.path.exists(filename):
+                logging.warning(
+                    f"Файла {filename} не существует. Не удалось удалить старый документ."
+                )
+                continue
+            os.remove(filename)
+
     return update_user_application_field(user_id, "documents", documents.dict())
 
 

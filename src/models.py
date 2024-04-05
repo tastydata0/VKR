@@ -1,4 +1,6 @@
 from datetime import date, datetime
+import logging
+import os
 import re
 from typing import Optional
 from bson import ObjectId
@@ -62,6 +64,21 @@ class Document(BaseModel):
     filename: str
     timestamp: Optional[datetime] = Field(datetime.now().replace(microsecond=0))
 
+    @validator("filename")
+    @classmethod
+    def validate_filename(cls, value):
+        if not os.path.exists(value):
+            logging.warning(f"Файла {value} не существует")
+        return value
+
+
+def files_existence_checker(files: list[Document] | Document):
+    for file in files if isinstance(files, list) else [files]:
+        if not os.path.exists(file.filename):
+            return None
+
+    return files
+
 
 class PersonalDocuments(BaseModel):
     parentPassportFiles: list[Document]
@@ -69,11 +86,49 @@ class PersonalDocuments(BaseModel):
     parentSnilsFiles: list[Document]
     childSnilsFiles: list[Document]
 
+    @validator(
+        "parentPassportFiles",
+        "childPassportFiles",
+        "parentSnilsFiles",
+        "childSnilsFiles",
+    )
+    @classmethod
+    def validate_parent_passport_files(cls, value):
+        return files_existence_checker(value)
+
 
 class ApplicationDocuments(PersonalDocuments):
     applicationFiles: list[Document]
     consentFiles: list[Document]
     mergedPdf: Document
+
+    @validator(
+        "applicationFiles",
+        "consentFiles",
+        "mergedPdf",
+    )
+    @classmethod
+    def validate_application_files(cls, value):
+        return files_existence_checker(value)
+
+    @property
+    def all_files(self) -> list[Document]:
+        files = []
+        if self.applicationFiles:
+            files += self.applicationFiles
+        if self.consentFiles:
+            files += self.consentFiles
+        if self.mergedPdf:
+            files.append(self.mergedPdf)
+        if self.parentPassportFiles:
+            files += self.parentPassportFiles
+        if self.childPassportFiles:
+            files += self.childPassportFiles
+        if self.parentSnilsFiles:
+            files += self.parentSnilsFiles
+        if self.childSnilsFiles:
+            files += self.childSnilsFiles
+        return files
 
 
 class Application(SelectedProgram):
@@ -108,7 +163,6 @@ class UserMutableData(BaseModel):
     phone: Optional[str] = Field(None)
     parentPhone: Optional[str] = Field(None)
     hasLaptop: Optional[bool] = Field(None)
-    latestDocs: Optional[PersonalDocuments] = Field(None)
 
 
 class UserBasicData(UserMutableData):
@@ -173,6 +227,7 @@ class User(UserBasicData):
 
     id: str
     application: Application = Field(Application())
+    latestDocs: Optional[PersonalDocuments] = Field(None)
 
 
 class ProgramId(BaseModel):

@@ -158,7 +158,7 @@ async def send_docs_form(request: Request):
             "application_stages": application_stages_by_user_id(request.user.id),
             "lastRejectionReason": request.user.application.lastRejectionReason,
             "user": UserMinInfo(**request.user.dict()),
-            "documents": request.user.application.documents,
+            "documents": request.user.latestDocs,
         },
     )
 

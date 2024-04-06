@@ -31,9 +31,33 @@
 <body>
     <div class="container mt-5">
         <h1 class="mb-4">Управление обучающими программами</h1>
-        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addProgramModal">
-            Добавить программу
-        </button>
+
+        <ol class="list-group w-50">
+            <li class="list-group-item d-flex justify-content-between align-items-start">
+                <div class="ms-2 me-auto">
+                    <a href="#" data-toggle="modal" data-target="#addProgramModal" class="fw-bold"><b>Создать
+                            программу</b></a>
+                    <br>
+                    Создание новой обучающей программы
+                </div>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-start">
+                <div class="ms-2 me-auto">
+                    <a href="#" data-toggle="modal" data-target="#confirmProgramModal" class="fw-bold"><b>Утвердить
+                            программу</b></a>
+                    <br>
+                    Утвердить существующую программу формально
+                </div>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-start">
+                <div class="ms-2 me-auto">
+                    <a href="#" data-toggle="modal" data-target="#realizeProgramModal" class="fw-bold"><b>Реализовать
+                            программу</b></a>
+                    <br>
+                    Реализовать утвержденную программу
+                </div>
+            </li>
+        </ol>
         <div class="modal fade" id="addProgramModal" tabindex="-1" role="dialog" aria-labelledby="addProgramModalLabel"
             aria-hidden="true">
             <div class="modal-dialog" role="document">
@@ -57,9 +81,6 @@
                 </div>
             </div>
         </div>
-        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#confirmProgramModal">
-            Утвердить программу
-        </button>
         <div class="modal fade" id="confirmProgramModal" tabindex="-1" role="dialog"
             aria-labelledby="confirmProgramModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
@@ -84,9 +105,6 @@
             </div>
         </div>
 
-        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#realizeProgramModal">
-            Реализовать программу
-        </button>
         <div class="modal fade" id="realizeProgramModal" tabindex="-1" role="dialog"
             aria-labelledby="realizeProgramModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">

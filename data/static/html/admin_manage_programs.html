@@ -1,268 +1,117 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Управление программами</title>
-    <link
-      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-  </head>
-  <body>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+    <!-- fontawesome5 -->
+    <link rel='stylesheet' href='https://use.fontawesome.com/releases/v5.12.1/css/all.css'>
+    <!-- Flatpickr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.3/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.3/dist/flatpickr.min.js"
+        integrity="sha256-/irFIZmSo2CKXJ4rxHWfrI+yGJuI16Z005X/bENdpTY=" crossorigin="anonymous"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
+        integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy"
+        crossorigin="anonymous"></script>
+</head>
+
+<body>
     <div class="container mt-5">
-      <h1 class="mb-4">Управление обучающими программами</h1>
-      <button
-        type="button"
-        class="btn btn-primary"
-        data-toggle="modal"
-        data-target="#addProgramModal"
-      >
-        Добавить программу
-      </button>
-      <div
-        class="modal fade"
-        id="addProgramModal"
-        tabindex="-1"
-        role="dialog"
-        aria-labelledby="addProgramModalLabel"
-        aria-hidden="true"
-      >
-        <div class="modal-dialog" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="addProgramModalLabel">
-                Добавить новую программу
-              </h5>
-              <button
-                type="button"
-                class="close"
-                data-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">&times;</span>
-              </button>
+        <h1 class="mb-4">Управление обучающими программами</h1>
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addProgramModal">
+            Добавить программу
+        </button>
+        <div class="modal fade" id="addProgramModal" tabindex="-1" role="dialog" aria-labelledby="addProgramModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addProgramModalLabel">
+                            Добавить новую программу
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="/admin/add_program" data-json-submit>
+                            <div class="json-editor" id="add-program-json-editor"></div>
+                            <button type="submit" class="btn btn-primary">
+                                Добавить программу
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
-            <div class="modal-body">
-              <form method="POST" action="/admin/add_program" data-json-submit>
-                <div class="form-group">
-                  <label for="newProgramId">ID:</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="newProgramId"
-                    name="newProgramId"
-                    placeholder="py"
-                    required
-                  />
+        </div>
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#confirmProgramModal">
+            Утвердить программу
+        </button>
+        <div class="modal fade" id="confirmProgramModal" tabindex="-1" role="dialog"
+            aria-labelledby="confirmProgramModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="confirmProgramModalLabel">
+                            Утвердить программу
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="/admin/confirm_program" data-json-submit>
+                            <div class="json-editor" id="confirm-program-json-editor"></div>
+                            <button type="submit" class="btn btn-primary">
+                                Утвердить программу
+                            </button>
+                        </form>
+                    </div>
                 </div>
-                <div class="form-group">
-                  <label for="newProgramBrief">Название программы</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="newProgramBrief"
-                    name="newProgramBrief"
-                    placeholder="Python"
-                    required
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="newProgramDifficulty">Сложность [0 - 3]</label>
-                  <input
-                    type="number"
-                    class="form-control"
-                    id="newProgramDifficulty"
-                    name="newProgramDifficulty"
-                    required
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="newProgramInfoHtml">Описание (поддерживается HTML)</label>
-                  <textarea
-                   rows="4" cols="50"
-                   type="text"
-                    class="form-control"
-                    id="newProgramInfoHtml"
-                    name="newProgramInfoHtml"
-                    placeholder="Основы программирования на Scratch. Подробнее на <a href=&quot;https://scratch.mit.edu\&quot;></a>"
-                    required
-                  ></textarea>
-                </div>
-                <div class="form-group">
-                  <label for="newProgramIconUrl">Ссылка на иконку ~256x256 пикс</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="newProgramIconUrl"
-                    name="newProgramIconUrl"
-                    required
-                  />
-                </div>
-                </div>
-                <button type="submit" class="btn btn-primary">
-                  Добавить программу
-                </button>
-              </form>
             </div>
-          </div>
         </div>
 
-    <button
-        type="button"
-        class="btn btn-primary"
-        data-toggle="modal"
-        data-target="#confirmProgramModal"
-      >
-        Утвердить программу
-      </button>
-      <div
-        class="modal fade"
-        id="confirmProgramModal"
-        tabindex="-1"
-        role="dialog"
-        aria-labelledby="confirmProgramModalLabel"
-        aria-hidden="true"
-      >
-        <div class="modal-dialog" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="confirmProgramModalLabel">
-                Утвердить программу
-              </h5>
-              <button
-                type="button"
-                class="close"
-                data-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <div class="modal-body">
-              <form method="POST" action="/admin/confirm_program" data-json-submit>
-                <div class="form-group">
-                    <label for="confirmProgramId">Программа</label>
-                    <select class="form-control" id="confirmProgramId" name="confirmProgramId">
-                        {% for program in programs %}
-                        <option value="{{ program.baseId }}">{{ program.brief }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group">
-                  <label for="confirmProgramFormalName">Формальное название программы</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="confirmProgramFormalName"
-                    name="confirmProgramFormalName"
-                    placeholder="Основы программирования на Python"
-                    required
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="confirmProgramHoursAud">Часы аудиторных занятий</label>
-                  <input
-                    type="number"
-                    class="form-control"
-                    id="confirmProgramHoursAud"
-                    name="confirmProgramHoursAud"
-                    placeholder="72"
-                    required
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="confirmProgramHoursHome">Часы самостоятельной работы</label>
-                  <input
-                    type="number"
-                    class="form-control"
-                    id="confirmProgramHoursHome"
-                    name="confirmProgramHoursHome"
-                    placeholder="36"
-                    required
-                  />
-                </div>
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#realizeProgramModal">
+            Реализовать программу
+        </button>
+        <div class="modal fade" id="realizeProgramModal" tabindex="-1" role="dialog"
+            aria-labelledby="realizeProgramModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="realizeProgramModalLabel">
+                            Реализовать последнюю утвержденную программу
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="/admin/realize_program" data-json-submit>
 
-                <div class="form-group">
-                  <label for="confirmProgramCost">Стоимость в рублях</label>
-                  <input
-                    type="number"
-                    class="form-control"
-                    id="confirmProgramCost"
-                    name="confirmProgramCost"
-                    placeholder="12000"
-                    required
-                  />
+                            <div class="json-editor" id="realize-program-json-editor"></div>
+                            <button type="submit" class="btn btn-primary">
+                                Реализовать программу
+                            </button>
+                        </form>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="confirmDate">Дата утверждения</label>
-                    <input type="text" class="form-control" id="confirmDate" name="confirmDate" pattern="\d{2}\.\d{2}\.\d{4}" placeholder="25.09.2023" required>
-                </div>
-
-                </div>
-                <button type="submit" class="btn btn-primary">
-                  Утвердить программу
-                </button>
-              </form>
             </div>
-          </div>
+
         </div>
-
-    <button
-        type="button"
-        class="btn btn-primary"
-        data-toggle="modal"
-        data-target="#realizeProgramModal"
-      >
-        Реализовать программу
-      </button>
-      <div
-        class="modal fade"
-        id="realizeProgramModal"
-        tabindex="-1"
-        role="dialog"
-        aria-labelledby="realizeProgramModalLabel"
-        aria-hidden="true"
-      >
-        <div class="modal-dialog" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="realizeProgramModalLabel">
-                Реализовать последнюю утвержденную программу
-              </h5>
-              <button
-                type="button"
-                class="close"
-                data-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <div class="modal-body">
-              <form method="POST" action="/admin/realize_program" data-json-submit>
-                <div class="form-group">
-                    <label for="realizeProgramId">ID</label>
-                    <select class="form-control" id="realizeProgramId" name="realizeProgramId">
-                        {% for program in programs %}
-                        <option value="{{ program.baseId }}">{{ program.brief }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="realizeDate">Дата реализации</label>
-                    <input type="text" class="form-control" id="realizeDate" name="realizeDate" pattern="\d{2}\.\d{2}\.\d{4}" placeholder="25.09.2023" required>
-                </div>
-                </div>
-                <button type="submit" class="btn btn-primary">
-                  Реализовать программу
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-
-      </div>
 
     </div>
 
@@ -270,34 +119,60 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    var forms = document.querySelectorAll('form[data-json-submit]');
-    Array.prototype.forEach.call(forms, function(form) {
-      form.addEventListener('submit', function(event) {
-        event.preventDefault();
-        var formData = {};
-        var inputs = this.querySelectorAll('input, select, textarea');
-        Array.prototype.forEach.call(inputs, function(input) {
-          formData[input.name] = input.value;
-        });
-        var jsonFormData = JSON.stringify(formData);
-        var url = this.getAttribute('action');
-        var method = this.getAttribute('method');
-        var xhr = new XMLHttpRequest();
-        xhr.open(method, url, true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                location.reload();
-            } else {
-              alert("Ошибка: " + JSON.parse(xhr.responseText).detail);
-            }
-        };
-        xhr.send(jsonFormData);
-      });
-    });
-  });
-</script>
+        const addProgramSchema = {{ add_program_schema | tojson }}
+        const confirmProgramSchema = {{ confirm_program_schema | tojson }}
+        const realizeProgramSchema = {{ realize_program_schema | tojson }}
 
-  </body>
+        function addEditor(id, schema) {
+            console.log(id)
+            let editor = new JSONEditor(document.getElementById(id), {
+                theme: "bootstrap5",
+                schema: schema,
+                disable_collapse: true,
+                disable_edit_json: true,
+                disable_properties: true,
+                iconlib: "fontawesome5",
+            });
+
+            editor.on('ready', function () {
+                let form = $('#' + id).find('.row');
+                form.find(".form-control").prop("required", true);
+
+                $('.card-title').hide();
+            });
+
+            document.getElementById(id).parentElement.addEventListener('submit', function (event) {
+
+                event.preventDefault();
+                var url = this.getAttribute('action');
+                var method = this.getAttribute('method');
+                var xhr = new XMLHttpRequest();
+                xhr.open(method, url, true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        location.reload();
+                    } else {
+                        alert("Ошибка: " + JSON.parse(xhr.responseText).detail);
+                    }
+                };
+                if (editor.validate().length === 0) {
+                    xhr.send(JSON.stringify(editor.getValue()));
+                } else {
+                    console.log(editor.validate())
+                    alert("Неверно заполнены данные")
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            addEditor("add-program-json-editor", addProgramSchema);
+            addEditor("confirm-program-json-editor", confirmProgramSchema);
+            addEditor("realize-program-json-editor", realizeProgramSchema);
+        });
+
+    </script>
+
+</body>
+
 </html>

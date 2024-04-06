@@ -23,7 +23,7 @@ from docx_generator import generate_doc
 from docs_to_pdf import merge_docs_to_pdf
 from mail_service import Mail
 from fastapi.staticfiles import StaticFiles
-from src import application_state
+from src import application_state, schemas
 from src.persistent_model import MongodbPersistentModel
 from models import *
 import database
@@ -760,6 +760,9 @@ async def admin_manage_programs(request: Request):
         {
             "request": request,
             "programs": list(database.programs.find()),
+            "add_program_schema": AddProgramDto.schema(),
+            "confirm_program_schema": schemas.confirm_program_schema(),
+            "realize_program_schema": schemas.realize_program_schema(),
         },
     )
 
@@ -770,11 +773,7 @@ async def admin_add_program_post(request: Request, data: AddProgramDto):
     try:
         database.add_program(
             Program(
-                baseId=data.newProgramId,
-                brief=data.newProgramBrief,
-                infoHtml=data.newProgramInfoHtml,
-                difficulty=data.newProgramDifficulty,
-                iconUrl=data.newProgramIconUrl,
+                **data.dict(),
             )
         )
     except ValueError:
@@ -785,7 +784,7 @@ async def admin_add_program_post(request: Request, data: AddProgramDto):
 @requires("admin")
 async def admin_confirm_program_post(request: Request, data: ConfirmProgramDto):
     database.confirm_program(
-        data.confirmProgramId, ProgramConfirmedNoId.from_confirm_program_dto(data)
+        data.id, ProgramConfirmedNoId.from_confirm_program_dto(data)
     )
 
 
@@ -793,7 +792,7 @@ async def admin_confirm_program_post(request: Request, data: ConfirmProgramDto):
 @requires("admin")
 async def admin_realize_program_post(request: Request, data: RealizeProgramDto):
     database.realize_program(
-        data.realizeProgramId, ProgramRealizationNoId.from_realize_program_dto(data)
+        data.id, ProgramRealizationNoId.from_realize_program_dto(data)
     )
 
 

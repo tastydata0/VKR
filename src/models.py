@@ -7,6 +7,7 @@ from bson import ObjectId
 from pydantic import BaseModel, Field, validator
 from application_state import ApplicationState
 
+
 class Regexes:
     email = re.compile(
         r"([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\"([]!#-[^-~ \t]|(\\[\t -~]))+\")@([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\[[\t -Z^-~]*])"
@@ -74,11 +75,13 @@ class Document(BaseModel):
 
     def read_file(self) -> bytes:
         from encryption import read_encrypted_document
+
         return read_encrypted_document(self)
 
     @classmethod
     def save_file(cls, filename: str, data: bytes) -> "Document":
         from encryption import save_file_encrypted
+
         return save_file_encrypted(filename, data)
 
 
@@ -324,7 +327,7 @@ class ProgramRealizationId(BaseModel):
 
 
 class RealizeProgramDto(BaseModel):
-    realizeProgramId: str  # py
+    id: str  # py
     realizeDate: str
 
 
@@ -343,12 +346,15 @@ class ProgramRealization(ProgramRealizationNoId, ProgramRealizationId):
 
 
 class ConfirmProgramDto(BaseModel):
-    confirmProgramId: str  # py
-    confirmProgramFormalName: str
-    confirmDate: str
-    confirmProgramCost: int
-    confirmProgramHoursAud: int
-    confirmProgramHoursHome: int
+    id: str = Field(..., title="ID")
+    formalName: str = Field(..., title="Официальное название")
+    cost: int = Field(..., title="Стоимость", ge=0)
+    hoursAud: int = Field(..., title="Часы аудиторных занятий", ge=0, le=1024)
+    hoursHome: int = Field(..., title="Часы домашних занятий", ge=0, le=1024)
+    confirmDate: str = Field(
+        ...,
+        title="Дата подтверждения",
+    )
 
 
 # Утвержденная в документах программа
@@ -363,10 +369,10 @@ class ProgramConfirmedNoId(BaseModel):
     @staticmethod
     def from_confirm_program_dto(dto: ConfirmProgramDto):
         return ProgramConfirmedNoId(
-            formalName=dto.confirmProgramFormalName,
-            cost=dto.confirmProgramCost,
-            hoursAud=dto.confirmProgramHoursAud,
-            hoursHome=dto.confirmProgramHoursHome,
+            formalName=dto.formalName,
+            cost=dto.cost,
+            hoursAud=dto.hoursAud,
+            hoursHome=dto.hoursHome,
             confirmDate=datetime.strptime(dto.confirmDate, "%d.%m.%Y"),
         )
 
@@ -411,11 +417,16 @@ class Program(BaseModel):
 
 
 class AddProgramDto(BaseModel):
-    newProgramId: str
-    newProgramBrief: str
-    newProgramDifficulty: int
-    newProgramInfoHtml: str
-    newProgramIconUrl: str
+    baseId: str = Field(
+        ...,
+        title="ID",
+        description="Это поле нельзя будет изменить позже",
+        min_length=1,
+    )
+    brief: str = Field(..., title="Краткое название", min_length=1)
+    infoHtml: str = Field(..., title="Описание на HTML", min_length=1)
+    difficulty: int = Field(..., title="Сложность", ge=0, le=3)
+    iconUrl: str = Field(..., title="URL иконки", min_length=1)
 
 
 class AvailableProgram(BaseModel):

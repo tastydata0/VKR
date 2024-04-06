@@ -236,13 +236,16 @@ def validate_program_realization_id_existence(program_id_raw: str):
     return result is not None
 
 
-def load_relevant_programs() -> list[Program]:
+def load_relevant_programs(
+    load_unconfirmed: bool = False, load_unrealized: bool = False
+) -> list[Program]:
     return [
         Program(**program)
         for program in programs.find(
             {"relevant": True}, {"_id": 0}, sort=[("difficulty", 1)]
         )
-        if program["confirmed"] and program["confirmed"][0]["realizations"]
+        if (load_unconfirmed or program["confirmed"])
+        and (load_unrealized or program["confirmed"][0]["realizations"])
     ]
 
 

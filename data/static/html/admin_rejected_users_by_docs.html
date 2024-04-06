@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Подтверждение документов</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+
+
+</head>
+
+<body>
+    <div class="m-4">
+        <h2>Отклоненные заявки из-за документов</h2>
+        <div>
+            <div>
+                <table class="table sortable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Имя</th>
+                            <th>Почта</th>
+                            <th>Телефон</th>
+                            <th>Программа</th>
+                            <th>Документы</th>
+                            <th>Причина отклонения</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>
+                                <input style="width: 60px" value="{{ user.id }}" readonly />
+                            </td>
+                            <td>{{ user.fullName }}<br>{{ user.parentFullName }} (род.)</td>
+                            <td>{{ user.email }}<br>{{ user.parentEmail }} (род.)</td>
+                            <td>{{ user.phone }}<br>{{ user.parentPhone }} (род.)</td>
+                            <td>{{ user.application.selectedProgram }}</td>
+                            <td>
+                                <a href="/admin/get_pdf_docs?user_id={{ user.id }}">Документы</a>
+                            </td>
+                            <td>{{ user.application.lastRejectionReason }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <link href="https://cdn.jsdelivr.net/gh/tofsjonas/sortable@latest/sortable.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/gh/tofsjonas/sortable@latest/sortable.min.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+
+</html>

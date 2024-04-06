@@ -531,6 +531,11 @@ async def upload_files(
         documents=application_documents,
     )
 
+    database.update_user_application_rejection_reason(
+        user_id=request.user.id,
+        reason=None,
+    )
+
     state.fill_docs()
 
     return RedirectResponse("/application/waiting_confirmation", status_code=302)
@@ -648,7 +653,15 @@ async def admin_dashboard(request: Request):
         {
             "request": request,
             "admin_email": request.user.email,
-            "badges": {"approve": database.user_count_by_application_state(ApplicationState.waiting_confirmation), "competition": database.user_count_by_application_state(ApplicationState.approved)},
+            "badges": {
+                "approve": database.user_count_by_application_state(
+                    ApplicationState.waiting_confirmation
+                ),
+                "competition": database.user_count_by_application_state(
+                    ApplicationState.approved
+                ),
+                "rejected": database.get_rejected_by_data_users_count()
+            },
         },
     )
 
@@ -670,6 +683,16 @@ def get_captcha(request: Request):
     captcha_img = create_captcha(request.client.host)
     return StreamingResponse(content=captcha_img, media_type="image/jpeg")
 
+@app.get("/admin/rejected_users_by_docs")
+@requires("admin")
+async def admin_approve(request: Request):
+    return templates.TemplateResponse(
+        "admin_rejected_users_by_docs.html",
+        {
+            "request": request,
+            "users": database.get_rejected_by_data_users(),
+        },
+    )
 
 @app.get("/admin/approve")
 @requires("admin")

@@ -15,6 +15,8 @@ def random_document(subfolder) -> Document:
             random.choice(os.listdir("data/fake_documents/" + subfolder)),
         ),
         timestamp=datetime.now(),
+        encryptionKey="",
+        encryptionVersion=0,
     )
 
 
@@ -40,7 +42,10 @@ def random_user() -> User:
 
     if states.index(state) >= states.index("filling_docs"):
         user.application.selectedProgram = random.choice(
-            ("py-2023-09-01", "cpp-2023-09-01", "java-2023-09-01", "scratch-2023-09-01")
+            [
+                p.confirmed[0].realizations[0].id
+                for p in database.load_relevant_programs()
+            ]
         )
 
     if states.index(state) > states.index("filling_docs"):

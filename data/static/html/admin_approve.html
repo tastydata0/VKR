@@ -1,192 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Подтверждение документов</title>
-    <link
-      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-  </head>
-  <body>
-    <div class="m-4">
-      <h2>Подтверждение документов</h2>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Подтверждение документов</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+
+
+</head>
+
+<body>
+  <div class="m-4">
+    <h2>Подтверждение документов</h2>
+    <div>
       <div>
-        <div>
-          <table class="table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Имя</th>
-                <th>Почта</th>
-                <th>Почта родителя</th>
-                <th>Телефон</th>
-                <th>Программа обучения</th>
-                <th>Ссылка на документы</th>
-                <th>Подтвердить</th>
-                <th>Отклонить</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for user in users %}
-              <tr>
-                <td>
-                  <input style="width: 100px" value="{{ user.id }}" readonly />
-                </td>
-                <td>{{ user.fullName }}</td>
-                <td>{{ user.email }}</td>
-                <td>{{ user.parentEmail }}</td>
-                <td>{{ user.phone }}</td>
-                <td>{{ user.application.selectedProgram }}</td>
-                <td>
-                  <a href="/admin/get_pdf_docs?user_id={{ user.id }}"
-                    >Документы</a
-                  >
-                </td>
-                <td>
-                  <button
-                    class="btn btn-success confirm-btn"
-                    data-id="{{ user.id }}"
-                  >
-                    Подтвердить
-                  </button>
-                </td>
-                <td>
-                  <button
-                    class="btn btn-danger reject-btn"
-                    data-toggle="modal"
-                    data-target="#rejectModal{{ user.id }}"
-                    data-id="{{ user.id }}"
-                  >
-                    Отклонить
-                  </button>
-                  <div
-                    class="modal fade"
-                    id="rejectModal{{ user.id }}"
-                    tabindex="-1"
-                    role="dialog"
-                    aria-labelledby="rejectModalLabel{{ user.id }}"
-                    aria-hidden="true"
-                  >
-                    <div class="modal-dialog" role="document">
-                      <div class="modal-content">
-                        <div class="modal-header">
-                          <h5
-                            class="modal-title"
-                            id="rejectModalLabel{{ user.id }}"
-                          >
-                            Отклонить абитуриента
-                          </h5>
-                          <button
-                            type="button"
-                            class="close"
-                            data-dismiss="modal"
-                            aria-label="Close"
-                          >
-                            <span aria-hidden="true">&times;</span>
-                          </button>
-                        </div>
-                        <div class="modal-body">
-                          <label for="rejectionReason{{ user.id }}"
-                            >Причина отклонения:</label
-                          >
-                          <textarea
-                            class="form-control"
-                            id="rejectionReason{{ user.id }}"
-                            rows="3"
-                          ></textarea>
-                        </div>
-                        <div class="modal-footer">
-                          <button
-                            type="button"
-                            class="btn btn-secondary"
-                            data-dismiss="modal"
-                          >
-                            Закрыть
-                          </button>
-                          <button
-                            type="button"
-                            class="btn btn-danger reject-modal-btn"
-                            data-id="{{ user.id }}"
-                            data-dismiss="modal"
-                          >
-                            Отклонить
-                          </button>
-                        </div>
+        <table class="table sortable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Имя</th>
+              <th>Почта</th>
+              <th>Телефон</th>
+              <th>Программа</th>
+              <th>Документы</th>
+              <th>Подтвердить</th>
+              <th>Отклонить</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+            <tr>
+              <td>
+                <input style="width: 60px" value="{{ user.id }}" readonly />
+              </td>
+              <td>{{ user.fullName }}<br>{{ user.parentFullName }} (род.)</td>
+              <td>{{ user.email }}<br>{{ user.parentEmail }} (род.)</td>
+              <td>{{ user.phone }}<br>{{ user.parentPhone }} (род.)</td>
+              <td>{{ user.application.selectedProgram }}</td>
+              <td>
+                <a href="/admin/get_pdf_docs?user_id={{ user.id }}">Документы</a>
+              </td>
+              <td>
+                <button class="btn btn-success confirm-btn" data-id="{{ user.id }}">
+                  Подтвердить
+                </button>
+              </td>
+              <td>
+                <button class="btn btn-danger reject-btn" data-toggle="modal" data-target="#rejectModal{{ user.id }}"
+                  data-id="{{ user.id }}">
+                  Отклонить
+                </button>
+                <div class="modal fade" id="rejectModal{{ user.id }}" tabindex="-1" role="dialog"
+                  aria-labelledby="rejectModalLabel{{ user.id }}" aria-hidden="true">
+                  <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="rejectModalLabel{{ user.id }}">
+                          Отклонить абитуриента
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                      </div>
+                      <div class="modal-body">
+                        <label for="rejectionReason{{ user.id }}">Причина отклонения:</label>
+                        <textarea class="form-control" id="rejectionReason{{ user.id }}" rows="3"></textarea>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                          Закрыть
+                        </button>
+                        <button type="button" class="btn btn-danger reject-modal-btn" data-id="{{ user.id }}"
+                          data-dismiss="modal">
+                          Отклонить
+                        </button>
                       </div>
                     </div>
                   </div>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
     </div>
+  </div>
 
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        // Обработчик для кнопки "Подтвердить"
-        document.querySelectorAll(".confirm-btn").forEach(function (button) {
+  <link href="https://cdn.jsdelivr.net/gh/tofsjonas/sortable@latest/sortable.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/gh/tofsjonas/sortable@latest/sortable.min.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+
+      // Обработчик для кнопки "Подтвердить"
+      document.querySelectorAll(".confirm-btn").forEach(function (button) {
+        button.addEventListener("click", function () {
+          console.log(this);
+          var userId = this.getAttribute("data-id");
+          sendDecision(button, userId, "approved");
+        });
+      });
+
+      // Обработчик для кнопки "Отклонить" в модальном окне
+      document
+        .querySelectorAll(".reject-modal-btn")
+        .forEach(function (button) {
           button.addEventListener("click", function () {
-            console.log(this);
             var userId = this.getAttribute("data-id");
-            sendDecision(button, userId, "approved");
+            var reason = document.getElementById(
+              "rejectionReason" + userId
+            ).value;
+            sendDecision(button, userId, "rejected", reason);
           });
         });
 
-        // Обработчик для кнопки "Отклонить" в модальном окне
-        document
-          .querySelectorAll(".reject-modal-btn")
-          .forEach(function (button) {
-            button.addEventListener("click", function () {
-              var userId = this.getAttribute("data-id");
-              var reason = document.getElementById(
-                "rejectionReason" + userId
-              ).value;
-              sendDecision(button, userId, "rejected", reason);
-            });
-          });
+      function sendDecision(button, userId, status, reason = null) {
+        var data = {
+          userId: userId,
+          status: status,
+          reason: reason,
+        };
 
-        function sendDecision(button, userId, status, reason = null) {
-          var data = {
-            userId: userId,
-            status: status,
-            reason: reason,
-          };
-
-          fetch("/admin/approve", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data),
+        fetch("/admin/approve", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        })
+          .then((response) => {
+            return Promise.all([response.json(), response.ok]);
           })
-            .then((response) => {
-              return Promise.all([response.json(), response.ok]);
-            })
-            .then(([data, ok]) => {
-              if (!ok) {
-                throw new Error(data.detail);
-              }
+          .then(([data, ok]) => {
+            if (!ok) {
+              throw new Error(data.detail);
+            }
 
-              console.log("Решение успешно отправлено на сервер:", data);
-              // Удаление строки из таблицы
-              var row = button.closest("tr");
-              row.parentNode.removeChild(row);
-            })
-            .catch((error) => {
-              console.error("Ошибка при отправке решения:", error);
-              alert(error);
-              location.reload();
-            });
-        }
-      });
-    </script>
+            console.log("Решение успешно отправлено на сервер:", data);
+            // Удаление строки из таблицы
+            var row = button.closest("tr");
+            row.parentNode.removeChild(row);
+          })
+          .catch((error) => {
+            console.error("Ошибка при отправке решения:", error);
+            alert(error);
+            location.reload();
+          });
+      }
+    });
+  </script>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  </body>
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+
 </html>

@@ -168,7 +168,9 @@ def update_user_application_discounts(user_id: str, discounts: list[str]):
     return update_user_application_field(user_id, "discounts", discounts)
 
 
-def update_user_application_rejection_reason(user_id: str, rejection_reason: str):
+def update_user_application_rejection_reason(
+    user_id: str, rejection_reason: str | None
+):
     return update_user_application_field(
         user_id, "lastRejectionReason", rejection_reason
     )
@@ -314,3 +316,38 @@ def get_all_discounts() -> list[str]:
 
 def user_count_by_application_state(state: statemachine.State) -> int:
     return users.count_documents({"application.status": state.id})
+
+
+def get_rejected_by_data_users() -> list[User]:
+    return [
+        User(**user)
+        for user in users.find(
+            {
+                "$and": [
+                    {"application.lastRejectionReason": {"$ne": None}},
+                    {
+                        "$or": [
+                            {"application.status": ApplicationState.filling_info.id},
+                            {"application.status": ApplicationState.filling_docs.id},
+                        ]
+                    },
+                ]
+            }
+        )
+    ]
+
+
+def get_rejected_by_data_users_count() -> int:
+    return users.count_documents(
+        {
+            "$and": [
+                {"application.lastRejectionReason": {"$ne": None}},
+                {
+                    "$or": [
+                        {"application.status": ApplicationState.filling_info.id},
+                        {"application.status": ApplicationState.filling_docs.id},
+                    ]
+                },
+            ]
+        }
+    )

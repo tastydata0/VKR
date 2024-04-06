@@ -16,6 +16,10 @@ def save_file_encrypted(filename: str, data: bytes) -> Document:
 
 
 def read_encrypted_document(document: Document) -> bytes:
-    fernet = Fernet(document.encryptionKey)
-    with open(document.filename, "rb") as f:
-        return fernet.decrypt(f.read())
+    if document.encryptionVersion == 0:
+        with open(document.filename, "rb") as f:
+            return f.read()
+    elif document.encryptionVersion == 1:
+        fernet = Fernet(document.encryptionKey)
+        with open(document.filename, "rb") as f:
+            return fernet.decrypt(f.read())

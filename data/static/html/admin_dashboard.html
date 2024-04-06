@@ -26,6 +26,17 @@ endblock %} {% block base_content %}
 
         <li class="list-group-item d-flex justify-content-between align-items-start">
           <div class="ms-2 me-auto">
+            <a href="/admin/rejected_users_by_docs" class="fw-bold">Отклоненные заявки</a>
+            <br>
+            Просмотр отклоненных заявок
+          </div>
+          {% if badges.rejected > 0 %}
+          <span class="badge text-bg-primary rounded-pill">{{badges.rejected}}</span>
+          {% endif %}
+        </li>
+
+        <li class="list-group-item d-flex justify-content-between align-items-start">
+          <div class="ms-2 me-auto">
             <a href="/admin/competition" class="fw-bold">Зачисление</a>
             <br>
             Зачисление на основе конкурса

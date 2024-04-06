@@ -660,7 +660,7 @@ async def admin_dashboard(request: Request):
                 "competition": database.user_count_by_application_state(
                     ApplicationState.approved
                 ),
-                "rejected": database.get_rejected_by_data_users_count()
+                "rejected": database.get_rejected_by_data_users_count(),
             },
         },
     )
@@ -683,6 +683,7 @@ def get_captcha(request: Request):
     captcha_img = create_captcha(request.client.host)
     return StreamingResponse(content=captcha_img, media_type="image/jpeg")
 
+
 @app.get("/admin/rejected_users_by_docs")
 @requires("admin")
 async def admin_approve(request: Request):
@@ -693,6 +694,7 @@ async def admin_approve(request: Request):
             "users": database.get_rejected_by_data_users(),
         },
     )
+
 
 @app.get("/admin/approve")
 @requires("admin")
@@ -740,8 +742,17 @@ async def admin_approve_post(request: Request, data: AdminApprovalDto):
 @app.get("/admin/get_pdf_docs")
 @requires("admin")
 async def admin_get_pdf_docs(request: Request, user_id: str):
+    user = database.find_user(user_id)
+    user_docs = user.application.documents
+    if user_docs is None:
+        return Response(
+            content=f"Пользователь {user.fullName} ({user_id}) не имеет документов.",
+            status_code=404,
+            media_type="text/plain",
+        )
+
     return Response(
-        content=database.find_user(user_id).application.documents.mergedPdf.read_file(),
+        content=user_docs.mergedPdf.read_file(),
         media_type="application/pdf",
     )
 

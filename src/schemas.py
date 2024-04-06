@@ -25,6 +25,7 @@ def confirm_program_schema() -> dict:
         "type": "object",
         "properties": {
             "id": {
+                "propertyOrder": 1,
                 "title": "ID",
                 "type": "string",
                 "enum": [p.baseId for p in database.load_relevant_programs(True, True)],

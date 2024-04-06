@@ -310,3 +310,7 @@ def realize_program(
 
 def get_all_discounts() -> list[str]:
     return config_db.find_one()["discounts"]
+
+
+def user_count_by_application_state(state: statemachine.State) -> int:
+    return users.count_documents({"application.status": state.id})

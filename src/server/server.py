@@ -644,7 +644,12 @@ async def create_admin_token(form_data: AdminLoginDto):
 @requires("admin")
 async def admin_dashboard(request: Request):
     return templates.TemplateResponse(
-        "admin_dashboard.html", {"request": request, "admin_email": request.user.email}
+        "admin_dashboard.html",
+        {
+            "request": request,
+            "admin_email": request.user.email,
+            "badges": {"approve": database.user_count_by_application_state(ApplicationState.waiting_confirmation), "competition": database.user_count_by_application_state(ApplicationState.approved)},
+        },
     )
 
 

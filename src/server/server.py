@@ -534,7 +534,7 @@ async def upload_files(
 
     database.update_user_application_rejection_reason(
         user_id=request.user.id,
-        reason=None,
+        rejection_reason=None,
     )
 
     state.fill_docs()

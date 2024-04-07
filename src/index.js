@@ -1,3 +1,5 @@
+import "../data/static/css/style.css";
+
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
@@ -16,5 +18,3 @@ import "sortable-tablesort/sortable.min.css";
 import "sortable-tablesort/sortable.min.js";
 
 import "@fortawesome/fontawesome-free/css/all.css";
-
-import "../data/static/css/style.css";

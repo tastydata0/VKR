@@ -67,6 +67,7 @@ form_fields = [
         name="birthDate",
         type="text",
         placeholder="ДД.ММ.ГГГГ",
+        extraInputClasses="datepicker",
     ),
     FormField(
         id="birthPlace",
@@ -81,15 +82,17 @@ form_fields = [
         label="Ваш телефон",
         name="phone",
         type="text",
-        placeholder="Введите ваш номер телефона",
+        placeholder="+7 ...",
         default_value="",
+        extraInputClasses="input-phone",
     ),
     FormField(
         id="parentPhone",
         label="Телефон родителя",
         name="parentPhone",
         type="text",
-        placeholder="Введите номер телефона родителя",
+        placeholder="+7 ...",
         default_value="",
+        extraInputClasses="input-phone-2",
     ),
 ]

@@ -1,356 +1,268 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      crossorigin="anonymous"
-    />
-    <style>
-      .warning {
-        margin-bottom: 10px;
-        padding: 10px;
-        background-color: #ffc10733;
-        border: 1px solid #ffc107;
-        border-radius: 5px;
-      }
-    </style>
-  </head>
-  <body>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
-    {% extends "base_with_status.html" %} {% block title %} Загрузка документов
-    {% endblock %} {% block base_with_status_content %}
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    .warning {
+      margin-bottom: 10px;
+      padding: 10px;
+      background-color: #ffc10733;
+      border: 1px solid #ffc107;
+      border-radius: 5px;
+    }
+  </style>
+</head>
 
-    <div class="container">
-      <h1 class="mt-4">Загрузка документов</h1>
-      <hr />
+<body>
+  {% extends "base_with_status.html" %} {% block title %} Загрузка документов
+  {% endblock %} {% block base_with_status_content %}
 
-      {% if lastRejectionReason %}
-      <div class="warning mt-4">
-        Внимание! Документы и/или данные были отклонены. Причина: {{
-        lastRejectionReason }}
-      </div>
-      {% endif %}
+  <div class="container">
+    <h1 class="mt-4">Загрузка документов</h1>
 
-      <form
-        id="fileUploadForm"
-        action="/application/fill_docs"
-        method="post"
-        enctype="multipart/form-data"
-        novalidate
-      >
-        <div class="mb-3">
-          <label for="applicationFiles" class="form-label"
-            >Заявление на зачисление:</label
-          >
-          <a href="/get_filled_application"
-            >Скачать частично заполненное для вас заявление</a
-          >
-          <input
-            type="file"
-            class="form-control"
-            id="applicationFiles"
-            name="application_files"
-            accept=".pdf, .jpg, .jpeg, .png"
-            multiple
-            required
-          />
-          <div id="applicationFilesThumbnail" class="thumbnail"></div>
-        </div>
-
-        <div class="mb-3">
-          <label for="consentFiles" class="form-label"
-            >Согласие на обработку данных:</label
-          >
-
-          <a href="/get_filled_consent"
-            >Скачать частично заполненное для вас согласие</a
-          >
-          <input
-            type="file"
-            class="form-control"
-            id="consentFiles"
-            name="consent_files"
-            accept=".pdf, .jpg, .jpeg, .png"
-            multiple
-            required
-          />
-          <div id="consentFilesThumbnail" class="thumbnail"></div>
-        </div>
-
-        <hr />
-
-        <div class="mb-3">
-          <label for="parentPassportFiles" class="form-label"
-            >Паспорт родителя:</label
-          >
-          <input
-            type="file"
-            class="form-control"
-            id="parentPassportFiles"
-            name="parent_passport_files"
-            accept=".pdf, .jpg, .jpeg, .png"
-            multiple
-            required
-          />
-          <div id="parentPassportFilesThumbnail" class="thumbnail"></div>
-          {% if documents.parentPassportFiles %}
-          <input type="checkbox" id="parentPassportFilesUseExisting" checked />
-          <label for="parentPassportFilesUseExisting" class="form-label ml-1"
-            >Использовать ранее загруженный документ
-            {{documents.parentPassportFiles[0].timestamp}}</label
-          >
-          {% endif %}
-        </div>
-
-        <div class="mb-3">
-          <label for="childPassportFiles" class="form-label"
-            >Паспорт ребенка:</label
-          >
-          <input
-            type="file"
-            class="form-control"
-            id="childPassportFiles"
-            name="child_passport_files"
-            accept=".pdf, .jpg, .jpeg, .png"
-            multiple
-            required
-          />
-          <div id="childPassportFilesThumbnail" class="thumbnail"></div>
-          {% if documents.childPassportFiles %}
-          <input type="checkbox" id="childPassportFilesUseExisting" checked />
-          <label for="childPassportFilesUseExisting" class="form-label ml-1"
-            >Использовать ранее загруженный документ
-            {{documents.childPassportFiles[0].timestamp}}</label
-          >
-          {% endif %}
-        </div>
-
-        <hr />
-
-        <div class="mb-3">
-          <label for="parentSnilsFiles" class="form-label"
-            >СНИЛС родителя:</label
-          >
-          <input
-            type="file"
-            class="form-control"
-            id="parentSnilsFiles"
-            name="parent_snils_files"
-            accept=".pdf, .jpg, .jpeg, .png"
-            multiple
-            required
-          />
-          <div id="parentSnilsFilesThumbnail" class="thumbnail"></div>
-          {% if documents.parentSnilsFiles %}
-          <input type="checkbox" id="parentSnilsFilesUseExisting" checked />
-          <label for="parentSnilsFilesUseExisting" class="form-label ml-1"
-            >Использовать ранее загруженный документ
-            {{documents.parentSnilsFiles[0].timestamp}}</label
-          >
-          {% endif %}
-        </div>
-
-        <div class="mb-3">
-          <label for="childSnilsFiles" class="form-label">СНИЛС ребенка:</label>
-          <input
-            type="file"
-            class="form-control"
-            id="childSnilsFiles"
-            name="child_snils_files"
-            accept=".pdf, .jpg, .jpeg, .png"
-            multiple
-            required
-          />
-          <div id="childSnilsFilesThumbnail" class="thumbnail"></div>
-          {% if documents.childSnilsFiles %}
-          <input type="checkbox" id="childSnilsFilesUseExisting" checked />
-          <label for="childSnilsFilesUseExisting" class="form-label ml-1"
-            >Использовать ранее загруженный документ
-            {{documents.childSnilsFiles[0].timestamp}}</label
-          >
-          {% endif %}
-        </div>
-        <div class="mb-3">
-          <label for="captcha">Введите сообщение с картинки:</label><br />
-          <img id="captchaImg" class="mb-2" src="/captcha" />
-          <input
-            type="text"
-            class="form-control"
-            id="captcha"
-            name="captcha"
-            required
-          />
-        </div>
-
-        <div class="warning">
-          После отправки мы будем рассматривать документы и данные и уведомим
-          вас о том, были ли они приняты или нужно внести изменения.
-        </div>
-
-        <button type="submit" class="btn btn-primary mb-4">Загрузить</button>
-      </form>
+    {% if lastRejectionReason %}
+    <div class="warning mt-4">
+      Внимание! Документы и/или данные были отклонены. Причина: {{
+      lastRejectionReason }}
     </div>
-    <script>
-      function refreshFileUploadVisibility(id) {
-        if ($(`#${id}UseExisting`).is(":checked")) {
-          $(`#${id}`).hide();
-          $(`#${id}Thumbnail`).hide();
-        } else {
-          $(`#${id}`).show();
-          $(`#${id}Thumbnail`).show();
-        }
+    {% endif %}
+
+    <form id="fileUploadForm" action="/application/fill_docs" method="post" enctype="multipart/form-data" novalidate>
+      <div class="mb-3">
+        <label for="applicationFiles" class="form-label">Заявление на зачисление:</label>
+        <a href="/get_filled_application">Скачать частично заполненное для вас заявление</a>
+        <input type="file" class="form-control" id="applicationFiles" name="application_files"
+          accept=".pdf, .jpg, .jpeg, .png" multiple required />
+        <div id="applicationFilesThumbnail" class="thumbnail"></div>
+      </div>
+
+      <div class="mb-3">
+        <label for="consentFiles" class="form-label">Согласие на обработку данных:</label>
+
+        <a href="/get_filled_consent">Скачать частично заполненное для вас согласие</a>
+        <input type="file" class="form-control" id="consentFiles" name="consent_files" accept=".pdf, .jpg, .jpeg, .png"
+          multiple required />
+        <div id="consentFilesThumbnail" class="thumbnail"></div>
+      </div>
+
+
+      <div class="mb-3">
+        <label for="parentPassportFiles" class="form-label">Паспорт родителя:</label>
+        <input type="file" class="form-control" id="parentPassportFiles" name="parent_passport_files"
+          accept=".pdf, .jpg, .jpeg, .png" multiple required />
+        <div id="parentPassportFilesThumbnail" class="thumbnail"></div>
+        {% if documents.parentPassportFiles %}
+        <input type="checkbox" id="parentPassportFilesUseExisting" checked />
+        <label for="parentPassportFilesUseExisting" class="form-label ml-1">Использовать ранее загруженный документ
+          {{documents.parentPassportFiles[0].timestamp}}</label>
+        {% endif %}
+      </div>
+
+      <div class="mb-3">
+        <label for="childPassportFiles" class="form-label">Паспорт ребенка:</label>
+        <input type="file" class="form-control" id="childPassportFiles" name="child_passport_files"
+          accept=".pdf, .jpg, .jpeg, .png" multiple required />
+        <div id="childPassportFilesThumbnail" class="thumbnail"></div>
+        {% if documents.childPassportFiles %}
+        <input type="checkbox" id="childPassportFilesUseExisting" checked />
+        <label for="childPassportFilesUseExisting" class="form-label ml-1">Использовать ранее загруженный документ
+          {{documents.childPassportFiles[0].timestamp}}</label>
+        {% endif %}
+      </div>
+
+
+      <div class="mb-3">
+        <label for="parentSnilsFiles" class="form-label">СНИЛС родителя:</label>
+        <input type="file" class="form-control" id="parentSnilsFiles" name="parent_snils_files"
+          accept=".pdf, .jpg, .jpeg, .png" multiple required />
+        <div id="parentSnilsFilesThumbnail" class="thumbnail"></div>
+        {% if documents.parentSnilsFiles %}
+        <input type="checkbox" id="parentSnilsFilesUseExisting" checked />
+        <label for="parentSnilsFilesUseExisting" class="form-label ml-1">Использовать ранее загруженный документ
+          {{documents.parentSnilsFiles[0].timestamp}}</label>
+        {% endif %}
+      </div>
+
+      <div class="mb-3">
+        <label for="childSnilsFiles" class="form-label">СНИЛС ребенка:</label>
+        <input type="file" class="form-control" id="childSnilsFiles" name="child_snils_files"
+          accept=".pdf, .jpg, .jpeg, .png" multiple required />
+        <div id="childSnilsFilesThumbnail" class="thumbnail"></div>
+        {% if documents.childSnilsFiles %}
+        <input type="checkbox" id="childSnilsFilesUseExisting" checked />
+        <label for="childSnilsFilesUseExisting" class="form-label ml-1">Использовать ранее загруженный документ
+          {{documents.childSnilsFiles[0].timestamp}}</label>
+        {% endif %}
+      </div>
+      <div class="mb-3">
+        <label for="captcha">Введите сообщение с картинки:</label><br />
+        <img id="captchaImg" class="mb-2" src="/captcha" />
+        <input type="text" class="form-control" id="captcha" name="captcha" required />
+      </div>
+
+      <div class="warning">
+        После отправки мы будем рассматривать документы и данные и уведомим
+        вас о том, были ли они приняты или нужно внести изменения.
+      </div>
+
+      <button type="submit" class="btn btn-primary mb-4">Загрузить</button>
+    </form>
+  </div>
+  <script>
+    function refreshFileUploadVisibility(id) {
+      if ($(`#${id}UseExisting`).is(":checked")) {
+        $(`#${id}`).hide();
+        $(`#${id}Thumbnail`).hide();
+      } else {
+        $(`#${id}`).show();
+        $(`#${id}Thumbnail`).show();
       }
+    }
 
-      $("#parentPassportFilesUseExisting").change(function () {
-        refreshFileUploadVisibility("parentPassportFiles");
-      });
-      $("#childPassportFilesUseExisting").change(function () {
-        refreshFileUploadVisibility("childPassportFiles");
-      });
-      $("#parentSnilsFilesUseExisting").change(function () {
-        refreshFileUploadVisibility("parentSnilsFiles");
-      });
-      $("#childSnilsFilesUseExisting").change(function () {
-        refreshFileUploadVisibility("childSnilsFiles");
-      });
-
+    $("#parentPassportFilesUseExisting").change(function () {
       refreshFileUploadVisibility("parentPassportFiles");
+    });
+    $("#childPassportFilesUseExisting").change(function () {
       refreshFileUploadVisibility("childPassportFiles");
+    });
+    $("#parentSnilsFilesUseExisting").change(function () {
       refreshFileUploadVisibility("parentSnilsFiles");
+    });
+    $("#childSnilsFilesUseExisting").change(function () {
       refreshFileUploadVisibility("childSnilsFiles");
+    });
 
-      document
-        .getElementById("fileUploadForm")
-        .addEventListener("submit", function (event) {
-          event.preventDefault();
+    refreshFileUploadVisibility("parentPassportFiles");
+    refreshFileUploadVisibility("childPassportFiles");
+    refreshFileUploadVisibility("parentSnilsFiles");
+    refreshFileUploadVisibility("childSnilsFiles");
 
-          const data = new FormData();
-          for (const file of document.getElementById("applicationFiles")
+    document
+      .getElementById("fileUploadForm")
+      .addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const data = new FormData();
+        for (const file of document.getElementById("applicationFiles")
+          .files) {
+          data.append("application_files", file);
+        }
+        for (const file of document.getElementById("consentFiles").files) {
+          data.append("consent_files", file);
+        }
+        if ($("#parentPassportFilesUseExisting").is(":checked")) {
+          data.append("parent_passport_files", "use_existing");
+        } else {
+          for (const file of document.getElementById("parentPassportFiles")
             .files) {
-            data.append("application_files", file);
+            data.append("parent_passport_files", file);
           }
-          for (const file of document.getElementById("consentFiles").files) {
-            data.append("consent_files", file);
+        }
+        if ($("#childPassportFilesUseExisting").is(":checked")) {
+          data.append("child_passport_files", "use_existing");
+        } else {
+          for (const file of document.getElementById("childPassportFiles")
+            .files) {
+            data.append("child_passport_files", file);
           }
-          if ($("#parentPassportFilesUseExisting").is(":checked")) {
-            data.append("parent_passport_files", "use_existing");
+        }
+        if ($("#parentSnilsFilesUseExisting").is(":checked")) {
+          data.append("parent_snils_files", "use_existing");
+        } else {
+          for (const file of document.getElementById("parentSnilsFiles")
+            .files) {
+            data.append("parent_snils_files", file);
+          }
+        }
+        if ($("#childSnilsFilesUseExisting").is(":checked")) {
+          data.append("child_snils_files", "use_existing");
+        } else {
+          for (const file of document.getElementById("childSnilsFiles")
+            .files) {
+            data.append("child_snils_files", file);
+          }
+        }
+
+        if (!data.has("application_files")) {
+          alert("Необходимо загрузить заявление");
+          return;
+        }
+        if (!data.has("consent_files")) {
+          alert("Необходимо загрузить согласие");
+          return;
+        }
+        if (!data.has("parent_passport_files")) {
+          alert("Необходимо заполнить паспорт родителя");
+          return;
+        }
+        if (!data.has("child_passport_files")) {
+          alert("Необходимо заполнить паспорт ребенка");
+          return;
+        }
+        if (!data.has("parent_snils_files")) {
+          alert("Необходимо заполнить СНИЛС родителя");
+          return;
+        }
+        if (!data.has("child_snils_files")) {
+          alert("Необходимо заполнить СНИЛС ребенка");
+          return;
+        }
+
+        console.log(data);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open(
+          "POST",
+          "/application/fill_docs?captcha=" +
+          document.getElementById("captcha").value,
+          true
+        );
+
+        xhr.send(data);
+
+        // Обновить капчу (препятствуем кэшу через getTime)
+        document.getElementById("captchaImg").src =
+          "/captcha?" + new Date().getTime();
+
+        xhr.onload = function () {
+          if (xhr.status === 200) {
+            window.location.href = xhr.responseURL;
           } else {
-            for (const file of document.getElementById("parentPassportFiles")
-              .files) {
-              data.append("parent_passport_files", file);
-            }
+            alert(
+              "Ошибка отправки документов: " +
+              JSON.parse(xhr.responseText).detail
+            );
           }
-          if ($("#childPassportFilesUseExisting").is(":checked")) {
-            data.append("child_passport_files", "use_existing");
-          } else {
-            for (const file of document.getElementById("childPassportFiles")
-              .files) {
-              data.append("child_passport_files", file);
-            }
-          }
-          if ($("#parentSnilsFilesUseExisting").is(":checked")) {
-            data.append("parent_snils_files", "use_existing");
-          } else {
-            for (const file of document.getElementById("parentSnilsFiles")
-              .files) {
-              data.append("parent_snils_files", file);
-            }
-          }
-          if ($("#childSnilsFilesUseExisting").is(":checked")) {
-            data.append("child_snils_files", "use_existing");
-          } else {
-            for (const file of document.getElementById("childSnilsFiles")
-              .files) {
-              data.append("child_snils_files", file);
-            }
-          }
+        };
+      });
 
-          if (!data.has("application_files")) {
-            alert("Необходимо загрузить заявление");
-            return;
-          }
-          if (!data.has("consent_files")) {
-            alert("Необходимо загрузить согласие");
-            return;
-          }
-          if (!data.has("parent_passport_files")) {
-            alert("Необходимо заполнить паспорт родителя");
-            return;
-          }
-          if (!data.has("child_passport_files")) {
-            alert("Необходимо заполнить паспорт ребенка");
-            return;
-          }
-          if (!data.has("parent_snils_files")) {
-            alert("Необходимо заполнить СНИЛС родителя");
-            return;
-          }
-          if (!data.has("child_snils_files")) {
-            alert("Необходимо заполнить СНИЛС ребенка");
-            return;
-          }
+    const displayThumbnail = (inputId, thumbnailId) => {
+      const fileInput = document.getElementById(inputId);
+      const thumbnail = document.getElementById(thumbnailId);
+      fileInput.addEventListener("change", function () {
+        thumbnail.innerHTML = "";
 
-          console.log(data);
-
-          var xhr = new XMLHttpRequest();
-          xhr.open(
-            "POST",
-            "/application/fill_docs?captcha=" +
-              document.getElementById("captcha").value,
-            true
-          );
-
-          xhr.send(data);
-
-          // Обновить капчу (препятствуем кэшу через getTime)
-          document.getElementById("captchaImg").src =
-            "/captcha?" + new Date().getTime();
-
-          xhr.onload = function () {
-            if (xhr.status === 200) {
-              window.location.href = xhr.responseURL;
-            } else {
-              alert(
-                "Ошибка отправки документов: " +
-                  JSON.parse(xhr.responseText).detail
-              );
-            }
+        for (let i = 0; i < fileInput.files.length; i++) {
+          const file = fileInput.files[i];
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            const img = document.createElement("img");
+            img.src = e.target.result;
+            img.style.maxHeight = "150px";
+            img.style.maxWidth = "100%";
+            thumbnail.appendChild(img);
           };
-        });
+          reader.readAsDataURL(file);
+        }
+      });
+    };
 
-      const displayThumbnail = (inputId, thumbnailId) => {
-        const fileInput = document.getElementById(inputId);
-        const thumbnail = document.getElementById(thumbnailId);
-        fileInput.addEventListener("change", function () {
-          thumbnail.innerHTML = "";
-
-          for (let i = 0; i < fileInput.files.length; i++) {
-            const file = fileInput.files[i];
-            const reader = new FileReader();
-            reader.onload = function (e) {
-              const img = document.createElement("img");
-              img.src = e.target.result;
-              img.style.maxHeight = "150px";
-              img.style.maxWidth = "100%";
-              thumbnail.appendChild(img);
-            };
-            reader.readAsDataURL(file);
-          }
-        });
-      };
-
-      displayThumbnail("applicationFiles", "applicationFilesThumbnail");
-      displayThumbnail("consentFiles", "consentFilesThumbnail");
-      displayThumbnail("parentPassportFiles", "parentPassportFilesThumbnail");
-      displayThumbnail("childPassportFiles", "childPassportFilesThumbnail");
-      displayThumbnail("parentSnilsFiles", "parentSnilsFilesThumbnail");
-      displayThumbnail("childSnilsFiles", "childSnilsFilesThumbnail");
-    </script>
-    {% endblock %}
-  </body>
-</html>
+    displayThumbnail("applicationFiles", "applicationFilesThumbnail");
+    displayThumbnail("consentFiles", "consentFilesThumbnail");
+    displayThumbnail("parentPassportFiles", "parentPassportFilesThumbnail");
+    displayThumbnail("childPassportFiles", "childPassportFilesThumbnail");
+    displayThumbnail("parentSnilsFiles", "parentSnilsFilesThumbnail");
+    displayThumbnail("childSnilsFiles", "childSnilsFilesThumbnail");
+  </script>
+  {% endblock %}

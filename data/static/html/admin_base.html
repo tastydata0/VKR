@@ -19,29 +19,18 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav mr-auto"></ul>
         <ul class="navbar-nav">
-          {% if user is undefined %}
           <li class="nav-item">
-            <a class="nav-link" href="/login">Вход</a>
+            <a class="nav-link" href="/admin/dashboard">К панели администратора</a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/registration">Регистрация</a>
-          </li>
-          {% else %}
-          <li class="nav-item">
-            <a class="nav-link" href="/"> 🙋🏼 {{ user.fullName }}</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">Выход</a>
-          </li>
-          {% endif %}
         </ul>
       </div>
     </nav>
   </div>
-  <div class="container">{% block base_content %}{% endblock %}</div>
+  <div class="">{% block base_content %}{% endblock %}</div>
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="/static/dist/bundle.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
   <script>
     $(document).ready(function () {
       $('.navbar-toggler').on('click', function () {

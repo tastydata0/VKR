@@ -1,46 +1,38 @@
 {% extends "base_with_status.html" %} {% block title %} Подача заявления {%
 endblock %} {% block base_with_status_content %}
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  </head>
+<h2 class="mt-4">Заявка отправлена!</h2>
+<p>
+  Ваша заявка успешно отправлена. Ожидайте подтверждения. Мы пришлем
+  сообщение на почту:
+<pre><b>{{user.email}}</b></pre>
+</p>
+<h3>Отозвать заявку?</h3>
+<p>
+  Если вы хотите выбрать другую программу или случайно ввели не те данные
+  или загрузили не те документы, то можете отозвать подтверждение и прямо
+  сейчас внести изменения.
+</p>
+<a class="btn btn-danger" id="cancel_btn">Отозвать заявку</a>
+</body>
 
-  <body>
-    <h2 class="mt-4">Заявка отправлена!</h2>
-    <p>
-      Ваша заявка успешно отправлена. Ожидайте подтверждения. Мы пришлем
-      сообщение на почту: <pre><b>{{user.email}}</b></pre>
-    </p>
-    <h3>Отозвать заявку?</h3>
-    <p>
-      Если вы хотите выбрать другую программу или случайно ввели не те данные
-      или загрузили не те документы, то можете отозвать подтверждение и прямо
-      сейчас внести изменения.
-    </p>
-    <a class="btn btn-danger" id="cancel_btn">Отозвать заявку</a>
-  </body>
-
-  <script>
-    $("#cancel_btn").click(() => {
-      // Prompt
-      if (confirm("Вы уверены, что хотите отозвать заявку?")) {
-        fetch("/refill_data", {
-          method: "POST",
+<script>
+  $("#cancel_btn").click(() => {
+    // Prompt
+    if (confirm("Вы уверены, что хотите отозвать заявку?")) {
+      fetch("/refill_data", {
+        method: "POST",
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          window.location.href = '/application';
         })
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error("Network response was not ok");
-            }
-            window.location.href = '/application';
-          })
-          .catch((error) => {
-            console.error("Ошибка при отправке решения:", error);
-          });
-      }
-    });
-  </script>
-</html>
+        .catch((error) => {
+          console.error("Ошибка при отправке решения:", error);
+        });
+    }
+  });
+</script>
 
 {% endblock %}

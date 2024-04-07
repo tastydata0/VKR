@@ -303,6 +303,7 @@ class FormField(BaseModel):
     name: str
     type: str = "text"
     placeholder: str
+    extraInputClasses: str = ""
 
 
 class UserFillDataSubmission(UserBasicData, SelectedProgram):

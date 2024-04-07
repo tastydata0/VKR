@@ -1,29 +1,34 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <style>
-      .container2 {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-      }
-      .content2 {
-        flex-grow: 1;
-        margin-right: 20px;
-      }
-      .status {
-        flex-shrink: 0;
-      }
-    </style>
-  </head>
-  <body>
-    {% extends "base.html" %} {% block base_content %}
-    <div class="container2">
-      <div class="content2">
-        {% block base_with_status_content %}{% endblock %}
-      </div>
-      <div class="status">{% include "status.html" %}</div>
+
+<head>
+  <style>
+    .container2 {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .content2 {
+      flex-grow: 1;
+      margin-right: 20px;
+    }
+
+    .status {
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+
+<body>
+  {% extends "base.html" %} {% block base_content %}
+  <div class="container2">
+    <div class="content2">
+      {% block base_with_status_content %}{% endblock %}
     </div>
-    {% endblock %}
-  </body>
+    <div class="status">{% include "status.html" %}</div>
+  </div>
+  {% endblock %}
+</body>
+
 </html>

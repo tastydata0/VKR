@@ -75,6 +75,7 @@ app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 app.mount("/static/docs", StaticFiles(directory=generated_docs_folder))
 app.mount("/static/icons", StaticFiles(directory="data/static/icons"))
 app.mount("/static/js", StaticFiles(directory="data/static/js"), name="js")
+app.mount("/static/dist", StaticFiles(directory="dist"), name="dist")
 
 templates = Jinja2Templates(directory="data/static/html")
 

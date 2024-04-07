@@ -1,309 +1,288 @@
 {% extends "base_with_status.html" %} {% block title %} Подача заявления {%
 endblock %} {% block base_with_status_content %}
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <style>
-      .star {
-        width: 24px;
-        height: 24px;
-        vertical-align: middle;
-      }
 
-      #stars-container {
-        position: relative;
-        top: -10px;
-        margin-left: 6px;
-      }
+<head>
+  <style>
+    .star {
+      width: 24px;
+      height: 24px;
+      vertical-align: middle;
+    }
 
-      #program-details {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-      }
+    #stars-container {
+      position: relative;
+      top: -10px;
+      margin-left: 6px;
+    }
 
-      .program-icon {
-        align-self: flex-start;
-        margin-right: 10px;
-      }
+    #program-details {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
 
-      .d-flex.align-items-center {
-        display: flex;
-        align-items: center;
-      }
-      .warning {
-        margin-bottom: 10px;
-        padding: 10px;
-        background-color: #ffc10733;
-        border: 1px solid #ffc107;
-        border-radius: 5px;
-      }
-    </style>
-  </head>
+    .program-icon {
+      align-self: flex-start;
+      margin-right: 10px;
+    }
 
-  <body>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    .d-flex.align-items-center {
+      display: flex;
+      align-items: center;
+    }
 
-    {% if lastRejectionReason %}
-    <div class="warning mt-4">
-      Внимание! Документы и/или данные были отклонены. Причина: {{
-      lastRejectionReason }}
-    </div>
-    {% endif %}
+    .warning {
+      margin-bottom: 10px;
+      padding: 10px;
+      background-color: #ffc10733;
+      border: 1px solid #ffc107;
+      border-radius: 5px;
+    }
+  </style>
 
-    <form method="POST" onsubmit="sendData(event)">
-      <h2 class="mb-4 mt-4">Выбор программы</h2>
-      <div class="container">
-        <div class="row">
-          <div class="col-auto" style="padding-left: 0px; margin-bottom: 16px">
-            {% for program in programs %}
-            <div class="form-check">
-              <input class="form-check-input program-radio"
-              style="margin-bottom: 8px" type="radio" name="selectedProgram"
+</head>
+
+<body>
+  {% if lastRejectionReason %}
+  <div class="warning mt-4">
+    Внимание! Документы и/или данные были отклонены. Причина: {{
+    lastRejectionReason }}
+  </div>
+  {% endif %}
+
+  <form method="POST" onsubmit="sendData(event)">
+    <h2 class="mb-4 mt-4">Выбор программы</h2>
+    <div class="container">
+      <div class="row">
+        <div class="col-auto" style="padding-left: 0px; margin-bottom: 16px">
+          {% for program in programs %}
+          <div class="form-check">
+            <input class="form-check-input program-radio" style="margin-bottom: 8px" type="radio" name="selectedProgram"
               id="{{ program.lastRealizationId }}" value="{{
               program.lastRealizationId }}" data-program-difficulty="{{
-              program.difficulty }}" {% if selectedProgram ==
-              program.lastRealizationId %}checked{% endif %} />
+              program.difficulty }}" {% if selectedProgram==program.lastRealizationId %}checked{% endif %} />
 
-              <label
-                class="form-check-label"
-                for="{{ program.lastRealizationId }}"
-              >
-                {{ program.brief }}
-              </label>
-            </div>
-            {% endfor %}
+            <label class="form-check-label" for="{{ program.lastRealizationId }}">
+              {{ program.brief }}
+            </label>
           </div>
+          {% endfor %}
+        </div>
 
-          <div class="col">
-            <div id="program-details" class="d-flex">
-              <div>
-                <h3 id="program-title"></h3>
-                <div id="program-info" class="d-flex align-items-center">
-                  <p id="program-difficulty-label">Сложность:</p>
-                  <div id="stars-container" style="display: flex">[Звезды]</div>
-                </div>
-                <p id="program-hours" style="margin-bottom: 0px"></p>
-                <p id="program-cost"></p>
-                <p id="program-description" class="fixed-width-description">
-                  [Описание программы]
-                </p>
+        <div class="col">
+          <div id="program-details" class="d-flex">
+            <div>
+              <h3 id="program-title"></h3>
+              <div id="program-info" class="d-flex align-items-center">
+                <p id="program-difficulty-label">Сложность:</p>
+                <div id="stars-container" style="display: flex">[Звезды]</div>
               </div>
-              <div>
-                <img
-                  id="program-icon"
-                  class="program-icon"
-                  width="96"
-                  height="96"
-                />
-              </div>
+              <p id="program-hours" style="margin-bottom: 0px"></p>
+              <p id="program-cost"></p>
+              <p id="program-description" class="fixed-width-description">
+                [Описание программы]
+              </p>
+            </div>
+            <div>
+              <img id="program-icon" class="program-icon" width="96" height="96" />
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <h2>Личные данные</h2>
+    <h2>Личные данные</h2>
 
-      {% for field in form_fields %}
-      <div class="mb-3">
-        <label for="{{ field.id }}" class="form-label"
-          >{{ field.label }}:</label
-        >
-        <input
-          type="{{ field.type }}"
-          class="form-control automatic-form-field"
-          id="{{ field.id }}"
-          name="{{ field.name }}"
-          placeholder="{{ field.placeholder }}"
-          value="{% if known_data[field.name] is not none %}{{ known_data[field.name] }}{% endif %}"
-        />
+    {% for field in form_fields %}
+    <div class="mb-3">
+      <label for="{{ field.id }}" class="form-label">{{ field.label }}:</label>
+      <input type="{{ field.type }}" class="form-control automatic-form-field {{field.extraInputClasses}}"
+        id="{{ field.id }}" name="{{ field.name }}" placeholder="{{ field.placeholder }}"
+        value="{% if known_data[field.name] is not none %}{{ known_data[field.name] }}{% endif %}" />
+    </div>
+    {% endfor %}
+    <div class="mb-3">
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="checkbox" id="hasLaptop" name="hasLaptop" />
+        <label for="hasLaptop" class="form-check-label">У меня есть ноутбук, который могу приносить на занятия</label>
       </div>
+    </div>
+    <div class="mb-3">
+      <h3>Льготы</h3>
+      {% for discount in discounts %}
+      <div class="form-check form-check-inline">
+        <input class="form-check-input discount-checkbox" type="checkbox" id="discount-{{ discount.id }}"
+          name="{{ discount.id }}" {% if discount.id in selectedDiscounts %} checked {% endif %} />
+        <label class="form-check-label" for="discount-{{ discount.id }}">{{ discount.desc }}</label>
+      </div>
+      <br />
       {% endfor %}
-      <div class="mb-3">
-        <div class="form-check form-check-inline">
-          <input
-            class="form-check-input"
-            type="checkbox"
-            id="hasLaptop"
-            name="hasLaptop"
-          />
-          <label for="hasLaptop" class="form-check-label"
-            >У меня есть ноутбук, который могу приносить на занятия</label
-          >
-        </div>
-      </div>
-      <div class="mb-3">
-        <h3>Льготы</h3>
-        {% for discount in discounts %}
-        <div class="form-check form-check-inline">
-          <input
-            class="form-check-input discount-checkbox"
-            type="checkbox"
-            id="discount-{{ discount.id }}"
-            name="{{ discount.id }}"
-            {%
-            if
-            discount.id
-            in
-            selectedDiscounts
-            %}
-            checked
-            {%
-            endif
-            %}
-          />
-          <label class="form-check-label" for="discount-{{ discount.id }}"
-            >{{ discount.desc }}</label
-          >
-        </div>
-        <br />
-        {% endfor %}
-      </div>
+    </div>
 
-      <button type="submit" class="btn btn-primary mb-4">
-        Отправить данные
-      </button>
-    </form>
+    <button type="submit" class="btn btn-primary mb-4">
+      Отправить данные
+    </button>
+  </form>
 
-    <script>
+
+  <script>
+
+    document.addEventListener('DOMContentLoaded', function () {
       {% if
         known_data['hasLaptop'] %} $("#hasLaptop").prop("checked", true) {% endif %}
-      function download(url, filename) {
-        fetch(url)
-          .then((response) => response.blob())
-          .then((blob) => {
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = filename;
-            link.click();
-          })
-          .catch(console.error);
+
+
+      let cleave = new Cleave('.input-phone', {
+        phone: true,
+        phoneRegionCode: 'RU'
+      });
+
+      let cleave2 = new Cleave('.input-phone-2', {
+        phone: true,
+        phoneRegionCode: 'RU'
+      });
+
+      flatpickr(".datepicker", {
+        dateFormat: "d.m.Y",
+      });
+      $(".datepicker").css("background-color", "white");
+    });
+
+    function download(url, filename) {
+      fetch(url)
+        .then((response) => response.blob())
+        .then((blob) => {
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = filename;
+          link.click();
+        })
+        .catch(console.error);
+    }
+
+    function sendData(event) {
+      event.preventDefault();
+
+      var formElements = document.forms[0].elements;
+
+      var userData = {};
+
+      for (let field of $(".automatic-form-field")) {
+        userData[field.name] = field.value;
       }
 
-      function sendData(event) {
-        event.preventDefault();
+      userData["hasLaptop"] = document.getElementById("hasLaptop").checked;
+      userData["discounts"] = [];
 
-        var formElements = document.forms[0].elements;
+      for (let d of $(".discount-checkbox:checked")) {
+        userData["discounts"].push(d.name);
+      }
 
-        var userData = {};
-
-        for (let field of $(".automatic-form-field")) {
-          userData[field.name] = field.value;
-        }
-
-        userData["hasLaptop"] = document.getElementById("hasLaptop").checked;
-        userData["discounts"] = [];
-
-        for (let d of $(".discount-checkbox:checked")) {
-          userData["discounts"].push(d.name);
-        }
-
-        // Проводим валидацию для поля birthDate
-        if (userData.hasOwnProperty("birthDate")) {
-          var birthDate = userData.birthDate;
-          // Добавьте здесь вашу валидацию, например, проверку формата даты
-          if (!isValidDate(birthDate)) {
-            alert("Некорректный формат даты рождения.");
-            return;
-          }
-        }
-
-        var selectedProgram = document.querySelector(
-          'input[name="selectedProgram"]:checked'
-        );
-        if (selectedProgram) {
-          userData.selectedProgram = selectedProgram.value;
-        } else {
-          alert("Пожалуйста, выберите программу обучения.");
+      // Проводим валидацию для поля birthDate
+      if (userData.hasOwnProperty("birthDate")) {
+        var birthDate = userData.birthDate;
+        // Добавьте здесь вашу валидацию, например, проверку формата даты
+        if (!isValidDate(birthDate)) {
+          alert("Некорректный формат даты рождения.");
           return;
         }
-
-        // Отправляем данные на сервер
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", document.URL);
-        xhr.setRequestHeader("Content-Type", "application/json");
-        xhr.onload = function () {
-          if (xhr.status === 200) {
-            window.location.href = xhr.responseURL;
-          }
-        };
-        xhr.send(JSON.stringify(userData));
       }
 
-      function isValidDate(dateString) {
-        var datePattern = /^(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.\d{4}$/;
-
-        if (!datePattern.test(dateString)) {
-          return false;
-        }
-
-        var dateParts = dateString.split(".");
-
-        if (dateParts.length !== 3) {
-          return false;
-        }
-
-        var day = parseInt(dateParts[0], 10);
-        var month = parseInt(dateParts[1], 10);
-        var year = parseInt(dateParts[2], 10);
-
-        if (isNaN(day) || isNaN(month) || isNaN(year)) {
-          return false;
-        }
-
-        var reformattedDate = month + "/" + day + "/" + year;
-
-        var date = new Date(reformattedDate);
-
-        if (isNaN(date.getTime())) {
-          return false;
-        }
-
-        return true;
-      }
-    </script>
-    <script>
-
-      function setProgramInfo() {
-          const programId = $('input[name="selectedProgram"]:checked').val();
-          const programDifficulty = $('input[name="selectedProgram"]:checked').data("program-difficulty");
-
-          console.log("Выбрана программа с ID: " + programId);
-          console.log("Сложность программы: " + programDifficulty);
-
-          // Найдем выбранную программу по ID
-          const currentSelectedProgram = programs.find(program => program.lastRealizationId === programId);
-
-          // Установим информацию о программе
-          document.getElementById("program-title").textContent = currentSelectedProgram.brief;
-
-          const programInfo = document.getElementById("program-info");
-
-
-          const starsContainer = document.getElementById("stars-container");
-          starsContainer.innerHTML = ''; // Очистим содержимое
-          for (let i = 0; i < 3; i++) {
-              const star = document.createElement("img");
-              star.src = i < programDifficulty ? 'https://img.icons8.com/fluency-systems-filled/48/star.png' : 'https://img.icons8.com/fluency-systems-regular/48/star--v1.png';
-              star.alt = i < programDifficulty ? 'Звезда' : 'Пустая звезда';
-              star.className = 'star';
-              starsContainer.appendChild(star);
-          }
-
-        $("#program-icon").attr("src", currentSelectedProgram.iconUrl);
-        $("#program-icon").attr("alt", currentSelectedProgram.brief);
-
-        $("#program-hours").text(`${currentSelectedProgram.hoursAud + currentSelectedProgram.hoursHome} часов (${currentSelectedProgram.hoursAud} аудиторных)`)
-
-        $("#program-cost").text(`Стоимость: ${currentSelectedProgram.cost}`);
-
-        $("#program-description").html(currentSelectedProgram.infoHtml);
+      var selectedProgram = document.querySelector(
+        'input[name="selectedProgram"]:checked'
+      );
+      if (selectedProgram) {
+        userData.selectedProgram = selectedProgram.value;
+      } else {
+        alert("Пожалуйста, выберите программу обучения.");
+        return;
       }
 
-      const programs = {{ programs | tojson | safe }};
+      // Отправляем данные на сервер
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", document.URL);
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.onload = function () {
+        if (xhr.status === 200) {
+          window.location.href = xhr.responseURL;
+        }
+      };
+      xhr.send(JSON.stringify(userData));
+    }
+
+    function isValidDate(dateString) {
+      var datePattern = /^(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.\d{4}$/;
+
+      if (!datePattern.test(dateString)) {
+        return false;
+      }
+
+      var dateParts = dateString.split(".");
+
+      if (dateParts.length !== 3) {
+        return false;
+      }
+
+      var day = parseInt(dateParts[0], 10);
+      var month = parseInt(dateParts[1], 10);
+      var year = parseInt(dateParts[2], 10);
+
+      if (isNaN(day) || isNaN(month) || isNaN(year)) {
+        return false;
+      }
+
+      var reformattedDate = month + "/" + day + "/" + year;
+
+      var date = new Date(reformattedDate);
+
+      if (isNaN(date.getTime())) {
+        return false;
+      }
+
+      return true;
+    }
+  </script>
+  <script>
+    const programs = {{ programs | tojson | safe }};
+    function setProgramInfo() {
+      const programId = $('input[name="selectedProgram"]:checked').val();
+      const programDifficulty = $('input[name="selectedProgram"]:checked').data("program-difficulty");
+
+      console.log("Выбрана программа с ID: " + programId);
+      console.log("Сложность программы: " + programDifficulty);
+
+      // Найдем выбранную программу по ID
+      const currentSelectedProgram = programs.find(program => program.lastRealizationId === programId);
+
+      // Установим информацию о программе
+      document.getElementById("program-title").textContent = currentSelectedProgram.brief;
+
+      const programInfo = document.getElementById("program-info");
+
+
+      const starsContainer = document.getElementById("stars-container");
+      starsContainer.innerHTML = ''; // Очистим содержимое
+      for (let i = 0; i < 3; i++) {
+        const star = document.createElement("img");
+        star.src = i < programDifficulty ? 'https://img.icons8.com/fluency-systems-filled/48/star.png' : 'https://img.icons8.com/fluency-systems-regular/48/star--v1.png';
+        star.alt = i < programDifficulty ? 'Звезда' : 'Пустая звезда';
+        star.className = 'star';
+        starsContainer.appendChild(star);
+      }
+
+      $("#program-icon").attr("src", currentSelectedProgram.iconUrl);
+      $("#program-icon").attr("alt", currentSelectedProgram.brief);
+
+      $("#program-hours").text(`${currentSelectedProgram.hoursAud + currentSelectedProgram.hoursHome} часов (${currentSelectedProgram.hoursAud} аудиторных)`)
+
+      $("#program-cost").text(`Стоимость: ${currentSelectedProgram.cost}`);
+
+      $("#program-description").html(currentSelectedProgram.infoHtml);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+
       console.log(programs)
       $('input[type="radio"].program-radio').change(setProgramInfo);
 
@@ -314,15 +293,15 @@ endblock %} {% block base_with_status_content %}
 
       // Если выбранная программа есть, устанавливаем данные о ней
       if ((!selectedProgramId || selectedProgramId == 'None') && programs.length > 0) {
-          $('input[name="selectedProgram"][value="' + programs[0].lastRealizationId + '"]').prop('checked', true);
-          setProgramInfo();
+        $('input[name="selectedProgram"][value="' + programs[0].lastRealizationId + '"]').prop('checked', true);
+        setProgramInfo();
       } else if (selectedProgramId) {
-          const selectedProgram = programs.find(program => program.lastRealizationId === selectedProgramId);
+        const selectedProgram = programs.find(program => program.lastRealizationId === selectedProgramId);
 
-          if (selectedProgram) {
-              // Вызываем функцию, которая устанавливает данные о программе
-              setProgramInfo();
-          }
+        if (selectedProgram) {
+          // Вызываем функцию, которая устанавливает данные о программе
+          setProgramInfo();
+        }
       }
 
 
@@ -332,58 +311,17 @@ endblock %} {% block base_with_status_content %}
 
       // Предзагрузка изображений
       programs.forEach(program => {
-          const img = new Image();
-          img.src = program.iconUrl;
+        const img = new Image();
+        img.src = program.iconUrl;
       });
 
       // Предзагрузка изображения звездочки
       const starImage = new Image();
       starImage.src = 'https://img.icons8.com/fluency-systems-filled/48/star.png';
 
-      /*const buttons = document.querySelectorAll(".program-radio");
-      buttons.forEach(button => {
-          button.addEventListener("click", () => {
-              // Получим ID и сложность выбранной программы
-              const programId = button.getAttribute("data-program-id");
-              const programDifficulty = button.getAttribute("data-program-difficulty");
+    });
 
-              // Найдем выбранную программу по ID
-              const selectedProgram = programs.find(program => program.id === programId);
-
-              // Установим информацию о программе
-              document.getElementById("program-title").textContent = selectedProgram.brief;
-
-              const programInfo = document.getElementById("program-info");
-
-
-              const starsContainer = document.getElementById("stars-container");
-              starsContainer.innerHTML = ''; // Очистим содержимое
-              for (let i = 0; i < 3; i++) {
-                  const star = document.createElement("img");
-                  star.src = i < programDifficulty ? 'https://img.icons8.com/fluency-systems-filled/48/star.png' : 'https://img.icons8.com/fluency-systems-regular/48/star--v1.png';
-                  star.alt = i < programDifficulty ? 'Звезда' : 'Пустая звезда';
-                  star.className = 'star';
-                  starsContainer.appendChild(star);
-              }
-
-              const programIcon = document.getElementById("program-icon");
-              programIcon.src = selectedProgram.iconUrl;
-              programIcon.alt = selectedProgram.brief;
-
-              const programHours = document.getElementById("program-hours");
-              programHours.innerHTML = `${selectedProgram.hoursAud + selectedProgram.hoursHome} часов (${selectedProgram.hoursAud} аудиторных)`
-
-              const programCost = document.getElementById("program-cost");
-              programCost.innerHTML = `Стоимость: ${selectedProgram.cost}`
-
-              const programDescription = document.getElementById("program-description");
-              programDescription.textContent = selectedProgram.details;
-          });
-      });*/
-    </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-  </body>
-</html>
+  </script>
+</body>
 
 {% endblock %}

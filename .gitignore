@@ -169,3 +169,4 @@ data/pdf_files/
 .vscode
 
 token.json
+node_modules/*

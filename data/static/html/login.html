@@ -1,97 +1,63 @@
 {% extends "base.html" %} {% block title %} Вход | Школа::Кода {% endblock %} {%
 block base_content %}
-<!DOCTYPE html>
-<html>
-  <head>
-    <link
-      rel="stylesheet"
-      href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"
-    />
-  </head>
-  <body>
-    <div id="header-container"></div>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-    <div class="container">
-      <h1 class="mt-4">Вход</h1>
-      <form class="mt-4" id="loginForm" method="post" action="/token">
-        <div class="form-group">
-          <label for="fullName">ФИО обучающегося:</label>
-          <input
-            type="text"
-            class="form-control"
-            id="fullName"
-            name="fullName"
-            required
-            value="Иванов Иван Иванович"
-          />
-        </div>
-        <div class="form-group">
-          <label for="birthDate">Дата рождения (ДД.ММ.ГГГГ):</label>
-          <input
-            type="text"
-            class="form-control"
-            id="birthDate"
-            name="birthDate"
-            required
-            placeholder="ДД.ММ.ГГГГ"
-            value="01.01.2005"
-          />
-        </div>
-        <div class="form-group">
-          <label for="password">Пароль:</label>
-          <input
-            type="password"
-            class="form-control"
-            id="password"
-            name="password"
-            required
-          />
-        </div>
-        <button type="submit" class="btn btn-primary">Войти</button>
-      </form>
+<div id="header-container"></div>
+<div class="container">
+  <h1 class="mt-4">Вход</h1>
+  <form class="mt-4" id="loginForm" method="post" action="/token">
+    <div class="form-group">
+      <label for="fullName">ФИО обучающегося:</label>
+      <input type="text" class="form-control" id="fullName" name="fullName" required value="Иванов Иван Иванович" />
     </div>
+    <div class="form-group">
+      <label for="birthDate">Дата рождения:</label>
+      <input type="text" class="form-control datepicker" id="birthDate" name="birthDate" required />
+    </div>
+    <div class="form-group">
+      <label for="password">Пароль:</label>
+      <input type="password" class="form-control" id="password" name="password" required />
+    </div>
+    <button type="submit" class="btn btn-primary">Войти</button>
+  </form>
+</div>
 
-    <script>
-      $(function () {
-        $("#birthDate").datepicker({
-          dateFormat: "dd.mm.yy",
-        });
-      });
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    flatpickr(".datepicker", {
+      dateFormat: "d.m.Y",
+    });
+    $(".datepicker").css("background-color", "white");
+  });
 
-      document
-        .getElementById("loginForm")
-        .addEventListener("submit", function (event) {
-          event.preventDefault();
+  document
+    .getElementById("loginForm")
+    .addEventListener("submit", function (event) {
+      event.preventDefault();
 
-          var fullName = document.getElementById("fullName").value;
-          var birthDate = document.getElementById("birthDate").value;
-          var password = document.getElementById("password").value;
+      var fullName = document.getElementById("fullName").value;
+      var birthDate = document.getElementById("birthDate").value;
+      var password = document.getElementById("password").value;
 
-          var data = {
-            fullName: fullName,
-            birthDate: birthDate,
-            password: password,
-          };
+      var data = {
+        fullName: fullName,
+        birthDate: birthDate,
+        password: password,
+      };
 
-          var xhr = new XMLHttpRequest();
-          xhr.open("POST", "/token", true);
-          xhr.setRequestHeader(
-            "Content-Type",
-            "application/json;charset=UTF-8"
-          );
-          xhr.send(JSON.stringify(data));
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", "/token", true);
+      xhr.setRequestHeader(
+        "Content-Type",
+        "application/json;charset=UTF-8"
+      );
+      xhr.send(JSON.stringify(data));
 
-          xhr.onload = function () {
-            if (xhr.status === 200) {
-              location.href = "/users/me";
-            } else {
-              alert("Ошибка входа");
-            }
-          };
-        });
-    </script>
-  </body>
-</html>
-
+      xhr.onload = function () {
+        if (xhr.status === 200) {
+          location.href = "/users/me";
+        } else {
+          alert("Ошибка входа");
+        }
+      };
+    });
+</script>
 {% endblock %}

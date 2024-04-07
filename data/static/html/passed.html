@@ -1,15 +1,12 @@
 {% extends "base_with_status.html" %} {% block title %} Подача заявления {%
 endblock %} {% block base_with_status_content %}
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  </head>
-
-  <body>
-    <p>Поздравляем! Вы успешно зачислены на программу!</p>
-  </body>
-</html>
+<div class="container mt-5">
+  <h1 class="mb-2">
+    Поздравляем! <br />
+    Вы зачислены на обучение! 🎉
+  </h1>
+  <iframe width="100%" style="height: 50vh"
+    src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSeiHVm9mTGjen4BPJrggKgtkWDbCUWIFLCbggrMln3Qo-kXrv13sBOkz-0Vm6ro_dk1tR0GoelV7Uf/pubhtml?widget=true&amp;headers=false"></iframe>
+</div>
 
 {% endblock %}

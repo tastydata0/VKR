@@ -13,3 +13,4 @@ python-dotenv
 argon2-cffi
 slowapi
 fast_captcha
+cryptorgaphy

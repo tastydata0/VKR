@@ -1,51 +1,43 @@
 {% extends "base.html" %} {% block title %} Личный кабинет ШК {% endblock %} {%
 block base_content %}
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  </head>
-  <div class="container mt-5">
-    <div class="row">
-      <div class="col-md-8">
-        <div class="d-flex align-items-center mb-3">
-          <img
-            class="me-3"
-            width="60"
-            height="60"
-            src="https://img.icons8.com/external-vitaliy-gorbachev-lineal-color-vitaly-gorbachev/60/external-astronaut-space-vitaliy-gorbachev-lineal-color-vitaly-gorbachev-4.png"
-            alt="external-astronaut-space-vitaliy-gorbachev-lineal-color-vitaly-gorbachev-4"
-          />
-          <div>
-            <h1>{{user.fullName}}</h1>
-            <p>{{user.email}}</p>
-          </div>
+
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-md-8">
+      <div class="d-flex align-items-center mb-3">
+        <img class="me-3" width="60" height="60"
+          src="https://img.icons8.com/external-vitaliy-gorbachev-lineal-color-vitaly-gorbachev/60/external-astronaut-space-vitaliy-gorbachev-lineal-color-vitaly-gorbachev-4.png"
+          alt="external-astronaut-space-vitaliy-gorbachev-lineal-color-vitaly-gorbachev-4" />
+        <div>
+          <h1>{{user.fullName}}</h1>
+          <p>{{user.email}}</p>
         </div>
-        <p>
-          {% if user.phone is not none and user.phone != "" %} Телефон:
-          {{user.phone}} <br />
-          {% endif %} {% if user.parentPhone is not none and user.parentPhone !=
-          "" %} Телефон родителя: {{user.parentPhone}} <br />
-          {% endif %} Школа: {{user.school}}, {{user.schoolClass}} класс <br />
-        </p>
-        <button class="btn btn-primary mb-3">Редактировать данные</button>
-        <a href="/application" class="btn btn-success mb-3">
-          Подать заявление на обучение
-        </a>
       </div>
-      <div class="col-md-8">
-        <h4>Пройденные программы обучения</h4>
-        <ul class="list-group mb-3">
-          <li class="list-group-item">Python (2021-2022)</li>
-          <li class="list-group-item">C++ (2022-2023)</li>
-        </ul>
-        <h4>Активная заявка: {{user.applicationSelectedProgram}}</h4>
-        <p>Статус: {{user.applicationStatus}}</p>
-      </div>
+      <p>
+        {% if user.phone is not none and user.phone != "" %} Телефон:
+        {{user.phone}} <br />
+        {% endif %} {% if user.parentPhone is not none and user.parentPhone !=
+        "" %} Телефон родителя: {{user.parentPhone}} <br />
+        {% endif %} Школа: {{user.school}}, {{user.schoolClass}} класс <br />
+      </p>
+      <button class="btn btn-primary mb-3">Редактировать данные</button>
+      <a href="/application" class="btn btn-success mb-3">
+        Подать заявление на обучение
+      </a>
+    </div>
+    <div class="col-md-8">
+      <h4>Пройденные программы обучения</h4>
+      <ul class="list-group mb-3">
+        <li class="list-group-item">Python (2021-2022)</li>
+        <li class="list-group-item">C++ (2022-2023)</li>
+      </ul>
+      <h4>Активная заявка: {{user.applicationSelectedProgram}}</h4>
+      <p>Статус: {{user.applicationStatus}}</p>
     </div>
   </div>
-  <body></body>
-</html>
+</div>
+<h3>Журнал</h3>
+<iframe width="100%" height="500px"
+  src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTLf05cGQ5A_UXdE_1poSY2MAYiyzzsxsbXqJg8Rl-OqKm1lcyVaUChmpYT1K0lvwps5BtZOzizZQmd/pubhtml?widget=true&amp;headers=false"></iframe>
 
 {% endblock %}

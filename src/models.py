@@ -154,6 +154,7 @@ class Application(SelectedProgram):
     )
     lastRejectionReason: Optional[str] = Field(None)
     discounts: Optional[list[str]] = Field([])
+    teacherName: Optional[str] = Field(None)
 
     @validator("status")
     @classmethod
@@ -449,3 +450,28 @@ class AvailableProgram(BaseModel):
     cost: int
     hoursAud: int
     hoursHome: int
+
+
+class Teacher(BaseModel):
+    name: str = Field(title="ФИО преподавателя", min_length=1)
+    auditory: Optional[str] = Field(
+        None, title="Аудитория проведения занятий", min_length=1
+    )
+    schedule: Optional[str] = Field(
+        None,
+        title="Расписание занятий",
+        description="Поддерживается HTML",
+        min_length=1,
+    )
+    relevantVkGroupUrl: Optional[str] = Field(
+        None, title="Ссылка на актуальную группу ВК"
+    )
+    relevantDiscordUrl: Optional[str] = Field(
+        None, title="Ссылка на актуальный сервер Discord"
+    )
+    relevantJournalUrl: Optional[str] = Field(None, title="Ссылка на актуальный журнал")
+
+
+class MultipleSetTeacherDto(BaseModel):
+    teacherName: str
+    usersIds: list[str]

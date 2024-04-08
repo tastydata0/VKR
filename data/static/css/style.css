@@ -17,6 +17,10 @@ html *:not(h1, h2, h3, h4) {
   font-style: normal;
 }
 
+.navbar-logo {
+  margin-left: 16px;
+}
+
 .star {
   width: 24px;
   height: 24px;

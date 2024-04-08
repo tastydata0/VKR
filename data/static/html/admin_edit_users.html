@@ -1,0 +1,203 @@
+{% extends "admin_base.html" %} {% block title %} Просмотр пользователей {% endblock %} {%
+block base_content %}
+<div class="m-4">
+
+  <div class="row align-items-right">
+    <h2 id="title" class="mb-4 col">Просмотр пользователей</h2>
+
+    <div class="col-auto">
+      <button id="btn-select-all" class="btn btn-secondary">Выделить всех</button>
+    </div>
+    <div class="col-auto">
+      <button id="btn-status-filter" data-show-only="all" class="btn btn-secondary">Показать только зачисленных</button>
+    </div>
+    <div class="col-auto">
+      <button id="btn-set-teacher" data-bs-toggle="modal" data-bs-target="#setTeacherModal"
+        class="btn btn-primary btn-multiselect">Указать
+        преподавателя</button>
+    </div>
+    <div class="col-auto">
+      <button id="btn-set-order" class="btn btn-primary btn-multiselect">Указать номер приказа о зачислении</button>
+    </div>
+  </div>
+
+
+
+  <div class="modal fade" id="setTeacherModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            Указать преподавателя
+          </h5>
+          <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-2">Вы собираетесь установить преподавателя для следующих пользователей:</p>
+          <p id="selected-users-list-txt"></p>
+          <label for="teacher-select">Выберите преподавателя:</label>
+          <select class="form-control" id="teacher-select">
+            {% for teacher in teachers %}
+            <option value="{{ teacher.name }}">{{ teacher.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            Закрыть
+          </button>
+          <button id="btn-set-teacher-submit" type="button" class="btn btn-success success-modal-btn"
+            data-bs-dismiss="modal">
+            Установить
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <div>
+    <div>
+      <table class="table sortable">
+        <thead>
+          <tr>
+            <th></th>
+            <th>ID</th>
+            <th>Имя</th>
+            <th>Почта</th>
+            <th>Телефон</th>
+            <th>Программа</th>
+            <th>Статус</th>
+            <th>Документы</th>
+            <th>Редактировать</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr class="user-tr user-tr-status-{{ user.application.status }}">
+            <div>
+              <td><input class="select-checkbox" data-id="{{ user.id }}" data-fullname="{{ user.fullName }}"
+                  type="checkbox" value="{{ user.id }}" /></td>
+              <td>
+                <input style="width: 60px" value="{{ user.id }}" readonly />
+              </td>
+              <td> {{ user.fullName }}<br>{{ user.parentFullName }} (род.)</td>
+              <td>{{ user.email }}<br>{{ user.parentEmail }} (род.)</td>
+              <td>{{ user.phone }}<br>{{ user.parentPhone }} (род.)</td>
+              <td>{{ user.application.selectedProgram }}</td>
+              <td>{{ user.application.status }}</td>
+              <td>
+                <a href=" /admin/get_pdf_docs?user_id={{ user.id }}">Документы</a>
+              </td>
+              <td>
+                <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#rejectModal{{ user.id }}"
+                  data-id="{{ user.id }}">
+                  Редактировать
+                </button>
+
+              </td>
+            </div>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  function refreshMultiselectButtons() {
+    if ($(".select-checkbox:checked").length > 0) {
+      $('.btn-multiselect').show();
+      $('#btn-select-all').text("Снять выделение");
+    } else {
+      $('.btn-multiselect').hide();
+      $('#btn-select-all').text("Выделить всех");
+    }
+  }
+
+  function getSelected(prop) {
+    let selectedIds = [];
+    // .select-checkbox that is checked and visible
+    $(".select-checkbox:checked").each(function () {
+      let dataId = $(this).data(prop);
+      selectedIds.push(dataId);
+    });
+    return selectedIds;
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+
+    refreshMultiselectButtons();
+
+    $(".select-checkbox").on("change", function () {
+      refreshMultiselectButtons();
+
+    });
+
+
+    $("#btn-set-teacher").on("click", function () {
+      let selectedIds = getSelected("id");
+      let selectedNames = getSelected("fullname");
+      $("#selected-users-list-txt").html(selectedNames.join("<br>"));
+    });
+
+
+    $("#btn-select-all").on("click", function () {
+      if ($(getSelected("id")).length > 0) {
+        $(".select-checkbox:visible").prop("checked", false);
+      } else {
+        $(".select-checkbox:visible").prop("checked", true);
+      }
+
+      refreshMultiselectButtons();
+    });
+
+    $('#btn-set-teacher-submit').on('click', function () {
+      let selectedIds = getSelected("id");
+
+      fetch('/admin/set_teacher', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ usersIds: selectedIds, teacherName: $('#teacher-select').val() }),
+      })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Success:', data);
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+        });
+    });
+
+    $('#btn-status-filter').on('click', function () {
+
+      $(".select-checkbox").prop("checked", false);
+      refreshMultiselectButtons();
+
+      let filter = $('#btn-status-filter').attr('data-show-only');
+
+      if (filter === 'passed') {
+        $('#btn-status-filter').attr('data-show-only', 'all');
+        $('#btn-status-filter').text('Показать только зачисленных');
+        $('.user-tr').show();
+        $('#title').text('Просмотр пользователей (все)');
+      } else if (filter === 'all') {
+        $('#btn-status-filter').attr('data-show-only', 'passed');
+        $('#btn-status-filter').text('Показать всех');
+        $('.user-tr').hide();
+        $('.user-tr-status-passed').show();
+        $('#title').text('Просмотр пользователей (только зачисленные)');
+      }
+    });
+
+  });
+
+</script>
+
+{% endblock %}

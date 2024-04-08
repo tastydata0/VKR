@@ -687,7 +687,7 @@ def get_captcha(request: Request):
 
 @app.get("/admin/rejected_users_by_docs")
 @requires("admin")
-async def admin_approve(request: Request):
+async def admin_rejected_users_by_docs(request: Request):
     return templates.TemplateResponse(
         "admin_rejected_users_by_docs.html",
         {
@@ -695,6 +695,27 @@ async def admin_approve(request: Request):
             "users": database.get_rejected_by_data_users(),
         },
     )
+
+
+@app.get("/admin/edit_users")
+@requires("admin")
+async def admin_approve(request: Request):
+    return templates.TemplateResponse(
+        "admin_edit_users.html",
+        {
+            "request": request,
+            "users": database.find_all_users(),
+            "teachers": database.get_teachers(),
+        },
+    )
+
+
+@app.post("/admin/set_teacher")
+@requires("admin")
+async def admin_set_teacher_post(request: Request, data: MultipleSetTeacherDto):
+    for user_id in data.usersIds:
+        database.update_user_application_teacher(user_id, data.teacherName)
+    return
 
 
 @app.get("/admin/approve")

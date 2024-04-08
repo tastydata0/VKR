@@ -52,6 +52,10 @@ def find_user(user_id: str) -> User | None:
     return User(**raw_user_data)
 
 
+def find_all_users() -> list[User]:
+    return [User(**user) for user in users.find({})]
+
+
 def insert_fake_user(user: User):
     d = user.dict()
     d.pop("id")
@@ -138,6 +142,10 @@ def update_user_application_field(user_id: str, field: str, value):
 
 def update_user_application_state(user_id: str, application_state: str):
     return update_user_application_field(user_id, "status", application_state)
+
+
+def update_user_application_teacher(user_id: str, teacher_name: str):
+    return update_user_application_field(user_id, "teacherName", teacher_name)
 
 
 def update_user_application_documents(user_id: str, documents: ApplicationDocuments):
@@ -351,3 +359,7 @@ def get_rejected_by_data_users_count() -> int:
             ]
         }
     )
+
+
+def get_teachers() -> list[Teacher]:
+    return [Teacher(**teacher) for teacher in config_db.find_one({})["teachers"]]

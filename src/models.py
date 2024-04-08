@@ -155,6 +155,7 @@ class Application(SelectedProgram):
     lastRejectionReason: Optional[str] = Field(None)
     discounts: Optional[list[str]] = Field([])
     teacherName: Optional[str] = Field(None)
+    order: Optional[str] = Field(None)
 
     @validator("status")
     @classmethod
@@ -474,4 +475,9 @@ class Teacher(BaseModel):
 
 class MultipleSetTeacherDto(BaseModel):
     teacherName: str
+    usersIds: list[str]
+
+
+class MultipleSetOrderDto(BaseModel):
+    order: str
     usersIds: list[str]

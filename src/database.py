@@ -148,6 +148,10 @@ def update_user_application_teacher(user_id: str, teacher_name: str):
     return update_user_application_field(user_id, "teacherName", teacher_name)
 
 
+def update_user_application_order(user_id: str, order: str):
+    return update_user_application_field(user_id, "order", order)
+
+
 def update_user_application_documents(user_id: str, documents: ApplicationDocuments):
     # Удаляем старые версии документов
     old_docs = find_user(user_id).application.documents

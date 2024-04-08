@@ -718,6 +718,13 @@ async def admin_set_teacher_post(request: Request, data: MultipleSetTeacherDto):
     return
 
 
+@app.post("/admin/set_order")
+@requires("admin")
+async def admin_set_order_post(request: Request, data: MultipleSetOrderDto):
+    for user_id in data.usersIds:
+        database.update_user_application_order(user_id, data.order)
+    return
+
 @app.get("/admin/approve")
 @requires("admin")
 async def admin_approve(request: Request):

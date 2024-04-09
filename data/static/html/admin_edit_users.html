@@ -102,6 +102,7 @@ block base_content %}
             <th>Программа</th>
             <th>Статус</th>
             <th>Приказ о зачиcлении</th>
+            <th>Преподаватель</th>
             <th>Редактировать</th>
           </tr>
         </thead>
@@ -118,8 +119,10 @@ block base_content %}
               <td>{{ user.email }}<br>{{ user.parentEmail }} (род.)</td>
               <td>{{ user.phone }}<br>{{ user.parentPhone }} (род.)</td>
               <td>{{ user.application.selectedProgram }}</td>
-              <td>{{ user.application.status }}</td>
+              <td class="user-status" data-user-status="{{ user.application.status }}">
+              </td>
               <td> {% if user.application.order %} {{ user.application.order }} {% else %} - {% endif %} </td>
+              <td>{% if user.application.teacherName %} {{ user.application.teacherName }} {% else %} - {% endif %}</td>
               <td>
                 <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#rejectModal{{ user.id }}"
                   data-id="{{ user.id }}">
@@ -137,6 +140,27 @@ block base_content %}
 </div>
 
 <script>
+  function statusToHuman(status) {
+    switch (status) {
+      case "waiting_for_applications":
+        return "0. Ожидание начала сбора заявлений";
+      case "filling_info":
+        return "1. Ввод данных и выбор программы";
+      case "filling_docs":
+        return "2. Загрузка документов";
+      case "waiting_confirmation":
+        return "3. Ожидание подтверждения";
+      case "approved":
+        return "4. Заявление принято";
+      case "not_passed":
+        return "4! Не прошел конкурс на программу";
+      case "passed":
+        return "5. Зачислен на программу";
+      case "graduated":
+        return "6. Программа пройдена";
+    }
+  }
+
   function refreshMultiselectButtons() {
     if ($(".select-checkbox:checked").length > 0) {
       $('.btn-multiselect').show();
@@ -160,6 +184,11 @@ block base_content %}
   document.addEventListener("DOMContentLoaded", function () {
 
     refreshMultiselectButtons();
+
+    $('.user-status').each(function () {
+      let userStatus = $(this).data('user-status');
+      $(this).text(statusToHuman(userStatus));
+    });
 
     $(".select-checkbox").on("change", function () {
       refreshMultiselectButtons();

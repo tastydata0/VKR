@@ -1,11 +1,7 @@
-# Python modules
 import logging
-from rich.console import Console
 import sys
 
 sys.path.insert(0, "./src")
-
-console = Console()
 
 # User modules
 import logging_setup
@@ -22,5 +18,5 @@ if __name__ == "__main__":
         main()
     except Exception as e:
         logging.error(f"Unhandled exception(type={type(e)}): {e}")
-        console.print_exception(show_locals=True)
+        raise e
         exit(1)

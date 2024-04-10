@@ -1,7 +1,7 @@
 import logging
 from logging import DEBUG, INFO, WARN, ERROR, FATAL
 from logging import basicConfig, debug
-from logging import FileHandler, StreamHandler, Logger, PlaceHolder
+from logging import FileHandler, StreamHandler
 
 from os.path import isdir, exists
 from os import mkdir, getcwd, makedirs

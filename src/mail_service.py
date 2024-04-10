@@ -1,10 +1,8 @@
 from email.mime.application import MIMEApplication
 import logging
 import smtplib, ssl
-import sys
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from random import randint
 import dotenv
 import os
 

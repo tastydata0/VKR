@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from statemachine import StateMachine, State
 from mail_service import Mail
 

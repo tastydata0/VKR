@@ -1,14 +1,7 @@
-from starlette.applications import Starlette
 from starlette.authentication import (
     AuthCredentials,
     AuthenticationBackend,
-    AuthenticationError,
-    SimpleUser,
 )
-from starlette.middleware import Middleware
-from starlette.middleware.authentication import AuthenticationMiddleware
-from starlette.responses import PlainTextResponse, RedirectResponse
-
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import RedirectResponse
 

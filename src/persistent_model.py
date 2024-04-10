@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 import logging
 
-from models import UserKey
 import database
 
 

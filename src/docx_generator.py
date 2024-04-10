@@ -1,6 +1,5 @@
 from uuid import uuid4
 from docx import Document
-import os
 import datetime
 from sheets_api import *
 

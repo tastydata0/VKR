@@ -124,10 +124,7 @@ block base_content %}
               <td> {% if user.application.order %} {{ user.application.order }} {% else %} - {% endif %} </td>
               <td>{% if user.application.teacherName %} {{ user.application.teacherName }} {% else %} - {% endif %}</td>
               <td>
-                <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#rejectModal{{ user.id }}"
-                  data-id="{{ user.id }}">
-                  Редактировать
-                </button>
+                <a href="/admin/edit_user?user_id={{ user.id }}">Редактировать</a>
 
               </td>
             </div>

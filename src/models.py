@@ -481,3 +481,14 @@ class MultipleSetTeacherDto(BaseModel):
 class MultipleSetOrderDto(BaseModel):
     order: str
     usersIds: list[str]
+
+
+class Discount(BaseModel):
+    id: str = Field(title="ID", min_length=1)
+    desc: str = Field(title="Описание", min_length=1)
+
+
+class Config(BaseModel):
+    teachers: list[Teacher] = Field([], title="Преподаватели")
+    discounts: list[Discount] = Field([], title="Льготы")
+

@@ -1,3 +1,4 @@
+import json
 import shutil
 import uuid
 from fastapi import FastAPI, Form, HTTPException, File, Response, UploadFile
@@ -699,7 +700,7 @@ async def admin_rejected_users_by_docs(request: Request):
 
 @app.get("/admin/edit_users")
 @requires("admin")
-async def admin_approve(request: Request):
+async def admin_edit_users(request: Request):
     return templates.TemplateResponse(
         "admin_edit_users.html",
         {
@@ -707,6 +708,39 @@ async def admin_approve(request: Request):
             "users": database.find_all_users(),
             "teachers": database.get_teachers(),
         },
+    )
+
+
+@app.get("/admin/edit_user")
+@requires("admin")
+async def admin_edit_user(request: Request, user_id: str):
+    return templates.TemplateResponse(
+        "admin_edit_user.html",
+        {
+            "request": request,
+            "user": database.find_user(user_id),
+            "user_json": database.find_user(user_id).json(),
+            "user_schema": schemas.user_schema(),
+        },
+    )
+
+
+@app.post("/admin/edit_user")
+@requires("admin")
+async def admin_edit_user_post(request: Request, user_id: str, data: User):
+    if not database.user_exists(user_id):
+        raise HTTPException(status_code=400, detail="User not found")
+
+    database.modify_user(user_id, UserBasicData(**data.dict()))
+    database.update_user_application_discounts(user_id, data.application.discounts)
+    database.update_user_application_teacher(user_id, data.application.teacherName)
+    database.update_user_application_order(user_id, data.application.order)
+    database.update_user_application_state(user_id, data.application.status)
+    database.update_user_application_rejection_reason(
+        user_id, data.application.lastRejectionReason
+    )
+    database.update_user_application_program_id(
+        user_id, data.application.selectedProgram
     )
 
 
@@ -724,6 +758,20 @@ async def admin_set_order_post(request: Request, data: MultipleSetOrderDto):
     for user_id in data.usersIds:
         database.update_user_application_order(user_id, data.order)
     return
+
+
+@app.get("/admin/config")
+@requires("admin")
+async def admin_config(request: Request):
+    return templates.TemplateResponse(
+        "admin_config.html",
+        {
+            "request": request,
+            "config_json": json.dumps(database.config_db.find_one({}, {"_id": 0})),
+            "config_schema": schemas.config_schema(),
+        },
+    )
+
 
 @app.get("/admin/approve")
 @requires("admin")

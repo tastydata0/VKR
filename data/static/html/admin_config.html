@@ -1,0 +1,65 @@
+{% extends "admin_base.html" %} {% block title %} Редактировать настройки {%
+endblock %} {% block base_content %}
+
+<div class="container mt-5">
+
+    <form method="POST" action="/admin/edit_config" data-json-submit>
+        <h1>Редактировать настройки</h1>
+        <div id="config-json-editor"></div>
+        <button type="submit" class="btn btn-primary mb-3">
+            Применить
+        </button>
+    </form>
+</div>
+
+<script>
+    const configSchema = {{ config_schema | tojson | safe }}
+
+    function addEditor(id, schema) {
+        console.log(id)
+        let editor = new JSONEditor(document.getElementById(id), {
+            theme: "bootstrap5",
+            schema: schema,
+            disable_edit_json: true,
+            disable_properties: true,
+            iconlib: "fontawesome5",
+            startval: JSON.parse({{ config_json | tojson | safe }})
+        });
+
+    editor.on('ready', function () {
+        $('.card-title.level-1').hide();
+    });
+
+
+    document.getElementById(id).parentElement.addEventListener('submit', function (event) {
+
+        event.preventDefault();
+        var url = this.getAttribute('action');
+        var method = this.getAttribute('method');
+        var xhr = new XMLHttpRequest();
+        xhr.open(method, url, true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.onload = function () {
+            if (xhr.status === 200) {
+                location.reload();
+            } else {
+                alert("Ошибка: " + JSON.parse(xhr.responseText).detail);
+            }
+        };
+        if (editor.validate().length === 0) {
+            xhr.send(JSON.stringify(editor.getValue()));
+        } else {
+            console.log(editor.validate())
+            alert("Неверно заполнены данные")
+        }
+    });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        addEditor("config-json-editor", configSchema);
+
+    });
+
+</script>
+
+{% endblock %}

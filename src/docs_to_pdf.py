@@ -2,11 +2,7 @@ import os
 from typing import List
 import uuid
 import img2pdf
-from fastapi import UploadFile
-import logging
-import hashlib
 from models import Document
-import encryption
 
 # Директория для сохранения загруженных файлов
 upload_dir = "data/uploaded_files"

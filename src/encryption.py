@@ -1,4 +1,3 @@
-from typing import BinaryIO
 from models import Document
 from cryptography.fernet import Fernet
 

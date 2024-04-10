@@ -1,10 +1,9 @@
 from uuid import uuid4
 from docx import Document
 import datetime
-from sheets_api import *
-
 from models import *
 from name_translation import fio_to_accusative
+import database
 
 
 def generate_doc(

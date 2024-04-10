@@ -614,7 +614,7 @@ async def create_token(form_data: LoginData):
     access_token = str(uuid.uuid4())
     database.add_auth_token(user.id, access_token)
 
-    response = fastapi.responses.RedirectResponse(url="/users/me", status_code=302)
+    response = fastapi.responses.RedirectResponse(url="/", status_code=302)
     response.set_cookie("access_token", access_token, httponly=True)
 
     return response

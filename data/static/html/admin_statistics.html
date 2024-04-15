@@ -1,0 +1,21 @@
+{% extends "admin_base.html" %} {% block title %} Статистика {%
+endblock %} {% block base_content %}
+
+<div class="container mt-5">
+
+    <form method="GET" action="/admin/statistics_lookup_people">
+        <h1>Статистика</h1>
+
+        <textarea class="form-control mb-3" name="people" placeholder="ФИО интересующих людей, каждое с новой строки"
+            required></textarea>
+        <button type="submit" class="btn btn-primary mb-3">
+            Поиск по ФИО
+        </button>
+    </form>
+</div>
+
+<script>
+
+</script>
+
+{% endblock %}

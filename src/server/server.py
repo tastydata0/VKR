@@ -969,6 +969,40 @@ async def admin_realize_program_post(request: Request, data: RealizeProgramDto):
     )
 
 
+@app.get("/admin/statistics")
+@requires("admin")
+async def admin_statistics(request: Request):
+    return templates.TemplateResponse(
+        "admin_statistics.html",
+        {
+            "request": request,
+        },
+    )
+
+
+@app.get("/admin/statistics_lookup_people")
+@requires("admin")
+async def admin_statistics_lookup_people(request: Request, people: str):
+    full_names_to_lookup = people.splitlines()
+
+    users, usersNotFound = [], []
+
+    for full_name in full_names_to_lookup:
+        if full_name:
+            lookup_result = database.find_users_by_full_name(full_name.strip())
+            if lookup_result:
+                users.append(lookup_result)
+            else:
+                usersNotFound.append(full_name)
+
+    users = [user for user in users if user]
+
+    return templates.TemplateResponse(
+        "admin_lookup_result.html",
+        {"request": request, "users": users, "usersNotFound": usersNotFound},
+    )
+
+
 def register_exception(app: FastAPI):
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(

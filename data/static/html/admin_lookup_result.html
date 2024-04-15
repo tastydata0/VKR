@@ -1,0 +1,61 @@
+{% extends "admin_base.html" %} {% block title %} Статистика {% endblock %} {%
+block base_content %}
+<div class="m-4">
+
+    <h2 id="title" class="mb-4 col">Статистика</h2>
+
+    <div>
+        <div>
+            <table class="table sortable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Имя</th>
+                        <th>Почта</th>
+                        <th>Телефон</th>
+                        <th>Где учится</th>
+                        <th>Где отучился</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <div>
+                            <td>
+                                <input style="width: 60px" value="{{ user.id }}" readonly />
+                            </td>
+                            <td> {{ user.fullName }}</td>
+                            <td>{{ user.email }}<br>{{ user.parentEmail }} (род.)</td>
+                            <td>{{ user.phone }}<br>{{ user.parentPhone }} (род.)</td>
+                            <td>{% if user.application.status and user.application.status not in ("filling_info",
+                                "filling_docs", "waiting_for_confirmation") %} {{
+                                user.application.selectedProgram
+                                }} {% endif %}
+                            </td>
+                            <td>
+                                <ul>
+                                    {% for application in user.applicationsArchive %} <li>{{ application.selectedProgram
+                                        }} (оценка: {{ application.grade }})</li>
+                                    {%
+                                    endfor %}
+                                </ul>
+                            </td>
+
+                        </div>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <p>Не удалось найти:</p>
+            <ol>
+                {% for user in usersNotFound %}
+                <li>{{ user }}</li>
+                {% endfor %}
+            </ol>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

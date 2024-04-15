@@ -71,6 +71,15 @@ def upsert_admin(admin: Admin):
     admins.update_one({"email": admin.email}, {"$set": admin.dict()}, upsert=True)
 
 
+def find_users_by_full_name(full_name: str) -> User | None:
+    raw_user_data = users.find_one({"fullName": full_name})
+
+    if raw_user_data is None:
+        return None
+
+    return User(**raw_user_data)
+
+
 def find_user_by_login_data(login_data: LoginData) -> User | None:
     raw_user_data = users.find_one(
         {"fullName": login_data.fullName, "birthDate": login_data.birthDate}

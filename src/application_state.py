@@ -50,6 +50,7 @@ class ApplicationState(StateMachine):
     not_pass = approved.to(not_passed)
     pass_ = approved.to(passed)
     graduate = passed.to(graduated)
+    not_graduate = passed.to(not_passed)
 
     def on_enter_waiting_for_applications(self):
         print(self.current_state.name)

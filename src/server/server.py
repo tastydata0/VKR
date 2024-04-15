@@ -129,8 +129,6 @@ def redirect_according_to_application_state(
         return RedirectResponse("/application/approved")
     elif state.current_state.id == ApplicationState.passed.id:
         return RedirectResponse("/application/passed")
-    elif state.current_state.id == ApplicationState.graduated.id:
-        return RedirectResponse("/application/graduated")
     else:
         return RedirectResponse("/error")
 
@@ -285,28 +283,6 @@ async def passed(request: Request):
 
     return templates.TemplateResponse(
         "passed.html",
-        {
-            "request": request,
-            "application_stages": application_stages_by_user_id(request.user.id),
-            "user": UserMinInfo(**request.user.dict()),
-        },
-    )
-
-
-@app.get("/application/graduated")
-@requires("authenticated")
-async def passed(request: Request):
-    state = application_state.ApplicationState(
-        model=MongodbPersistentModel(
-            request.user.id,
-        )
-    )
-
-    if state.current_state.id != ApplicationState.graduated.id:
-        return redirect_according_to_application_state(state)
-
-    return templates.TemplateResponse(
-        "graduated.html",
         {
             "request": request,
             "application_stages": application_stages_by_user_id(request.user.id),
@@ -799,6 +775,16 @@ async def admin_config(request: Request):
 @app.get("/admin/graduate")
 @requires("admin")
 async def admin_graduate(request: Request):
+    users_without_teachers = [
+        u
+        for u in database.find_users_with_status(ApplicationState.passed)
+        if not u.application.teacherName
+    ]
+    if users_without_teachers:
+        return templates.TemplateResponse(
+            "admin_cannot_graduate.html",
+            {"request": request, "users": users_without_teachers},
+        )
     return templates.TemplateResponse(
         "admin_graduate.html",
         {
@@ -824,7 +810,10 @@ async def admin_graduate_csv_upload(request: Request, table: UploadFile):
             model=MongodbPersistentModel(student["id"])
         )
 
-        state.graduate()
+        if student["grade"] == "0":
+            state.not_graduate()
+        else:
+            state.graduate()
 
         database.update_user_application_grade(student["id"], student["grade"])
         database.move_user_application_to_archive(student["id"])

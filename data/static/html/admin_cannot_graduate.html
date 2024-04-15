@@ -1,0 +1,14 @@
+{% extends "admin_base.html" %} {% block title %} Выпуск учеников {% endblock %} {%
+block base_content %}
+<div class="m-4">
+
+    <h1 id="title" class="mb-4 col">Выпуск учеников</h1>
+    Сначала нужно указать преподавателей для следующих учеников:
+    <ol>
+        {% for user in users %}
+        <li>{{ user.fullName }}</li>
+        {% endfor %}
+    </ol>
+
+
+    {% endblock %}

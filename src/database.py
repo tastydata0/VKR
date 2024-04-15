@@ -408,8 +408,6 @@ def export_graduate_csv() -> pathlib.Path:
 
     items.sort(key=lambda x: (x["teacherName"], x["fullName"]))
 
-    print(items)
-
     output_path = pathlib.Path("/tmp/export_" + uuid.uuid4().hex).with_suffix(".csv")
     pd.DataFrame(items).to_csv(output_path, index=False)
     return output_path

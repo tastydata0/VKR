@@ -35,7 +35,8 @@ block base_content %}
                             <td>
                                 <ul>
                                     {% for application in user.applicationsArchive %} <li>{{ application.selectedProgram
-                                        }} (оценка: {{ application.grade }})</li>
+                                        }} {% if application.grade %} (оценка: {{ application.grade }}) {% else %} (не
+                                        доучился){% endif %}</li>
                                     {%
                                     endfor %}
                                 </ul>
@@ -47,15 +48,16 @@ block base_content %}
                 </tbody>
             </table>
 
+            {% if usersNotFound %}
             <p>Не удалось найти:</p>
             <ol>
                 {% for user in usersNotFound %}
                 <li>{{ user }}</li>
                 {% endfor %}
             </ol>
+            {% endif %}
         </div>
     </div>
 </div>
-
 
 {% endblock %}

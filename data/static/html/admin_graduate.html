@@ -6,9 +6,10 @@ endblock %} {% block base_content %}
     <form method="POST" action="/admin/graduate_csv" enctype="multipart/form-data">
         <h1>Выпуск учеников</h1>
 
-        <label for="applicationFiles" class="form-label">Заявление на зачисление:</label>
+        <label for="applicationFiles" class="form-label">Загрузите таблицу с заполненными преподавателями оценками. Если
+            ученик бросил обучение, ставим оценку "0".</label>
         <a href="/admin/graduate_csv">Скачать таблицу для заполнения туда оценок</a>
-        <input type="file" class="form-control mb-3" id="table" name="table" accept=".csv" required />
+        <input type="file" class="form-control mb-3 mt-3" id="table" name="table" accept=".csv" required />
 
         <button type="submit" class="btn btn-primary mb-3">
             Применить

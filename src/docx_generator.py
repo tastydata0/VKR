@@ -1,5 +1,5 @@
 from uuid import uuid4
-from docx import Document
+from docx import Document as DocxDocument
 import datetime
 from models import *
 from name_translation import fio_to_accusative
@@ -13,14 +13,13 @@ def generate_doc(
     filename = f"{uuid4()}.docx"
     output_file_path = f"/tmp/{filename}"
 
-    program_info = list(
-        filter(
-            lambda program: program["id"] == userData.application.selectedProgram,
-            database.load_programs(),
+    program_info = Program(
+        **database.resolve_program_by_realization_id(
+            userData.application.selectedProgram
         )
-    )[0]
+    )
 
-    print(filename)
+    print(program_info)
 
     variables = {
         "{ПРЕДСТАВИТЕЛЬ_ФИО}": userData.parentFullName,  # | "ФИО родителя",
@@ -28,11 +27,12 @@ def generate_doc(
         "{РЕБЕНОК_ФИО_РОД_ПАДЕЖ}": fio_to_accusative(
             userData.fullName
         ),  # | "ФИО ребенка",
-        "{ПРОГРАММА}": program_info["details"],
+        "{ПРОГРАММА}": program_info.relevant_confirmed().formalName,
         "{ПРОГРАММА_ЧАСЫ}": str(
-            int(program_info["hoursAud"]) + int(program_info["hoursHome"])
+            program_info.relevant_confirmed().hoursAud
+            + int(program_info.relevant_confirmed().hoursHome)
         ),
-        "{ПРОГРАММА_ЧАСЫ_АУД}": str(program_info["hoursAud"]),
+        "{ПРОГРАММА_ЧАСЫ_АУД}": str(program_info.relevant_confirmed().hoursAud),
         "{РЕБЕНОК_ФИО}": userData.fullName,  # | "ФИО ребенка",
         "{РЕБЕНОК_ДАТА_РОЖ}": userData.birthDate,  # | "Дата рождения ребенка",
         "{РЕБЕНОК_МЕСТО_РОЖ}": userData.birthPlace,  # | "Место рождения ребенка",
@@ -41,10 +41,10 @@ def generate_doc(
         "{РЕБЕНОК_ТЕЛЕФОН}": userData.phone,  # | "Телефон ребенка",
         "{ПРЕДСТАВИТЕЛЬ_ТЕЛЕФОН}": userData.parentPhone,  # | "Телефон родителя",
         "{ПРЕДСТАВИТЕЛЬ_ПОЧТА}": userData.parentEmail,  # | "Email родителя",
-        "{ГОД}": datetime.datetime.now().year,
+        "{ГОД}": datetime.now().year,
     }
 
-    template_document = Document(template_file_path)
+    template_document = DocxDocument(template_file_path)
 
     for variable_key, variable_value in variables.items():
         for paragraph in template_document.paragraphs:

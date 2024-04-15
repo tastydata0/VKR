@@ -421,6 +421,9 @@ class Program(BaseModel):
     def relevant_realization(self) -> ProgramRealization:
         return self.confirmed[0].realizations[0]
 
+    def relevant_confirmed(self) -> ProgramConfirmed:
+        return self.confirmed[0]
+
 
 class AddProgramDto(BaseModel):
     baseId: str = Field(

@@ -150,11 +150,12 @@ class Application(SelectedProgram):
     )  # Полное имя на момент подачи заявления (т.к. может измениться)
     documents: Optional[ApplicationDocuments] = Field(None)
     status: Optional[str] = Field(
-        ApplicationState.filling_docs.id, validate_default=True
+        ApplicationState.filling_info.id, validate_default=True
     )
     lastRejectionReason: Optional[str] = Field(None)
     discounts: Optional[list[str]] = Field([])
     teacherName: Optional[str] = Field(None)
+    grade: Optional[int] = Field(None)
     order: Optional[str] = Field(None)
 
     @validator("status")
@@ -243,6 +244,7 @@ class User(UserBasicData):
 
     id: str
     application: Application = Field(Application())
+    applicationsArchive: list[Application] = Field([])
     latestDocs: Optional[PersonalDocuments] = Field(None)
 
 
@@ -290,6 +292,7 @@ class DashboardUserInfo(BaseModel):
     parentPhone: Optional[str] = Field(None)
     applicationSelectedProgram: str | None
     applicationStatus: str | None
+    completedPrograms: list
 
 
 class UserKey(BaseModel):
@@ -491,4 +494,3 @@ class Discount(BaseModel):
 class Config(BaseModel):
     teachers: list[Teacher] = Field([], title="Преподаватели")
     discounts: list[Discount] = Field([], title="Льготы")
-

@@ -16,22 +16,24 @@ endblock %} {% block base_with_status_content %}
 </body>
 
 <script>
-  $("#cancel_btn").click(() => {
-    // Prompt
-    if (confirm("Вы уверены, что хотите отозвать заявку?")) {
-      fetch("/refill_data", {
-        method: "POST",
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error("Network response was not ok");
-          }
-          window.location.href = '/application';
+  document.addEventListener("DOMContentLoaded", function () {
+    $("#cancel_btn").click(() => {
+      // Prompt
+      if (confirm("Вы уверены, что хотите отозвать заявку?")) {
+        fetch("/refill_data", {
+          method: "POST",
         })
-        .catch((error) => {
-          console.error("Ошибка при отправке решения:", error);
-        });
-    }
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Network response was not ok");
+            }
+            window.location.href = '/application';
+          })
+          .catch((error) => {
+            console.error("Ошибка при отправке решения:", error);
+          });
+      }
+    });
   });
 </script>
 

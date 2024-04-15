@@ -1,0 +1,23 @@
+{% extends "admin_base.html" %} {% block title %} Выпуск учеников {%
+endblock %} {% block base_content %}
+
+<div class="container mt-5">
+
+    <form method="POST" action="/admin/graduate_csv" enctype="multipart/form-data">
+        <h1>Выпуск учеников</h1>
+
+        <label for="applicationFiles" class="form-label">Заявление на зачисление:</label>
+        <a href="/admin/graduate_csv">Скачать таблицу для заполнения туда оценок</a>
+        <input type="file" class="form-control mb-3" id="table" name="table" accept=".csv" required />
+
+        <button type="submit" class="btn btn-primary mb-3">
+            Применить
+        </button>
+    </form>
+</div>
+
+<script>
+
+</script>
+
+{% endblock %}

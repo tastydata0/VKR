@@ -106,6 +106,10 @@ def find_users_with_status(status: statemachine.State) -> list[User]:
     return [User(**user) for user in users.find({"application.status": status.id})]
 
 
+def find_users_with_status_cursor(status: statemachine.State) -> Cursor:
+    return users.find({"application.status": status.id})
+
+
 def user_exists(user_id: str) -> bool:
     return _find_user_with_password(user_id) is not None
 
@@ -148,6 +152,10 @@ def update_user_application_teacher(user_id: str, teacher_name: str):
     return update_user_application_field(user_id, "teacherName", teacher_name)
 
 
+def update_user_application_grade(user_id: str, grade: int):
+    return update_user_application_field(user_id, "grade", grade)
+
+
 def update_user_application_order(user_id: str, order: str):
     return update_user_application_field(user_id, "order", order)
 
@@ -186,6 +194,22 @@ def update_user_application_rejection_reason(
     return update_user_application_field(
         user_id, "lastRejectionReason", rejection_reason
     )
+
+
+def move_user_application_to_archive(user_id: str):
+    user = find_user(user_id)
+    if user:
+        users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$push": {"applicationsArchive": user.application.dict()}},
+            upsert=True,
+        )
+
+        users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$unset": {"application": None}},
+            upsert=True,
+        )
 
 
 def register_user(userData: RegistrationData) -> str | None:
@@ -266,18 +290,6 @@ def load_relevant_programs(
 def resolve_program_by_realization_id(id: str) -> dict:
     query = {"confirmed.realizations.id": {"$in": [id]}}
     return programs.find_one(query)
-
-
-def _export_users_csv(cursor: Cursor, fields: list[str]) -> pathlib.Path:
-    output_path = pathlib.Path("export_" + uuid.uuid4().hex).with_suffix(".csv")
-    pd.DataFrame(cursor).to_csv(output_path, columns=fields, index=False)
-    return output_path
-
-
-def export_users_csv(model_name: typing.Type[BaseModel]) -> pathlib.Path:
-    cursor = users.find({})
-    basic_fields = list(model_name.__fields__.keys())
-    return _export_users_csv(cursor, basic_fields)
 
 
 _setup_db()
@@ -367,3 +379,28 @@ def get_rejected_by_data_users_count() -> int:
 
 def get_teachers() -> list[Teacher]:
     return [Teacher(**teacher) for teacher in config_db.find_one({})["teachers"]]
+
+
+def export_graduate_csv() -> pathlib.Path:
+    cursor = users.find(
+        {"application.status": ApplicationState.passed.id},
+        {"_id": 1, "fullName": 1, "application.teacherName": 1},
+    )
+
+    items = [
+        {
+            "id": user["_id"],
+            "fullName": user["fullName"],
+            "teacherName": user["application"]["teacherName"],
+            "grade": "",
+        }
+        for user in cursor
+    ]
+
+    items.sort(key=lambda x: (x["teacherName"], x["fullName"]))
+
+    print(items)
+
+    output_path = pathlib.Path("/tmp/export_" + uuid.uuid4().hex).with_suffix(".csv")
+    pd.DataFrame(items).to_csv(output_path, index=False)
+    return output_path

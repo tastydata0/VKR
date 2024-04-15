@@ -56,7 +56,7 @@ block base_content %}
 
       xhr.onload = function () {
         if (xhr.status === 200) {
-          location.href = "/users/me";
+          location.href = xhr.responseURL;
         } else {
           alert("Ошибка входа");
         }

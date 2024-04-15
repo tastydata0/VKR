@@ -28,11 +28,14 @@ block base_content %}
     <div class="col-md-8">
       <h4>Пройденные программы обучения</h4>
       <ul class="list-group mb-3">
-        <li class="list-group-item">Python (2021-2022)</li>
-        <li class="list-group-item">C++ (2022-2023)</li>
+        {% for completedProgram in user.completedPrograms %}
+        <li class="list-group-item">{{completedProgram.brief}} ({{completedProgram.year}})</li>
+        {% endfor %}
       </ul>
+      {% if user.applicationSelectedProgram is not none %}
       <h4>Активная заявка: {{user.applicationSelectedProgram}}</h4>
       <p>Статус: {{user.applicationStatus}}</p>
+      {% endif %}
     </div>
   </div>
 </div>

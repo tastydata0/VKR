@@ -27,6 +27,7 @@ class ApplicationState(StateMachine):
             ApplicationState.waiting_confirmation,
             ApplicationState.approved,
             ApplicationState.passed,
+            ApplicationState.graduated,
         ].index(state)
 
     start_application = waiting_for_applications.to(filling_info)

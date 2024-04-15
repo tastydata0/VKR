@@ -1,3 +1,4 @@
+import csv
 import json
 import shutil
 import uuid
@@ -128,6 +129,8 @@ def redirect_according_to_application_state(
         return RedirectResponse("/application/approved")
     elif state.current_state.id == ApplicationState.passed.id:
         return RedirectResponse("/application/passed")
+    elif state.current_state.id == ApplicationState.graduated.id:
+        return RedirectResponse("/application/graduated")
     else:
         return RedirectResponse("/error")
 
@@ -290,6 +293,28 @@ async def passed(request: Request):
     )
 
 
+@app.get("/application/graduated")
+@requires("authenticated")
+async def passed(request: Request):
+    state = application_state.ApplicationState(
+        model=MongodbPersistentModel(
+            request.user.id,
+        )
+    )
+
+    if state.current_state.id != ApplicationState.graduated.id:
+        return redirect_according_to_application_state(state)
+
+    return templates.TemplateResponse(
+        "graduated.html",
+        {
+            "request": request,
+            "application_stages": application_stages_by_user_id(request.user.id),
+            "user": UserMinInfo(**request.user.dict()),
+        },
+    )
+
+
 @app.get("/")
 @requires("authenticated")
 async def waiting_confirmation(request: Request):
@@ -321,6 +346,15 @@ async def waiting_confirmation(request: Request):
                 **request.user.dict(),
                 applicationSelectedProgram=applicationSelectedProgram,
                 applicationStatus=applicationStatus,
+                completedPrograms=[
+                    {
+                        "brief": database.resolve_program_by_realization_id(
+                            application.selectedProgram
+                        )["brief"],
+                        "year": application.selectedProgram.split("-")[-3],
+                    }
+                    for application in request.user.applicationsArchive
+                ],
             ),
         },
     )
@@ -442,53 +476,49 @@ async def upload_files(
 
     if parent_passport_files == ["use_existing"]:
         if (
-            request.user.application.documents is None
-            or request.user.application.documents.parentPassportFiles is None
+            request.user.latestDocs is None
+            or request.user.latestDocs.parentPassportFiles is None
         ):
             raise HTTPException(
                 status_code=400, detail="Необходимо заполнить паспорт родителя"
             )
-        parent_passport_local_files = (
-            request.user.application.documents.parentPassportFiles
-        )
+        parent_passport_local_files = request.user.latestDocs.parentPassportFiles
     else:
         parent_passport_local_files = upload_files_to_local_files(parent_passport_files)
 
     if child_passport_files == ["use_existing"]:
         if (
-            request.user.application.documents is None
-            or request.user.application.documents.childPassportFiles is None
+            request.user.latestDocs is None
+            or request.user.latestDocs.childPassportFiles is None
         ):
             raise HTTPException(
                 status_code=400, detail="Необходимо заполнить паспорт ребенка"
             )
-        child_passport_local_files = (
-            request.user.application.documents.childPassportFiles
-        )
+        child_passport_local_files = request.user.latestDocs.childPassportFiles
     else:
         child_passport_local_files = upload_files_to_local_files(child_passport_files)
 
     if parent_snils_files == ["use_existing"]:
         if (
-            request.user.application.documents is None
-            or request.user.application.documents.parentSnilsFiles is None
+            request.user.latestDocs is None
+            or request.user.latestDocs.parentSnilsFiles is None
         ):
             raise HTTPException(
                 status_code=400, detail="Необходимо заполнить СНИЛС родителя"
             )
-        parent_snils_local_files = request.user.application.documents.parentSnilsFiles
+        parent_snils_local_files = request.user.latestDocs.parentSnilsFiles
     else:
         parent_snils_local_files = upload_files_to_local_files(parent_snils_files)
 
     if child_snils_files == ["use_existing"]:
         if (
-            request.user.application.documents is None
-            or request.user.application.documents.childSnilsFiles is None
+            request.user.latestDocs is None
+            or request.user.latestDocs.childSnilsFiles is None
         ):
             raise HTTPException(
                 status_code=400, detail="Необходимо заполнить СНИЛС ребенка"
             )
-        child_snils_local_files = request.user.application.documents.childSnilsFiles
+        child_snils_local_files = request.user.latestDocs.childSnilsFiles
     else:
         child_snils_local_files = upload_files_to_local_files(child_snils_files)
 
@@ -668,13 +698,6 @@ async def admin_dashboard(request: Request):
     )
 
 
-# Эндпоинт для доступа к данным пользователя
-@app.get("/users/me")
-@requires("authenticated")
-async def read_users_me(request: Request):
-    return request.user.dict()
-
-
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     return FileResponse("data/static/favicon.ico")
@@ -771,6 +794,40 @@ async def admin_config(request: Request):
             "config_schema": schemas.config_schema(),
         },
     )
+
+
+@app.get("/admin/graduate")
+@requires("admin")
+async def admin_graduate(request: Request):
+    return templates.TemplateResponse(
+        "admin_graduate.html",
+        {
+            "request": request,
+        },
+    )
+
+
+@app.get("/admin/graduate_csv")
+@requires("admin")
+async def admin_graduate_csv(request: Request):
+    return FileResponse(database.export_graduate_csv())
+
+
+@app.post("/admin/graduate_csv")
+@requires("admin")
+async def admin_graduate_csv_upload(request: Request, table: UploadFile):
+    data = list(csv.DictReader(table.file.read().decode("utf-8-sig").splitlines()))
+
+    for student in data:
+        print(student)
+        state = application_state.ApplicationState(
+            model=MongodbPersistentModel(student["id"])
+        )
+
+        state.graduate()
+
+        database.update_user_application_grade(student["id"], student["grade"])
+        database.move_user_application_to_archive(student["id"])
 
 
 @app.get("/admin/approve")

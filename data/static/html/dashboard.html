@@ -20,11 +20,44 @@ block base_content %}
         "" %} Телефон родителя: {{user.parentPhone}} <br />
         {% endif %} Школа: {{user.school}}, {{user.schoolClass}} класс <br />
       </p>
-      <button class="btn btn-primary mb-3">Редактировать данные</button>
+      <button data-bs-toggle="modal" data-bs-target="#setPasswordModal" class="btn btn-primary mb-3">Сменить
+        пароль</button>
+
+      <div class="modal fade" id="setPasswordModal" tabindex="-1" role="dialog" aria-labelledby="addProgramModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="addProgramModalLabel">
+                Смена пароля
+              </h5>
+              <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form method="POST" action="/change_password" id="set-password-form">
+                <label class="form-label mt-3">Старый пароль</label>
+                <input type="password" class="form-control" name="old_password">
+                <label class="form-label mt-3">Новый пароль</label>
+                <input type="password" class="form-control" name="new_password">
+                <label class="form-label mt-3">Новый пароль еще раз</label>
+                <input type="password" class="form-control" name="new_password_confirm">
+
+                <button type="submit" class="btn btn-primary mt-3">
+                  Сменить пароль
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <a href="/application" class="btn btn-success mb-3">
         Подать заявление на обучение
       </a>
     </div>
+    {% if user.completedPrograms %}
     <div class="col-md-8">
       <h4>Пройденные программы обучения</h4>
       <ul class="list-group mb-3">
@@ -37,10 +70,42 @@ block base_content %}
       <p>Статус: {{user.applicationStatus}}</p>
       {% endif %}
     </div>
+    {% endif %}
   </div>
 </div>
-<h3>Журнал</h3>
+<!-- <h3>Журнал</h3>
 <iframe width="100%" height="500px"
-  src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTLf05cGQ5A_UXdE_1poSY2MAYiyzzsxsbXqJg8Rl-OqKm1lcyVaUChmpYT1K0lvwps5BtZOzizZQmd/pubhtml?widget=true&amp;headers=false"></iframe>
+  src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTLf05cGQ5A_UXdE_1poSY2MAYiyzzsxsbXqJg8Rl-OqKm1lcyVaUChmpYT1K0lvwps5BtZOzizZQmd/pubhtml?widget=true&amp;headers=false"></iframe> -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    $("#set-password-form").submit(function (event) {
+      event.preventDefault();
+      if (
+        $("#set-password-form input[name=new_password]").val() !=
+        $("#set-password-form input[name=new_password_confirm]").val()
+      ) {
+        alert("Пароли не совпадают");
+        return;
+      }
 
+      fetch("/change_password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          oldPassword: $("#set-password-form input[name=old_password]").val(),
+          newPassword: $("#set-password-form input[name=new_password]").val(),
+        }),
+      }).then(function (response) {
+        if (response.ok) {
+          alert("Пароль успешно изменен");
+          window.location.reload();
+        } else {
+          alert("Неправильный пароль");
+        }
+      });
+    });
+  });
+</script>
 {% endblock %}

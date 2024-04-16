@@ -12,6 +12,12 @@ import Cleave from "cleave.js";
 import "cleave.js/dist/addons/cleave-phone.ru.js";
 
 import flatpickr from "flatpickr";
+
+import "flatpickr/dist/l10n/ru.js";
+
+const Russian = require("flatpickr/dist/l10n/ru.js").default.ru;
+flatpickr.localize(Russian); // default locale is now Russian
+
 import "flatpickr/dist/flatpickr.min.css";
 
 import "sortable-tablesort/sortable.min.css";

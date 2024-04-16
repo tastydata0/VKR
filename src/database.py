@@ -95,6 +95,20 @@ def find_user_by_login_data(login_data: LoginData) -> User | None:
     return User(**raw_user_data)
 
 
+def check_user_password(user_id: str, password: str) -> bool:
+    raw_user_data = _find_user_with_password(user_id)
+    if raw_user_data is None:
+        return False
+    return verify_password(password=password, hash=raw_user_data["password"])
+
+
+def update_user_password(user_id: str, password: str) -> bool:
+    users.update_one(
+        {"_id": ObjectId(user_id)}, {"$set": {"password": get_password_hash(password)}}
+    )
+    return True
+
+
 def find_admin_by_login_data(login_data: AdminLoginDto) -> AdminWithId | None:
     raw_admin_data = admins.find_one({"email": login_data.email})
 

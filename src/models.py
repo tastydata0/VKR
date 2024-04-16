@@ -509,3 +509,8 @@ class Discount(BaseModel):
 class Config(BaseModel):
     teachers: list[Teacher] = Field([], title="Преподаватели")
     discounts: list[Discount] = Field([], title="Льготы")
+
+
+class ChangePasswordDto(BaseModel):
+    oldPassword: str
+    newPassword: str

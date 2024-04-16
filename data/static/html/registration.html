@@ -40,17 +40,19 @@ base_content %}
       <img id="captchaImg" class="mb-2" src="/captcha" />
       <input type="text" class="form-control" id="captcha" name="captcha" required />
     </div>
-    <button type="submit" class="btn btn-primary">
+    <button type="submit" class="btn btn-primary mb-3">
       Зарегистрироваться
     </button>
   </form>
 </div>
 
 <script>
-  $(function () {
-    $("#birthDate").datepicker({
-      dateFormat: "dd.mm.yy",
+  document.addEventListener("DOMContentLoaded", function () {
+    flatpickr("#birthDate", {
+      dateFormat: "d.m.Y",
+      locale: "ru"
     });
+    $(".datepicker").css("background-color", "white");
   });
 
   document

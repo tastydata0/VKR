@@ -632,6 +632,16 @@ async def logout(request: Request):
     return response
 
 
+@app.post("/change_password")
+@requires("authenticated")
+async def change_password(request: Request, data: ChangePasswordDto):
+    if database.check_user_password(request.user.id, data.oldPassword) is False:
+        raise HTTPException(status_code=400, detail="Неверный пароль")
+
+    database.update_user_password(request.user.id, data.newPassword)
+    return "Пароль успешно изменен"
+
+
 @app.get("/admin/login")
 async def login(request: Request):
     return templates.TemplateResponse("admin_login.html", {"request": request})

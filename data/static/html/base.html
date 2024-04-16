@@ -19,35 +19,38 @@
 
 <body>
   <div id="header-container">
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <a class="navbar-brand" href="#">
-        <img src="/static/icons/cs.png" width="20%" height="20%" class="navbar-logo d-inline-block align-top" />
-      </a>
-      <button class="navbar-toggler" type="button" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav mr-auto"></ul>
-        <ul class="navbar-nav">
-          {% if user is undefined %}
-          <li class="nav-item">
-            <a class="nav-link" href="/login">Вход</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/registration">Регистрация</a>
-          </li>
-          {% else %}
-          <li class="nav-item">
-            <a class="nav-link" href="/"> 🙋🏼 {{ user.fullName }}</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" id="logout" href="#">Выход</a>
-          </li>
-          {% endif %}
-        </ul>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light p-3">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">
+          <img src="/static/icons/cs.png" style="max-height: 48px; width: auto;"
+            class="navbar-logo d-inline-block align-top" />
+        </a>
+        <button class="navbar-toggler" type="button" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+          <ul class="navbar-nav">
+            {% if user is undefined %}
+            <li class="nav-item">
+              <a class="nav-link" href="/login">Вход</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/registration">Регистрация</a>
+            </li>
+            {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="/"> 🙋🏼 {{ user.fullName }}</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="logout" href="#">Выход</a>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
       </div>
     </nav>
   </div>
+
   <div class="container">{% block base_content %}{% endblock %}</div>
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -58,12 +61,8 @@
         $('#navbarNav').collapse('toggle');
       });
       $('#logout').on('click', function () {
-        $.ajax({
-          url: '/logout',
-          type: 'POST',
-          success: function () {
-            window.location.href = '/';
-          }
+        $.post('/logout', function () {
+          window.location.href = '/';
         });
       });
     });

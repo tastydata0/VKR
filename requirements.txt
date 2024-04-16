@@ -5,6 +5,7 @@ Jinja2==3.1.2
 uvicorn
 python-docx
 starlette==0.22.0
+python-multipart
 img2pdf
 pdf2image
 pytrovich

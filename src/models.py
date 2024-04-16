@@ -41,6 +41,18 @@ class LoginData(BaseModel):
     fullName: str = Field(regex=Regexes.name, min_length=1, max_length=100)
     password: str
 
+    @validator("birthDate")
+    @classmethod
+    def validate_birth_date(cls, value):
+        try:
+            date = datetime.strptime(value, "%m/%d/%Y").date()
+        except ValueError:
+            try:
+                date = datetime.strptime(value, "%d.%m.%Y").date()
+            except ValueError:
+                raise ValueError("Неверный формат даты рождения")
+        return date.strftime("%d.%m.%Y")
+
 
 class SelectedProgram(BaseModel):
     selectedProgram: Optional[str] = Field(None)

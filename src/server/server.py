@@ -624,6 +624,14 @@ async def create_token(form_data: LoginData):
     return response
 
 
+@app.post("/logout")
+@requires("authenticated")
+async def logout(request: Request):
+    response = fastapi.responses.RedirectResponse(url="/", status_code=302)
+    response.delete_cookie("access_token")
+    return response
+
+
 @app.get("/admin/login")
 async def login(request: Request):
     return templates.TemplateResponse("admin_login.html", {"request": request})

@@ -7,10 +7,12 @@ wget
 starlette
 openpyxl
 img2pdf
-pymorphy3
 pytrovich
 python-dotenv
 argon2-cffi
 slowapi
 fast_captcha
-cryptorgaphy
+cryptography
+python-json-config
+python-statemachine
+

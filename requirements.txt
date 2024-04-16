@@ -14,4 +14,4 @@ fast_captcha
 cryptography
 python-json-config
 python-statemachine
-
+pandas

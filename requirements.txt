@@ -1,6 +1,7 @@
 fastapi==0.89.1
 pymongo==4.6.1
 pydantic==1.10.14
+Jinja2==3.1.2
 uvicorn
 python-docx
 starlette==0.22.0

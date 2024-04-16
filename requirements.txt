@@ -13,3 +13,4 @@ argon2-cffi
 slowapi
 fast_captcha
 cryptography
+python-json-config

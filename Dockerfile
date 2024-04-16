@@ -18,4 +18,4 @@ COPY ./data /app/data
 RUN npx webpack
 
 EXPOSE 80
-CMD ["uvicorn", "src.main:server.app", "--host", "127.0.0.1", "--port", "80"]
+CMD ["uvicorn", "src.main:server.app", "--host", "0.0.0.0", "--port", "10000"]

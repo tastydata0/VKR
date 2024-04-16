@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY ./requirements.txt /app/requirements.txt
 
-RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
+RUN pip install --no-cache-dir --upgrade --progress-bar off -r /app/requirements.txt 
 
 COPY ./src /app/src
 COPY ./data /app/data

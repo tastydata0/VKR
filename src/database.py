@@ -20,9 +20,11 @@ dotenv.load_dotenv(".env")
 username = os.getenv("DB_USER")
 password = os.getenv("DB_PASS")
 auth_source = os.getenv("DB_AUTH_SOURCE")
+db_host = os.getenv("DB_HOST")
+db_port = os.getenv("DB_PORT")
 
 client = MongoClient(
-    "mongodb://{}:{}@localhost:27017/{}".format(username, password, auth_source)
+    f"mongodb://{username}:{password}@{db_host}:{db_port}/{auth_source}"
 )
 
 db = client["codeschool"]

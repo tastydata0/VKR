@@ -180,6 +180,8 @@ def update_user_application_teacher(user_id: str, teacher_name: str):
 def update_user_application_grade(user_id: str, grade: int):
     return update_user_application_field(user_id, "grade", grade)
 
+def update_user_application_diploma(user_id: str, diploma: bool):
+    return update_user_application_field(user_id, "diploma", diploma)
 
 def update_user_application_order(user_id: str, order: str):
     return update_user_application_field(user_id, "order", order)
@@ -418,6 +420,7 @@ def export_graduate_csv() -> pathlib.Path:
             "fullName": user["fullName"],
             "teacherName": user["application"]["teacherName"],
             "grade": "",
+            "diploma": ""
         }
         for user in cursor
     ]

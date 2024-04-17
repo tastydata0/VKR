@@ -35,7 +35,8 @@ block base_content %}
                             <td>
                                 <ul>
                                     {% for application in user.applicationsArchive %} <li>{{ application.selectedProgram
-                                        }} {% if application.grade %} (оценка: {{ application.grade }}) {% else %} (не
+                                        }} {% if application.grade %} (оценка: {{ application.grade }}{% if
+                                        application.diploma %}, диплом{% endif %}) {% else %} (не
                                         доучился){% endif %}</li>
                                     {%
                                     endfor %}

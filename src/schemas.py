@@ -163,6 +163,7 @@ def user_schema():
                     "discounts": [],
                     "teacherName": None,
                     "order": None,
+                    "diploma": None,
                 },
                 "allOf": [{"$ref": "#/definitions/Application"}],
             },
@@ -209,6 +210,7 @@ def user_schema():
                         "enum": [t.name for t in database.get_teachers()],
                     },
                     "order": {"title": "Приказ о зачислении", "type": "string"},
+                    "diploma": {"title": "Наличие диплома за лучший результат", "type": "boolean"},
                 },
             }
         },

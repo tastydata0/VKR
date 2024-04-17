@@ -322,9 +322,9 @@ async def waiting_confirmation(request: Request):
                 applicationStatus=applicationStatus,
                 completedPrograms=[
                     {
-                        "brief": database.resolve_program_by_realization_id(
+                        **database.resolve_program_by_realization_id(
                             application.selectedProgram
-                        )["brief"],
+                        ),
                         "year": application.selectedProgram.split("-")[-3],
                     }
                     for application in request.user.applicationsArchive
@@ -832,6 +832,7 @@ async def admin_graduate_csv_upload(request: Request, table: UploadFile):
             state.graduate()
 
         database.update_user_application_grade(student["id"], student["grade"])
+        database.update_user_application_diploma(student["id"], student["diploma"].lower() in ('+', 'да'))
         database.move_user_application_to_archive(student["id"])
 
 

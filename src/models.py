@@ -169,6 +169,7 @@ class Application(SelectedProgram):
     teacherName: Optional[str] = Field(None)
     grade: Optional[int] = Field(None)
     order: Optional[str] = Field(None)
+    diploma: Optional[bool] = Field(False)
 
     @validator("status")
     @classmethod

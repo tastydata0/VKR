@@ -1,24 +1,72 @@
-{% extends "admin_base.html" %} {% block title %} Выпуск учеников {%
-endblock %} {% block base_content %}
+{% extends "admin_base.html" %} {% block title %} Выпуск учеников {% endblock %}
+{% block base_content %}
 
 <div class="container mt-5">
-
     <form method="POST" action="/admin/graduate_csv" enctype="multipart/form-data">
         <h1>Выпуск учеников</h1>
 
         <label for="applicationFiles" class="form-label">Загрузите таблицу с заполненными преподавателями оценками. Если
-            ученик бросил обучение, ставим оценку "0".</label>
+            ученик
+            бросил обучение, ставим оценку "0". Ученикам с дипломом ставим "+" или "да" в последнем столбце</label>
         <a href="/admin/graduate_csv">Скачать таблицу для заполнения туда оценок</a>
+
+        <p>Пример заполненной таблицы:</p>
+        <table>
+            <tr>
+                <th>id</th>
+                <th>fullName</th>
+                <th>teacherName</th>
+                <th>grade</th>
+                <th>diploma</th>
+            </tr>
+            <tr>
+                <td>Y3oVGa7j9aTGTqN3Cry</td>
+                <td>Иванов Иван Иванович</td>
+                <td>Учитель Пётр</td>
+                <td>75</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>DIVFxD3yQg5RTy7xeX</td>
+                <td>Александров Александр Александрович</td>
+                <td>Учитель Пётр</td>
+                <td>91</td>
+                <td>+</td>
+            </tr>
+            <tr>
+                <td>gDUdWAdur/74iC8G9u</td>
+                <td>Антонова Антонина Антоновна</td>
+                <td>Учитель Пётр</td>
+                <td>88</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>NPmz+yxjH+/b60iJc/</td>
+                <td>Сидоров Сидр Сидорович</td>
+                <td>Учительница Катя</td>
+                <td>100</td>
+                <td>+</td>
+            </tr>
+            <tr>
+                <td>NPmz+yxjH+/b60iJc/</td>
+                <td>Васильева Варвара Васильевна</td>
+                <td>Учительница Катя</td>
+                <td>90</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>UCh8tUPkTCHjJoMwbw</td>
+                <td>Неокончивший Обучение Ученик</td>
+                <td>Учительница Катя</td>
+                <td>0</td>
+                <td></td>
+            </tr>
+        </table>
+
         <input type="file" class="form-control mb-3 mt-3" id="table" name="table" accept=".csv" required />
 
-        <button type="submit" class="btn btn-primary mb-3">
-            Применить
-        </button>
+        <button type="submit" class="btn btn-primary mb-3">Применить</button>
     </form>
 </div>
-
-<script>
-
-</script>
 
 {% endblock %}

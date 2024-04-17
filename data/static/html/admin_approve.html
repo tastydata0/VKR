@@ -1,7 +1,7 @@
 {% extends "admin_base.html" %} {% block title %} Подтверждение документов {% endblock %} {%
 block base_content %}
 <div class="m-4">
-  <h2>Подтверждение документов</h2>
+  <h2 class="mb-3">Подтверждение документов</h2>
   <div>
     <div>
       <table class="table sortable">
@@ -80,6 +80,10 @@ block base_content %}
 <script>
   document.addEventListener("DOMContentLoaded", function () {
 
+
+    $(".close").addClass("btn-close");
+
+    $(".close").children().remove();
 
     // Обработчик для кнопки "Подтвердить"
     document.querySelectorAll(".confirm-btn").forEach(function (button) {

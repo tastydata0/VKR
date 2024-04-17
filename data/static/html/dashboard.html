@@ -78,6 +78,11 @@ block base_content %}
   src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTLf05cGQ5A_UXdE_1poSY2MAYiyzzsxsbXqJg8Rl-OqKm1lcyVaUChmpYT1K0lvwps5BtZOzizZQmd/pubhtml?widget=true&amp;headers=false"></iframe> -->
 <script>
   document.addEventListener("DOMContentLoaded", function () {
+
+    $(".close").addClass("btn-close");
+
+    $(".close").children().remove();
+
     $("#set-password-form").submit(function (event) {
       event.preventDefault();
       if (

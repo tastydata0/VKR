@@ -175,6 +175,11 @@ block base_content %}
   }
 
   document.addEventListener('DOMContentLoaded', function () {
+
+    $(".close").addClass("btn-close");
+
+    $(".close").children().remove();
+
     addEditor("add-program-json-editor", addProgramSchema);
     addEditor("confirm-program-json-editor", confirmProgramSchema);
     addEditor("realize-program-json-editor", realizeProgramSchema);

@@ -192,9 +192,9 @@ block base_content %}
 
     });
 
+    $(".close").addClass("btn-close");
 
-
-
+    $(".close").children().remove();
 
     $("#btn-select-all").on("click", function () {
       if ($(getSelected("id")).length > 0) {

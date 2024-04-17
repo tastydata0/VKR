@@ -383,7 +383,7 @@ def get_rejected_by_data_users() -> list[User]:
         for user in users.find(
             {
                 "$and": [
-                    {"application.lastRejectionReason": {"$ne": None}},
+                    {"application.lastRejectionReason": {"$gte": " "}},
                     {
                         "$or": [
                             {"application.status": ApplicationState.filling_info.id},

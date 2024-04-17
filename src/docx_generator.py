@@ -1,25 +1,31 @@
-from uuid import uuid4
+from io import BytesIO
 from docx import Document as DocxDocument
 import datetime
 from models import *
 from name_translation import fio_to_accusative
 import database
 
+def format_date(date: datetime.date | datetime.datetime) -> str:
+    months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+              'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
+    
+    day = date.day
+    month = months[date.month - 1]
+    year = date.year
+    formatted_date = f"{day:02d} {month} {year} г."
+    return formatted_date
+
 
 def generate_doc(
     userData: UserBasicData, template_name: str
-):  # template_name: application, consent, ...
+) -> BytesIO:  # template_name: application, consent, ...
     template_file_path = f"data/docx_files/{template_name}.docx"
-    filename = f"{uuid4()}.docx"
-    output_file_path = f"/tmp/{filename}"
 
     program_info = Program(
         **database.resolve_program_by_realization_id(
             userData.application.selectedProgram
         )
     )
-
-    print(program_info)
 
     variables = {
         "{ПРЕДСТАВИТЕЛЬ_ФИО}": userData.parentFullName,  # | "ФИО родителя",
@@ -33,6 +39,8 @@ def generate_doc(
             + int(program_info.relevant_confirmed().hoursHome)
         ),
         "{ПРОГРАММА_ЧАСЫ_АУД}": str(program_info.relevant_confirmed().hoursAud),
+        "{ПРОГРАММА_НАЧАЛО}": format_date(program_info.relevant_realization().realizationDate),
+        "{ПРОГРАММА_КОНЕЦ}": format_date(program_info.relevant_realization().finishDate),
         "{РЕБЕНОК_ФИО}": userData.fullName,  # | "ФИО ребенка",
         "{РЕБЕНОК_ДАТА_РОЖ}": userData.birthDate,  # | "Дата рождения ребенка",
         "{РЕБЕНОК_МЕСТО_РОЖ}": userData.birthPlace,  # | "Место рождения ребенка",
@@ -58,9 +66,11 @@ def generate_doc(
                             paragraph, variable_key, variable_value
                         )
 
-    template_document.save(output_file_path)
+    docx_bytes = BytesIO()
 
-    return output_file_path
+    template_document.save(docx_bytes)
+
+    return docx_bytes
 
 
 def replace_text_in_paragraph(paragraph, key, value):

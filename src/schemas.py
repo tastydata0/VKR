@@ -9,7 +9,7 @@ def _date_options() -> dict:
     return {
         "grid_columns": 4,
         "inputAttributes": {
-            "placeholder": "Enter date",
+            "placeholder": "Дата",
         },
         "flatpickr": {
             "inlineHideInput": True,
@@ -81,8 +81,14 @@ def realize_program_schema() -> dict:
                 "format": "date",
                 "options": _date_options(),
             },
+            "finishDate": {
+                "title": "Дата завершения программы",
+                "type": "string",
+                "format": "date",
+                "options": _date_options(),
+            },
         },
-        "required": ["id", "realizeDate"],
+        "required": ["id", "realizeDate", "finishDate"],
     }
 
 

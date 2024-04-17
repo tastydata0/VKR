@@ -348,15 +348,18 @@ class ProgramRealizationId(BaseModel):
 class RealizeProgramDto(BaseModel):
     id: str  # py
     realizeDate: str
+    finishDate: str
 
 
 class ProgramRealizationNoId(BaseModel):
     realizationDate: datetime = Field(datetime.now().replace(microsecond=0))
+    finishDate: datetime
 
     @staticmethod
     def from_realize_program_dto(dto: RealizeProgramDto):
         return ProgramRealizationNoId(
-            realizationDate=datetime.strptime(dto.realizeDate, "%d.%m.%Y")
+            realizationDate=datetime.strptime(dto.realizeDate, "%d.%m.%Y"),
+            finishDate=datetime.strptime(dto.finishDate, "%d.%m.%Y")
         )
 
 

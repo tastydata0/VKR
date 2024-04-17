@@ -164,25 +164,18 @@ async def send_docs_form(request: Request):
         },
     )
 
-
 @app.get("/get_filled_application")
 @limiter.limit("1/minute")
 @requires("authenticated")
-async def get_filled_application(request: Request, background_tasks: BackgroundTasks):
-    filepath = generate_doc(request.user, "application")
-    background_tasks.add_task(os.remove, filepath)
-
-    return FileResponse(filepath, filename="Заявление.docx")
+async def get_filled_application(request: Request):
+    return Response(content=generate_doc(request.user, "application").getbuffer(), media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
 
 
 @app.get("/get_filled_consent")
 @limiter.limit("1/minute")
 @requires("authenticated")
-async def get_filled_consent(request: Request, background_tasks: BackgroundTasks):
-    filepath = generate_doc(request.user, "consent")
-    background_tasks.add_task(os.remove, filepath)
-
-    return FileResponse(filepath, filename="Согласие.docx")
+async def get_filled_consent(request: Request):
+    return Response(content=generate_doc(request.user, "consent").getbuffer(), media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
 
 
 @app.get("/application/fill_info")

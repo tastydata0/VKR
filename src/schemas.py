@@ -288,3 +288,95 @@ def config_schema():
             },
         },
     }
+
+
+def edit_programs_schema():
+    return {
+        "title": "Программа",
+        "type": "object",
+        "properties": {
+            "baseId": {
+                "title": "Базовый ID",
+                "type": "string",
+                "readonly": "true",
+            },
+            "brief": {"title": "Краткое описание", "type": "string"},
+            "infoHtml": {"title": "Описание на HTML", "type": "string"},
+            "difficulty": {
+                "title": "Сложность (0-3)",
+                "minimum": 0,
+                "maximum": 3,
+                "type": "integer",
+            },
+            "iconUrl": {"title": "URL иконки", "type": "string"},
+            "confirmed": {
+                "title": "Утвержденные программы",
+                "type": "array",
+                "items": {"$ref": "#/definitions/ProgramConfirmed"},
+            },
+            "relevant": {
+                "title": "Актуальна ли программа?",
+                "default": True,
+                "type": "boolean",
+            },
+        },
+        "required": ["baseId", "brief", "infoHtml", "difficulty", "iconUrl"],
+        "definitions": {
+            "ProgramRealization": {
+                "title": "Реализация утвержденной программы",
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "title": "Id",
+                        "pattern": "[^-]+-[0-9]{4}-[0-9]{2}-[0-9]{2}-rel-[0-9]{4}-[0-9]{2}-[0-9]{2}",
+                        "type": "string",
+                        "readonly": "true",
+                    },
+                    "realizationDate": {
+                        "title": "Дата реализации",
+                        "type": "string",
+                        "format": "date",
+                        "options": _date_options(),
+                    },
+                },
+                "required": ["id"],
+            },
+            "ProgramConfirmed": {
+                "title": "Утвержденная программа",
+                "type": "object",
+                "properties": {
+                    "formalName": {"title": "Формальное название", "type": "string"},
+                    "cost": {"title": "Стоимость", "type": "integer"},
+                    "hoursAud": {"title": "Аудиторные часы", "type": "integer"},
+                    "hoursHome": {
+                        "title": "Часы самостоятельной работы",
+                        "type": "integer",
+                    },
+                    "confirmDate": {
+                        "title": "Дата утверждения",
+                        "type": "string",
+                        "format": "date",
+                        "options": _date_options(),
+                    },
+                    "realizations": {
+                        "title": "Реализации утвержденной программы",
+                        "type": "array",
+                        "items": {"$ref": "#/definitions/ProgramRealization"},
+                    },
+                    "id": {
+                        "title": "Id",
+                        "pattern": "[^-]+-[0-9]{4}-[0-9]{2}-[0-9]{2}",
+                        "type": "string",
+                        "readonly": "true",
+                    },
+                },
+                "required": [
+                    "formalName",
+                    "cost",
+                    "hoursAud",
+                    "hoursHome",
+                    "id",
+                ],
+            },
+        },
+    }

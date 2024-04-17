@@ -935,6 +935,12 @@ async def admin_manage_programs(request: Request):
             "add_program_schema": AddProgramDto.schema(),
             "confirm_program_schema": schemas.confirm_program_schema(),
             "realize_program_schema": schemas.realize_program_schema(),
+            "active_programs_ids": [
+                p.baseId for p in database.load_relevant_programs()
+            ],
+            "active_or_uncompleted_programs_ids": [
+                p.baseId for p in database.load_relevant_programs(True, True)
+            ],
         },
     )
 
@@ -966,6 +972,32 @@ async def admin_realize_program_post(request: Request, data: RealizeProgramDto):
     database.realize_program(
         data.id, ProgramRealizationNoId.from_realize_program_dto(data)
     )
+
+
+@app.get("/admin/edit_program")
+@requires("admin")
+async def admin_edit_program(request: Request, program_id: str):
+    program = Program(**database.programs.find_one({"baseId": program_id}))
+
+    return templates.TemplateResponse(
+        "admin_edit_programs.html",
+        {
+            "request": request,
+            "program": program,
+            "program_json": program.json(),
+            "edit_programs_schema": schemas.edit_programs_schema(),
+        },
+    )
+
+
+@app.post("/admin/edit_program")
+@requires("admin")
+async def admin_edit_program_post(request: Request, program_id: str, data: Program):
+    try:
+        print(data)
+        database.edit_program(program_id, data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.get("/admin/statistics")

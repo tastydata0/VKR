@@ -362,6 +362,13 @@ class ProgramRealizationNoId(BaseModel):
             finishDate=datetime.strptime(dto.finishDate, "%d.%m.%Y")
         )
 
+    @validator("realizationDate")
+    @classmethod
+    def validate_realization_date(cls, value):
+        if not isinstance(value, date):
+            value = datetime.strptime(value, "%d.%m.%Y")
+        return value
+
 
 class ProgramRealization(ProgramRealizationNoId, ProgramRealizationId):
     ...
@@ -385,7 +392,9 @@ class ProgramConfirmedNoId(BaseModel):
     cost: int
     hoursAud: int
     hoursHome: int
-    confirmDate: datetime = Field(datetime.now().replace(microsecond=0))
+    confirmDate: datetime | str = Field(
+        datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    )
     realizations: Optional[list[ProgramRealization]] = Field([])
 
     @staticmethod
@@ -397,6 +406,13 @@ class ProgramConfirmedNoId(BaseModel):
             hoursHome=dto.hoursHome,
             confirmDate=datetime.strptime(dto.confirmDate, "%d.%m.%Y"),
         )
+
+    @validator("confirmDate")
+    @classmethod
+    def validate_confirm_date(cls, value):
+        if not isinstance(value, date):
+            value = datetime.strptime(value, "%d.%m.%Y")
+        return value
 
 
 class ProgramConfirmed(ProgramConfirmedNoId):

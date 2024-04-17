@@ -342,7 +342,7 @@ def confirm_program(
     program.add_confirmed_program(confirmed_program)
     programs.replace_one({"baseId": program_base_id}, program.dict())
 
-    return
+    return True
 
 
 def realize_program(
@@ -358,7 +358,15 @@ def realize_program(
     program.add_program_realization(realized_program)
     programs.replace_one({"baseId": program_base_id}, program.dict())
 
-    return
+    return True
+
+
+def edit_program(program_base_id: str, program: Program) -> bool:
+    if programs.find_one({"baseId": program_base_id}) is None:
+        raise ValueError("Программы не существует")
+
+    programs.replace_one({"baseId": program_base_id}, program.dict())
+    return True
 
 
 def get_all_discounts() -> list[str]:

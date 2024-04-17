@@ -258,7 +258,9 @@ endblock %} {% block base_with_status_content %}
       console.log(selectedProgramId);
 
       // Если выбранная программа есть, устанавливаем данные о ней
-      if ((!selectedProgramId || selectedProgramId == 'None') && programs.length > 0) {
+      const programsContainSelectedProgram = programs.some(program => program.lastRealizationId === selectedProgramId);
+
+      if ((!selectedProgramId || selectedProgramId == 'None' || !programsContainSelectedProgram) && programs.length > 0) {
         $('input[name="selectedProgram"][value="' + programs[0].lastRealizationId + '"]').prop('checked', true);
         setProgramInfo();
       } else if (selectedProgramId) {

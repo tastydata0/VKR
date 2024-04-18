@@ -1,29 +1,24 @@
 import csv
 import json
-import shutil
 import uuid
-from fastapi import FastAPI, Form, HTTPException, File, Response, UploadFile
+from fastapi import FastAPI, HTTPException, Response, UploadFile
 from fastapi import Request
 from fastapi.responses import StreamingResponse
 import fastapi
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse
 import os
-from datetime import datetime, timedelta
-from typing import Annotated, Dict, List, Optional
-from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 import starlette
 from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse
 from starlette.authentication import requires
 from starlette.middleware import Middleware
 from starlette.middleware.authentication import AuthenticationMiddleware
-from starlette.background import BackgroundTasks
 import statemachine
 import uvicorn
 from docx_generator import generate_doc
 from docs_to_pdf import merge_docs_to_pdf
-from mail_service import Mail
 from fastapi.staticfiles import StaticFiles
 from src import application_state, schemas
 from src.persistent_model import MongodbPersistentModel
@@ -38,7 +33,6 @@ from slowapi.util import get_remote_address
 
 from .middlewares import *
 from .captcha import *
-import encryption
 from forms.main_form_fields import form_fields
 
 from application_stages import get_stages_according_to_state
@@ -101,17 +95,14 @@ async def status(request: Request):
 
 @app.get("/registration")
 async def registration_form(request: Request):
-    data = {}
     return templates.TemplateResponse(
-        "registration.html", {"request": request, "data": data}
+        "registration.html", {"request": request}
     )
 
 
-# Эндпоинт для отображения HTML-страницы входа
 @app.get("/login", response_class=HTMLResponse)
 async def login_form(request: Request):
-    data = {}
-    return templates.TemplateResponse("login.html", {"request": request, "data": data})
+    return templates.TemplateResponse("login.html", {"request": request})
 
 
 def redirect_according_to_application_state(
@@ -1020,7 +1011,7 @@ async def admin_statistics_lookup_people(request: Request, people: str):
 
     for full_name in full_names_to_lookup:
         if full_name:
-            lookup_result = database.find_users_by_full_name(full_name.strip())
+            lookup_result = database.find_user_by_full_name(full_name.strip())
             if lookup_result:
                 users.append(lookup_result)
             else:

@@ -19,4 +19,3 @@ if __name__ == "__main__":
     except Exception as e:
         logging.error(f"Unhandled exception(type={type(e)}): {e}")
         raise e
-        exit(1)

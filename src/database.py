@@ -1,10 +1,7 @@
 from datetime import datetime
-import json
 import logging
 import pathlib
-import typing
 import uuid
-import pydantic
 from pymongo import MongoClient
 from pymongo.cursor import Cursor
 import pandas as pd
@@ -14,7 +11,7 @@ import dotenv
 import os
 from passwords import get_password_hash, verify_password
 from bson import ObjectId
-
+from returns.maybe import Maybe, Nothing, Some, maybe
 
 dotenv.load_dotenv(".env")
 username = os.getenv("DB_USER")
@@ -43,15 +40,35 @@ def _setup_db():
         print("Индекс уже существует")
 
 
-def _find_user_with_password(user_id: str):
-    return users.find_one({"_id": ObjectId(user_id)})
+@maybe
+def _find_one_maybe(collection, *args, **kwargs) -> dict:
+    return collection.find_one(*args, **kwargs)
 
 
-def find_user(user_id: str) -> User | None:
-    raw_user_data = _find_user_with_password(user_id)
-    if raw_user_data is None:
+@maybe
+def _find_raw_user(user_id: str) -> dict:
+    return _find_one_maybe(users, {"_id": ObjectId(user_id)})
+
+
+@maybe
+def find_user(user_id: str) -> User:
+    return _find_raw_user(user_id).bind_optional(lambda raw: User(**raw))
+
+
+@maybe
+def find_user_by_login_data(login_data: LoginData) -> User:
+    raw_user: Maybe[dict] = _find_one_maybe(users, {"fullName": login_data.fullName, "birthDate": login_data.birthDate})
+
+    if raw_user == Nothing or not verify_password(
+        password=login_data.password, hash=raw_user["password"]
+    ):
         return None
+
     return User(**raw_user_data)
+
+@maybe
+def find_user_by_full_name(full_name: str) -> User:
+    return _find_one_maybe({"fullName": full_name})
 
 
 def find_all_users() -> list[User]:
@@ -73,70 +90,40 @@ def upsert_admin(admin: Admin):
     admins.update_one({"email": admin.email}, {"$set": admin.dict()}, upsert=True)
 
 
-def find_users_by_full_name(full_name: str) -> User | None:
-    raw_user_data = users.find_one({"fullName": full_name})
-
-    if raw_user_data is None:
-        return None
-
-    return User(**raw_user_data)
-
-
-def find_user_by_login_data(login_data: LoginData) -> User | None:
-    raw_user_data = users.find_one(
-        {"fullName": login_data.fullName, "birthDate": login_data.birthDate}
-    )
-
-    if raw_user_data is None or not verify_password(
-        password=login_data.password, hash=raw_user_data["password"]
-    ):
-        return None
-
-    return User(**raw_user_data)
-
-
 def check_user_password(user_id: str, password: str) -> bool:
-    raw_user_data = _find_user_with_password(user_id)
-    if raw_user_data is None:
-        return False
-    return verify_password(password=password, hash=raw_user_data["password"])
+    return _find_raw_user(user_id).bind_optional(lambda raw : verify_password(password=password, hash=raw["password"])).value_or(False)
 
 
-def update_user_password(user_id: str, password: str) -> bool:
+def update_user_password(user_id: str, password: str):
     users.update_one(
         {"_id": ObjectId(user_id)}, {"$set": {"password": get_password_hash(password)}}
     )
-    return True
 
 
-def find_admin_by_login_data(login_data: AdminLoginDto) -> AdminWithId | None:
-    raw_admin_data = admins.find_one({"email": login_data.email})
+@maybe
+def find_admin_by_login_data(login_data: AdminLoginDto) -> AdminWithId:
+    raw_admin: Maybe[dict] = _find_one_maybe(admins, {"email": login_data.email})
 
-    if raw_admin_data is None or not verify_password(
-        password=login_data.password, hash=raw_admin_data["password"]
+    if raw_admin == Nothing or not verify_password(
+        password=login_data.password, hash=raw_admin["password"]
     ):
         return None
 
-    return AdminWithId(**raw_admin_data, id=str(raw_admin_data["_id"]))
+    return AdminWithId(**raw_admin, id=str(raw_admin["_id"]))
 
 
+
+@maybe
 def find_user_creds(user_id: str) -> LoginData:
-    raw_user_data = _find_user_with_password(user_id)
-    if raw_user_data is None:
-        return None
-    return LoginData(**raw_user_data)
+    return _find_raw_user(user_id).bind_optional(lambda raw : LoginData(**raw))
 
 
 def find_users_with_status(status: statemachine.State) -> list[User]:
     return [User(**user) for user in users.find({"application.status": status.id})]
 
 
-def find_users_with_status_cursor(status: statemachine.State) -> Cursor:
-    return users.find({"application.status": status.id})
-
-
 def user_exists(user_id: str) -> bool:
-    return _find_user_with_password(user_id) is not None
+    return _find_raw_user(user_id) != Nothing
 
 
 def modify_user(user_id: str, newUserData: UserBasicData):
@@ -267,34 +254,39 @@ def add_auth_token(user_id: str, token: str, role: str = "user"):
     )
 
 
-def find_auth_token(token: str):
+@maybe
+def find_auth_token(token: str) -> dict:
     return tokens.find_one({"token": token})
 
 
+@maybe
 def find_user_by_token(token: str):
-    token_info = find_auth_token(token)
-    if token_info is None or token_info["role"] != "user":
+    token_info: Maybe[dict] = find_auth_token(token)
+    if token_info.bind_optional(lambda token_info: token_info["role"] != "user").value_or(False):
         return None
-    raw_user_data = users.find_one({"_id": ObjectId(token_info["user_id"])})
-    if raw_user_data is None:
-        return None
-    res = User(**raw_user_data)
-    return res
+    
+    user = token_info.bind(lambda token_info: find_user(token_info["user_id"])).value_or(None)
+
+    # TODO ensure and remove
+    assert(type(user) == User or user is None)
+    
+    return user
 
 
 def find_admin_by_token(token: str):
-    token_info = find_auth_token(token)
-    if token_info is None or token_info["role"] != "admin":
+    token_info: Maybe[dict] = find_auth_token(token)
+    if token_info.bind_optional(lambda token_info: token_info["role"] != "admin") != Some(True):
         return None
-    raw_admin_data = admins.find_one({"_id": ObjectId(token_info["user_id"])})
-    if raw_admin_data is None:
-        return None
-    res = Admin(**raw_admin_data, id=str(raw_admin_data["_id"]))
-    return res
+    
+    admin = token_info.bind(lambda token_info: _find_one_maybe(admins, {"_id": ObjectId(token_info["user_id"])})).bind_optional(lambda raw: Admin(**raw, id=str(raw["_id"]))).value_or(None)
 
+    # TODO ensure and remove
+    assert(type(admin) == Admin or admin is None)
+    
+    return admin
 
 # Programs
-def validate_program_realization_id_existence(program_id_raw: str):
+def validate_program_realization_id_existence(program_id_raw: str) -> bool:
     # Проверить, что программа актуальна и что она существует
     query = {"confirmed.realizations.id": {"$in": [program_id_raw]}}
     result = programs.find_one(query)
@@ -314,6 +306,7 @@ def load_relevant_programs(
     ]
 
 
+@maybe
 def resolve_program_by_realization_id(id: str) -> dict:
     query = {"confirmed.realizations.id": {"$in": [id]}}
     return programs.find_one(query)

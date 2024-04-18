@@ -17,3 +17,4 @@ cryptography
 python-json-config
 python-statemachine
 pandas
+returns

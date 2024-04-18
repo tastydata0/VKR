@@ -12,6 +12,10 @@ import os
 from passwords import get_password_hash, verify_password
 from bson import ObjectId
 from returns.maybe import Maybe, Nothing, Some, maybe
+from returns.pipeline import flow
+from returns.result import safe
+from returns.pointfree import bind
+from lambdas import _
 
 dotenv.load_dotenv(".env")
 username = os.getenv("DB_USER")
@@ -45,30 +49,32 @@ def _find_one_maybe(collection, *args, **kwargs) -> dict:
     return collection.find_one(*args, **kwargs)
 
 
-@maybe
-def _find_raw_user(user_id: str) -> dict:
+def _find_raw_user(user_id: str) -> Maybe[dict]:
     return _find_one_maybe(users, {"_id": ObjectId(user_id)})
 
 
-@maybe
-def find_user(user_id: str) -> User:
+def find_user(user_id: str) -> Maybe[User]:
     return _find_raw_user(user_id).bind_optional(lambda raw: User(**raw))
 
 
 @maybe
 def find_user_by_login_data(login_data: LoginData) -> User:
-    raw_user: Maybe[dict] = _find_one_maybe(users, {"fullName": login_data.fullName, "birthDate": login_data.birthDate})
+    raw_user: Maybe[dict] = _find_one_maybe(
+        users, {"fullName": login_data.fullName, "birthDate": login_data.birthDate}
+    )
 
     if raw_user == Nothing or not verify_password(
-        password=login_data.password, hash=raw_user["password"]
+        password=login_data.password, hash=raw_user.unwrap()["password"]
     ):
         return None
 
-    return User(**raw_user_data)
+    return User(**raw_user.unwrap())
 
-@maybe
-def find_user_by_full_name(full_name: str) -> User:
-    return _find_one_maybe({"fullName": full_name})
+
+def find_user_by_full_name(full_name: str) -> Maybe[User]:
+    return _find_one_maybe(users, {"fullName": full_name}).bind_optional(
+        lambda raw: User(**raw)
+    )
 
 
 def find_all_users() -> list[User]:
@@ -91,7 +97,13 @@ def upsert_admin(admin: Admin):
 
 
 def check_user_password(user_id: str, password: str) -> bool:
-    return _find_raw_user(user_id).bind_optional(lambda raw : verify_password(password=password, hash=raw["password"])).value_or(False)
+    return (
+        _find_raw_user(user_id)
+        .bind_optional(
+            lambda raw: verify_password(password=password, hash=raw["password"])
+        )
+        .value_or(False)
+    )
 
 
 def update_user_password(user_id: str, password: str):
@@ -105,17 +117,15 @@ def find_admin_by_login_data(login_data: AdminLoginDto) -> AdminWithId:
     raw_admin: Maybe[dict] = _find_one_maybe(admins, {"email": login_data.email})
 
     if raw_admin == Nothing or not verify_password(
-        password=login_data.password, hash=raw_admin["password"]
+        password=login_data.password, hash=raw_admin.unwrap()["password"]
     ):
         return None
 
-    return AdminWithId(**raw_admin, id=str(raw_admin["_id"]))
+    return AdminWithId(**raw_admin.unwrap(), id=str(raw_admin.unwrap()["_id"]))
 
 
-
-@maybe
-def find_user_creds(user_id: str) -> LoginData:
-    return _find_raw_user(user_id).bind_optional(lambda raw : LoginData(**raw))
+def find_user_creds(user_id: str) -> Maybe[LoginData]:
+    return _find_raw_user(user_id).bind_optional(lambda raw: LoginData(**raw))
 
 
 def find_users_with_status(status: statemachine.State) -> list[User]:
@@ -167,8 +177,10 @@ def update_user_application_teacher(user_id: str, teacher_name: str):
 def update_user_application_grade(user_id: str, grade: int):
     return update_user_application_field(user_id, "grade", grade)
 
+
 def update_user_application_diploma(user_id: str, diploma: bool):
     return update_user_application_field(user_id, "diploma", diploma)
+
 
 def update_user_application_order(user_id: str, order: str):
     return update_user_application_field(user_id, "order", order)
@@ -176,7 +188,9 @@ def update_user_application_order(user_id: str, order: str):
 
 def update_user_application_documents(user_id: str, documents: ApplicationDocuments):
     # Удаляем старые версии документов
-    old_docs = find_user(user_id).application.documents
+
+    # TODO сделать через flow?
+    old_docs = find_user(user_id).unwrap().application.documents
     if old_docs:
         old_files = [file.filename for file in old_docs.all_files]
         current_filenames = [file.filename for file in documents.all_files]
@@ -212,7 +226,7 @@ def update_user_application_rejection_reason(
 
 def move_user_application_to_archive(user_id: str):
     user = find_user(user_id)
-    if user:
+    if user != Nothing:
         users.update_one(
             {"_id": ObjectId(user_id)},
             {"$push": {"applicationsArchive": user.application.dict()}},
@@ -262,28 +276,44 @@ def find_auth_token(token: str) -> dict:
 @maybe
 def find_user_by_token(token: str):
     token_info: Maybe[dict] = find_auth_token(token)
-    if token_info.bind_optional(lambda token_info: token_info["role"] != "user").value_or(False):
+    if token_info.bind_optional(
+        lambda token_info: token_info["role"] != "user"
+    ).value_or(False):
         return None
-    
-    user = token_info.bind(lambda token_info: find_user(token_info["user_id"])).value_or(None)
+
+    user = token_info.bind(
+        lambda token_info: find_user(token_info["user_id"])
+    ).value_or(None)
 
     # TODO ensure and remove
-    assert(type(user) == User or user is None)
-    
+    assert type(user) == User or user is None
+
     return user
 
 
+@maybe
 def find_admin_by_token(token: str):
     token_info: Maybe[dict] = find_auth_token(token)
-    if token_info.bind_optional(lambda token_info: token_info["role"] != "admin") != Some(True):
+    if token_info.bind_optional(
+        lambda token_info: token_info["role"] != "admin"
+    ).value_or(False):
         return None
-    
-    admin = token_info.bind(lambda token_info: _find_one_maybe(admins, {"_id": ObjectId(token_info["user_id"])})).bind_optional(lambda raw: Admin(**raw, id=str(raw["_id"]))).value_or(None)
+
+    admin = (
+        token_info.bind(
+            lambda token_info: _find_one_maybe(
+                admins, {"_id": ObjectId(token_info["user_id"])}
+            )
+        )
+        .bind_optional(lambda raw: Admin(**raw, id=str(raw["_id"])))
+        .value_or(None)
+    )
 
     # TODO ensure and remove
-    assert(type(admin) == Admin or admin is None)
-    
+    assert type(admin) == Admin or admin is None
+
     return admin
+
 
 # Programs
 def validate_program_realization_id_existence(program_id_raw: str) -> bool:
@@ -421,7 +451,7 @@ def export_graduate_csv() -> pathlib.Path:
             "fullName": user["fullName"],
             "teacherName": user["application"]["teacherName"],
             "grade": "",
-            "diploma": ""
+            "diploma": "",
         }
         for user in cursor
     ]

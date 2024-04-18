@@ -4,6 +4,7 @@ import datetime
 from models import *
 from name_translation import fio_to_accusative
 import database
+from returns.maybe import Maybe
 
 
 def format_date(date: date | datetime) -> str:
@@ -34,11 +35,9 @@ def generate_doc(
 ) -> BytesIO:  # template_name: application, consent, ...
     template_file_path = f"data/docx_files/{template_name}.docx"
 
-    program_info = Program(
-        **database.resolve_program_by_realization_id(
-            userData.application.selectedProgram
-        )
-    )
+    program_info: Maybe[Program] = database.resolve_program_by_realization_id(
+        userData.application.selectedProgram
+    ).bind_optional(lambda program: Program(**program))
 
     variables = {
         "{ПРЕДСТАВИТЕЛЬ_ФИО}": userData.parentFullName,  # | "ФИО родителя",
@@ -46,18 +45,24 @@ def generate_doc(
         "{РЕБЕНОК_ФИО_РОД_ПАДЕЖ}": fio_to_accusative(
             userData.fullName
         ),  # | "ФИО ребенка",
-        "{ПРОГРАММА}": program_info.relevant_confirmed().formalName,
+        "{ПРОГРАММА}": program_info.bind_optional(
+            lambda program: program.relevant_confirmed().formalName
+        ).value_or("_" * 20),
         "{ПРОГРАММА_ЧАСЫ}": str(
-            program_info.relevant_confirmed().hoursAud
-            + int(program_info.relevant_confirmed().hoursHome)
+            program_info.bind_optional(
+                lambda program: program.relevant_confirmed().hoursAud
+                + int(program.relevant_confirmed().hoursHome)
+            ).value_or("__")
         ),
-        "{ПРОГРАММА_ЧАСЫ_АУД}": str(program_info.relevant_confirmed().hoursAud),
-        "{ПРОГРАММА_НАЧАЛО}": format_date(
-            program_info.relevant_realization().realizationDate
-        ),
-        "{ПРОГРАММА_КОНЕЦ}": format_date(
-            program_info.relevant_realization().finishDate
-        ),
+        "{ПРОГРАММА_ЧАСЫ_АУД}": program_info.bind_optional(
+            lambda program: program.relevant_confirmed().hoursAud
+        ).value_or("__"),
+        "{ПРОГРАММА_НАЧАЛО}": program_info.bind_optional(
+            lambda program: format_date(program.relevant_realization().realizationDate)
+        ).value_or("______"),
+        "{ПРОГРАММА_КОНЕЦ}": program_info.bind_optional(
+            lambda program: format_date(program.relevant_realization().finishDate)
+        ).value_or("______"),
         "{РЕБЕНОК_ФИО}": userData.fullName,  # | "ФИО ребенка",
         "{РЕБЕНОК_ДАТА_РОЖ}": userData.birthDate,  # | "Дата рождения ребенка",
         "{РЕБЕНОК_МЕСТО_РОЖ}": userData.birthPlace,  # | "Место рождения ребенка",

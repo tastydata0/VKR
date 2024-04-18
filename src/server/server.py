@@ -37,6 +37,9 @@ from forms.main_form_fields import form_fields
 
 from application_stages import get_stages_according_to_state
 
+from returns.maybe import Maybe, Nothing, Some
+from lambdas import _
+
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 generated_docs_folder = "data/docx_files"
 
@@ -95,9 +98,7 @@ async def status(request: Request):
 
 @app.get("/registration")
 async def registration_form(request: Request):
-    return templates.TemplateResponse(
-        "registration.html", {"request": request}
-    )
+    return templates.TemplateResponse("registration.html", {"request": request})
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -298,9 +299,11 @@ async def waiting_confirmation(request: Request):
         )
 
         if applicationSelectedProgram is not None:
-            applicationSelectedProgram = database.resolve_program_by_realization_id(
-                applicationSelectedProgram
-            )["brief"]
+            applicationSelectedProgram = (
+                database.resolve_program_by_realization_id(applicationSelectedProgram)
+                .bind_optional(lambda p: p["brief"])
+                .value_or("Неизвестная программа")
+            )
 
     return templates.TemplateResponse(
         "dashboard.html",
@@ -313,8 +316,10 @@ async def waiting_confirmation(request: Request):
                 applicationStatus=applicationStatus,
                 completedPrograms=[
                     {
-                        **database.resolve_program_by_realization_id(
-                            application.selectedProgram
+                        **(
+                            database.resolve_program_by_realization_id(
+                                application.selectedProgram
+                            ).value_or({"brief": "Неизвестная программа"})
                         ),
                         "year": application.selectedProgram.split("-")[-3],
                         "grade": application.grade,
@@ -602,14 +607,14 @@ async def register(request: Request, data: RegistrationData, captcha: str):
 async def create_token(form_data: LoginData):
     user = database.find_user_by_login_data(form_data)
 
-    if user is None:
+    if user == Nothing:
         raise HTTPException(
             status_code=400,
             detail="Неверные данные или пароль",
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token = str(uuid.uuid4())
-    database.add_auth_token(user.id, access_token)
+    database.add_auth_token(user.unwrap().id, access_token)
 
     response = fastapi.responses.RedirectResponse(url="/", status_code=302)
     response.set_cookie("access_token", access_token, httponly=True)
@@ -644,7 +649,7 @@ async def login(request: Request):
 async def create_admin_token(form_data: AdminLoginDto):
     user = database.find_admin_by_login_data(form_data)
 
-    if user is None:
+    if user == Nothing:
         raise HTTPException(
             status_code=400,
             detail="Неверные данные или пароль",
@@ -652,7 +657,7 @@ async def create_admin_token(form_data: AdminLoginDto):
         )
 
     access_token = str(uuid.uuid4())
-    database.add_auth_token(user.id, access_token, role="admin")
+    database.add_auth_token(user.unwrap().id, access_token, role="admin")
 
     response = fastapi.responses.RedirectResponse(
         url="/admin/dashboard", status_code=302
@@ -726,8 +731,8 @@ async def admin_edit_user(request: Request, user_id: str):
         "admin_edit_user.html",
         {
             "request": request,
-            "user": database.find_user(user_id),
-            "user_json": database.find_user(user_id).json(),
+            "user": database.find_user(user_id).unwrap(),
+            "user_json": database.find_user(user_id).unwrap().json(),
             "user_schema": schemas.user_schema(),
         },
     )
@@ -865,10 +870,10 @@ async def admin_approve_post(request: Request, data: AdminApprovalDto):
 
     try:
         if data.status == "approved":
-            state.approve(database.find_user(data.userId))
+            state.approve(database.find_user(data.userId).unwrap())
 
         elif data.status == "rejected":
-            state.data_invalid(database.find_user(data.userId))
+            state.data_invalid(database.find_user(data.userId).unwrap())
 
             database.update_user_application_rejection_reason(
                 user_id=data.userId, rejection_reason=data.reason
@@ -884,19 +889,22 @@ async def admin_approve_post(request: Request, data: AdminApprovalDto):
 @app.get("/admin/get_pdf_docs")
 @requires("admin")
 async def admin_get_pdf_docs(request: Request, user_id: str):
-    user = database.find_user(user_id)
-    user_docs = user.application.documents
-    if user_docs is None:
+    def check_docs(user: User):
+        user_docs = user.application.documents
+
+        if user_docs is None:
+            return Response(
+                content=f"Пользователь {user.fullName} ({user_id}) не имеет документов.",
+                status_code=404,
+                media_type="text/plain",
+            )
+
         return Response(
-            content=f"Пользователь {user.fullName} ({user_id}) не имеет документов.",
-            status_code=404,
-            media_type="text/plain",
+            content=user_docs.mergedPdf.read_file(),
+            media_type="application/pdf",
         )
 
-    return Response(
-        content=user_docs.mergedPdf.read_file(),
-        media_type="application/pdf",
-    )
+    return database.find_user(user_id).bind_optional(check_docs).unwrap()
 
 
 @app.get("/admin/competition")
@@ -923,10 +931,10 @@ async def admin_competition_post(request: Request, data: AdminApprovalDto):
     )
 
     if data.status == "approved":
-        state.pass_(database.find_user(data.userId))
+        state.pass_(database.find_user(data.userId).unwrap())
 
     elif data.status == "rejected":
-        state.not_pass(database.find_user(data.userId))
+        state.not_pass(database.find_user(data.userId).unwrap())
 
         database.update_user_application_rejection_reason(
             user_id=data.userId, rejection_reason=data.reason
@@ -1031,11 +1039,9 @@ async def admin_statistics_lookup_people(request: Request, people: str):
 
     for full_name in full_names_to_lookup:
         if full_name:
-            lookup_result = database.find_user_by_full_name(full_name.strip())
-            if lookup_result:
-                users.append(lookup_result)
-            else:
-                usersNotFound.append(full_name)
+            user = database.find_user_by_full_name(full_name.strip())
+            user.bind_optional(users.append)
+            user.or_else_call(lambda: usersNotFound.append(full_name))
 
     users = [user for user in users if user]
 

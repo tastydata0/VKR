@@ -69,7 +69,7 @@ class SelectedProgram(BaseModel):
     def get_brief_name(self):
         from database import resolve_program_by_realization_id
 
-        return resolve_program_by_realization_id(self.selectedProgram)["brief"]
+        return resolve_program_by_realization_id(self.selectedProgram).bind_optional(lambda p: p["brief"]).value_or('<Ошибка, неизвестная программа>')
 
 
 class Document(BaseModel):

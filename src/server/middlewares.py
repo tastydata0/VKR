@@ -6,6 +6,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import RedirectResponse
 
 from database import find_user_by_token, find_admin_by_token
+from returns.maybe import Nothing
 
 
 class CookieTokenAuthBackend(AuthenticationBackend):
@@ -16,12 +17,12 @@ class CookieTokenAuthBackend(AuthenticationBackend):
         token = conn.cookies.get("access_token")
 
         user = find_user_by_token(token)
-        if user is not None:
-            return AuthCredentials(["authenticated"]), user
+        if user != Nothing:
+            return AuthCredentials(["authenticated"]), user.unwrap()
 
         admin = find_admin_by_token(token)
-        if admin is not None:
-            return AuthCredentials(["admin"]), admin
+        if admin != Nothing:
+            return AuthCredentials(["admin"]), admin.unwrap()
 
 
 class RedirectMiddleware(BaseHTTPMiddleware):

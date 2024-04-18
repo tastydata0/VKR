@@ -38,7 +38,7 @@ class MongodbPersistentModel(AbstractPersistentModel):
 
     def _read_state(self):
         try:
-            application = database.find_user(self.user_id).application
+            application = database.find_user(self.user_id).unwrap().application
             return None if application is None else application.status
         except Exception as e:
             logging.error(e, exc_info=True)

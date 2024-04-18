@@ -74,18 +74,21 @@ def realize_program_schema() -> dict:
                 "enum": [
                     p.baseId for p in database.load_relevant_programs(False, True)
                 ],
+                "propertyOrder": 0,
             },
             "realizeDate": {
                 "title": "Дата реализации",
                 "type": "string",
                 "format": "date",
                 "options": _date_options(),
+                "propertyOrder": 1,
             },
             "finishDate": {
                 "title": "Дата завершения программы",
                 "type": "string",
                 "format": "date",
                 "options": _date_options(),
+                "propertyOrder": 2,
             },
         },
         "required": ["id", "realizeDate", "finishDate"],
@@ -216,7 +219,10 @@ def user_schema():
                         "enum": [t.name for t in database.get_teachers()],
                     },
                     "order": {"title": "Приказ о зачислении", "type": "string"},
-                    "diploma": {"title": "Наличие диплома за лучший результат", "type": "boolean"},
+                    "diploma": {
+                        "title": "Наличие диплома за лучший результат",
+                        "type": "boolean",
+                    },
                 },
             }
         },
@@ -328,18 +334,26 @@ def edit_programs_schema():
                 "properties": {
                     "id": {
                         "title": "Id",
-                        "pattern": "[^-]+-[0-9]{4}-[0-9]{2}-[0-9]{2}-rel-[0-9]{4}-[0-9]{2}-[0-9]{2}",
                         "type": "string",
                         "readonly": "true",
+                        "propertyOrder": 0,
                     },
                     "realizationDate": {
                         "title": "Дата реализации",
                         "type": "string",
                         "format": "date",
                         "options": _date_options(),
+                        "propertyOrder": 1,
+                    },
+                    "finishDate": {
+                        "title": "Дата завершения",
+                        "type": "string",
+                        "format": "date",
+                        "options": _date_options(),
+                        "propertyOrder": 2,
                     },
                 },
-                "required": ["id"],
+                "required": ["id", "realizationDate", "finishDate"],
             },
             "ProgramConfirmed": {
                 "title": "Утвержденная программа",
@@ -365,7 +379,6 @@ def edit_programs_schema():
                     },
                     "id": {
                         "title": "Id",
-                        "pattern": "[^-]+-[0-9]{4}-[0-9]{2}-[0-9]{2}",
                         "type": "string",
                         "readonly": "true",
                     },

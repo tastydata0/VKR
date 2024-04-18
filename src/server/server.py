@@ -155,18 +155,25 @@ async def send_docs_form(request: Request):
         },
     )
 
+
 @app.get("/get_filled_application")
 @limiter.limit("1/minute")
 @requires("authenticated")
 async def get_filled_application(request: Request):
-    return Response(content=generate_doc(request.user, "application").getbuffer(), media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    return Response(
+        content=generate_doc(request.user, "application").getbuffer().tobytes(),
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    )
 
 
 @app.get("/get_filled_consent")
 @limiter.limit("1/minute")
 @requires("authenticated")
 async def get_filled_consent(request: Request):
-    return Response(content=generate_doc(request.user, "consent").getbuffer(), media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    return Response(
+        content=generate_doc(request.user, "consent").getbuffer().tobytes(),
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    )
 
 
 @app.get("/application/fill_info")
@@ -310,6 +317,8 @@ async def waiting_confirmation(request: Request):
                             application.selectedProgram
                         ),
                         "year": application.selectedProgram.split("-")[-3],
+                        "grade": application.grade,
+                        "diploma": application.diploma,
                     }
                     for application in request.user.applicationsArchive
                 ],
@@ -816,8 +825,17 @@ async def admin_graduate_csv_upload(request: Request, table: UploadFile):
             state.graduate()
 
         database.update_user_application_grade(student["id"], student["grade"])
-        database.update_user_application_diploma(student["id"], student["diploma"].lower() in ('+', 'да'))
+        database.update_user_application_diploma(
+            student["id"], student["diploma"].lower() in ("+", "да")
+        )
         database.move_user_application_to_archive(student["id"])
+
+    return templates.TemplateResponse(
+        "admin_graduate.html",
+        {
+            "request": request,
+        },
+    )
 
 
 @app.get("/admin/approve")
@@ -975,7 +993,9 @@ async def admin_edit_program(request: Request, program_id: str):
         {
             "request": request,
             "program": program,
-            "program_json": program.json(),
+            "program_json": re.sub(
+                r"\b(\d{4})-(\d{2})-(\d{2})T00:00:00\b", r"\3.\2.\1", program.json()
+            ),
             "edit_programs_schema": schemas.edit_programs_schema(),
         },
     )

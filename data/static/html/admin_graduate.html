@@ -2,7 +2,7 @@
 {% block base_content %}
 
 <div class="container mt-5">
-    <form method="POST" action="/admin/graduate_csv" enctype="multipart/form-data">
+    <form method="POST" action="/admin/graduate_csv" enctype="multipart/form-data" id="graduate-form">
         <h1>Выпуск учеников</h1>
 
         <label for="applicationFiles" class="form-label">Загрузите таблицу с заполненными преподавателями оценками. Если
@@ -11,7 +11,7 @@
         <a href="/admin/graduate_csv">Скачать таблицу для заполнения туда оценок</a>
 
         <p>Пример заполненной таблицы:</p>
-        <table>
+        <table class="table">
             <tr>
                 <th>id</th>
                 <th>fullName</th>
@@ -68,5 +68,6 @@
         <button type="submit" class="btn btn-primary mb-3">Применить</button>
     </form>
 </div>
+
 
 {% endblock %}

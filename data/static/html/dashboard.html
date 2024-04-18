@@ -62,7 +62,9 @@ block base_content %}
       <h4>Пройденные программы обучения</h4>
       <ul class="list-group mb-3">
         {% for completedProgram in user.completedPrograms %}
-        <li class="list-group-item">{{completedProgram.brief}} ({{completedProgram.year}}), Оценка: {{completedProgram.grade}}{% if completedProgram.diploma %}<p class="ml-1" data-bs-toggle="tooltip" data-bs-placement="left" title="Грамота за лучший результат среди группы">👑</p>{% endif %}</li>
+        <li class="list-group-item">{{completedProgram.brief}} ({{completedProgram.year}}), Оценка:
+          {{completedProgram.grade}}{% if completedProgram.diploma %}<b class="ml-3" data-bs-toggle="tooltip"
+            data-bs-placement="left" title="Грамота за лучший результат среди группы">, Грамота ⭐</b>{% endif %}</li>
         {% endfor %}
       </ul>
       {% if user.applicationSelectedProgram is not none %}

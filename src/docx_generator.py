@@ -5,10 +5,23 @@ from models import *
 from name_translation import fio_to_accusative
 import database
 
-def format_date(date: datetime.date | datetime.datetime) -> str:
-    months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-              'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
-    
+
+def format_date(date: date | datetime) -> str:
+    months = [
+        "января",
+        "февраля",
+        "марта",
+        "апреля",
+        "мая",
+        "июня",
+        "июля",
+        "августа",
+        "сентября",
+        "октября",
+        "ноября",
+        "декабря",
+    ]
+
     day = date.day
     month = months[date.month - 1]
     year = date.year
@@ -39,8 +52,12 @@ def generate_doc(
             + int(program_info.relevant_confirmed().hoursHome)
         ),
         "{ПРОГРАММА_ЧАСЫ_АУД}": str(program_info.relevant_confirmed().hoursAud),
-        "{ПРОГРАММА_НАЧАЛО}": format_date(program_info.relevant_realization().realizationDate),
-        "{ПРОГРАММА_КОНЕЦ}": format_date(program_info.relevant_realization().finishDate),
+        "{ПРОГРАММА_НАЧАЛО}": format_date(
+            program_info.relevant_realization().realizationDate
+        ),
+        "{ПРОГРАММА_КОНЕЦ}": format_date(
+            program_info.relevant_realization().finishDate
+        ),
         "{РЕБЕНОК_ФИО}": userData.fullName,  # | "ФИО ребенка",
         "{РЕБЕНОК_ДАТА_РОЖ}": userData.birthDate,  # | "Дата рождения ребенка",
         "{РЕБЕНОК_МЕСТО_РОЖ}": userData.birthPlace,  # | "Место рождения ребенка",

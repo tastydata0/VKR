@@ -56,6 +56,11 @@ block base_content %}
       <a href="/application" class="btn btn-success mb-3">
         Подать заявление на обучение
       </a>
+      {% if user.applicationTeacher and user.applicationTeacher.relevantJournalUrl %}
+      <a href="{{ user.applicationTeacher.relevantJournalUrl  }}" class="btn btn-primary mb-3">
+        Открыть журнал
+      </a>
+      {% endif %}
     </div>
     <div class="col-md-8">
       {% if user.completedPrograms %}
@@ -69,8 +74,10 @@ block base_content %}
       </ul>
       {% endif %}
       {% if user.applicationSelectedProgram is not none %}
-      <h4>Активная заявка: {{user.applicationSelectedProgram}}</h4>
+      <h4>{% if user.applicationStatus != 'Зачислен на обучение' %}Активная заявка: {% else %}Обучение по программе: {%
+        endif %}{{user.applicationSelectedProgram}}</h4>
       <p>Статус: {{user.applicationStatus}}</p>
+      {% if user.applicationTeacher %} <p>Преподаватель: {{ user.applicationTeacher.fullName }}</p> {% endif %}
       {% endif %}
     </div>
   </div>

@@ -294,6 +294,12 @@ async def homepage(request: Request):
                 .value_or("Неизвестная программа")
             )
 
+        teacher_name = (
+            Maybe.from_optional(request.user.application)
+            .bind_optional(lambda app: app.dict().get("teacherName", None))
+            .value_or(None)
+        )
+
     return templates.TemplateResponse(
         "dashboard.html",
         {
@@ -303,6 +309,9 @@ async def homepage(request: Request):
                 **request.user.dict(),
                 applicationSelectedProgram=applicationSelectedProgram,
                 applicationStatus=applicationStatus,
+                applicationTeacher=database.resolve_teacher_by_name(
+                    teacher_name
+                ).value_or(None),
                 completedPrograms=[
                     {
                         **(
@@ -763,6 +772,21 @@ async def admin_config(request: Request):
             "config_schema": schemas.config_schema(),
         },
     )
+
+
+@app.post("/admin/edit_config")
+@requires("admin")
+async def admin_config_post(request: Request, data: Config):
+    started_accepting_applications = (
+        data.acceptApplications and not database.get_config().acceptApplications
+    )
+    if started_accepting_applications:
+        for user in database.find_users_with_status(
+            ApplicationState.waiting_for_applications
+        ):
+            ApplicationState(user_id=user.id).start_application(True)
+
+    database.config_db.update_one({}, data)
 
 
 @app.get("/admin/graduate")

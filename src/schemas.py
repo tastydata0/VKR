@@ -1,6 +1,7 @@
 from datetime import date
 from pydantic import BaseModel, Field
 import json
+from src.application_state import ApplicationState
 import src.database as database
 from src.models import *
 
@@ -216,7 +217,8 @@ def user_schema():
                     "teacherName": {
                         "title": "Имя учителя",
                         "type": "string",
-                        "enum": [t.name for t in database.get_teachers()],
+                        "enum": [t.name for t in database.get_teachers()] + [""],
+                        "default": ""
                     },
                     "order": {"title": "Приказ о зачислении", "type": "string"},
                     "diploma": {
@@ -246,6 +248,15 @@ def config_schema():
                 "type": "array",
                 "items": {"$ref": "#/definitions/Discount"},
             },
+            "acceptApplications": {
+                "title": "Принимать ли заявки",
+                "default": False,
+                "type": "boolean"
+            },
+            "termsUrl": {
+                "title": "Ссылка на политику обработки данных сайтом",
+                "type": "string"
+            }
         },
         "definitions": {
             "Teacher": {

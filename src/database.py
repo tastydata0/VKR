@@ -14,6 +14,7 @@ from returns.maybe import Maybe, Nothing, Some, maybe
 from returns.pipeline import flow, is_successful
 from returns.result import safe
 from returns.pointfree import bind
+from returns.curry import partial
 from lambdas import _
 from application_state import ApplicationState
 
@@ -44,11 +45,15 @@ def _setup_db():
         print("Индекс уже существует")
 
 
-def _get_config() -> dict:
+def _get_config_raw() -> dict:
     if not config_db.find_one():
         raise ValueError("Конфигурация не найдена")
 
     return config_db.find_one()  # type: ignore
+
+
+def get_config() -> Config:
+    return Config(**_get_config_raw())
 
 
 @maybe
@@ -56,8 +61,11 @@ def _find_one_maybe(collection, *args, **kwargs) -> dict:
     return collection.find_one(*args, **kwargs)
 
 
+_find_one_user_maybe = partial(_find_one_maybe, users)
+
+
 def _find_raw_user(user_id: str) -> Maybe[dict]:
-    return _find_one_maybe(users, {"_id": ObjectId(user_id)})
+    return _find_one_user_maybe({"_id": ObjectId(user_id)})
 
 
 def find_user(user_id: str) -> Maybe[User]:
@@ -65,25 +73,29 @@ def find_user(user_id: str) -> Maybe[User]:
 
 
 def find_user_by_login_data(login_data: LoginData) -> Maybe[User]:
-    return _find_one_maybe(
-        users, {"fullName": login_data.fullName, "birthDate": login_data.birthDate}
+    return _find_one_user_maybe(
+        {"fullName": login_data.fullName, "birthDate": login_data.birthDate}
     ).bind_optional(
-        lambda raw: User(**raw)
-        if verify_password(password=login_data.password, hash=raw["password"])
-        else None
+        lambda raw: (
+            User(**raw)
+            if verify_password(password=login_data.password, hash=raw["password"])
+            else None
+        )
     )
 
 
 def find_admin_by_login_data(login_data: AdminLoginDto) -> Maybe[AdminWithId]:
     return _find_one_maybe(admins, {"email": login_data.email}).bind_optional(
-        lambda raw: AdminWithId(**raw, id=str(raw["_id"]))
-        if verify_password(password=login_data.password, hash=raw["password"])
-        else None
+        lambda raw: (
+            AdminWithId(**raw, id=str(raw["_id"]))
+            if verify_password(password=login_data.password, hash=raw["password"])
+            else None
+        )
     )
 
 
 def find_user_by_full_name(full_name: str) -> Maybe[User]:
-    return _find_one_maybe(users, {"fullName": full_name}).bind_optional(
+    return _find_one_user_maybe({"fullName": full_name}).bind_optional(
         lambda raw: User(**raw)
     )
 
@@ -397,7 +409,15 @@ def edit_program(program_base_id: str, program: Program) -> bool:
 
 
 def get_all_discounts() -> list[str]:
-    return _get_config()["discounts"]
+    return _get_config_raw()["discounts"]
+
+
+def are_applications_accepted() -> bool:
+    return _get_config_raw().get("acceptApplications", False)
+
+
+def set_applications_accepted(accepted: bool) -> None:
+    config_db.update_one({}, {"$set": {"acceptApplications": accepted}}, upsert=True)
 
 
 def are_applications_accepted() -> bool:
@@ -448,7 +468,16 @@ def get_rejected_by_data_users_count() -> int:
 
 
 def get_teachers() -> list[Teacher]:
-    return [Teacher(**teacher) for teacher in _get_config()["teachers"]]
+    return get_config().teachers
+
+
+@maybe
+def resolve_teacher_by_name(full_name) -> Teacher:
+    for t in get_teachers():
+        if t.fullName == full_name:
+            return t
+
+    return None  # type: ignore
 
 
 def export_graduate_csv() -> pathlib.Path:

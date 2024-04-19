@@ -60,7 +60,9 @@ def get_config() -> Config:
 def _find_one_maybe(collection, *args, **kwargs) -> dict:
     return collection.find_one(*args, **kwargs)
 
+
 _find_one_user_maybe = partial(_find_one_maybe, users)
+
 
 def _find_raw_user(user_id: str) -> Maybe[dict]:
     return _find_one_user_maybe({"_id": ObjectId(user_id)})
@@ -71,19 +73,24 @@ def find_user(user_id: str) -> Maybe[User]:
 
 
 def find_user_by_login_data(login_data: LoginData) -> Maybe[User]:
-    return _find_one_user_maybe({"fullName": login_data.fullName, "birthDate": login_data.birthDate}
+    return _find_one_user_maybe(
+        {"fullName": login_data.fullName, "birthDate": login_data.birthDate}
     ).bind_optional(
-        lambda raw: User(**raw)
-        if verify_password(password=login_data.password, hash=raw["password"])
-        else None
+        lambda raw: (
+            User(**raw)
+            if verify_password(password=login_data.password, hash=raw["password"])
+            else None
+        )
     )
 
 
 def find_admin_by_login_data(login_data: AdminLoginDto) -> Maybe[AdminWithId]:
     return _find_one_maybe(admins, {"email": login_data.email}).bind_optional(
-        lambda raw: AdminWithId(**raw, id=str(raw["_id"]))
-        if verify_password(password=login_data.password, hash=raw["password"])
-        else None
+        lambda raw: (
+            AdminWithId(**raw, id=str(raw["_id"]))
+            if verify_password(password=login_data.password, hash=raw["password"])
+            else None
+        )
     )
 
 
@@ -454,6 +461,15 @@ def get_rejected_by_data_users_count() -> int:
 
 def get_teachers() -> list[Teacher]:
     return get_config().teachers
+
+
+@maybe
+def resolve_teacher_by_name(full_name) -> Teacher:
+    for t in get_teachers():
+        if t.fullName == full_name:
+            return t
+
+    return None  # type: ignore
 
 
 def export_graduate_csv() -> pathlib.Path:

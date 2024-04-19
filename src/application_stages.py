@@ -1,6 +1,6 @@
-import statemachine
-from models import ApplicationStage
-from application_state import ApplicationState
+import statemachine  # type: ignore
+from src.models import ApplicationStage
+from src.application_state import ApplicationState
 
 
 def status(current_state, state):
@@ -19,7 +19,9 @@ def status(current_state, state):
 def get_stages_according_to_state(state: statemachine.State):
     return [
         ApplicationStage(
-            stageName="Ожидание начала сбора заявлений", stageStatus="passed"
+            stageName="Ожидание начала сбора заявлений",
+            stageStatus="passed",
+            stageHref="#",
         ),
         ApplicationStage(
             stageName="Ввод данных и выбор программы",
@@ -49,5 +51,7 @@ def get_stages_according_to_state(state: statemachine.State):
             stageStatus=status(state, ApplicationState.passed),
             stageHref="/application/passed",
         ),
-        ApplicationStage(stageName="Программа пройдена", stageStatus="todo"),
+        ApplicationStage(
+            stageName="Программа пройдена", stageStatus="todo", stageHref="#"
+        ),
     ]

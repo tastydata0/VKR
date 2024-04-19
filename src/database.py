@@ -3,16 +3,15 @@ import logging
 import pathlib
 import uuid
 from pymongo import MongoClient
-from pymongo.cursor import Cursor
 import pandas as pd
-import statemachine
-from models import *
+import statemachine  # type: ignore
+from src.models import *
 import dotenv
 import os
-from passwords import get_password_hash, verify_password
+from src.passwords import get_password_hash, verify_password
 from bson import ObjectId
 from returns.maybe import Maybe, Nothing, Some, maybe
-from returns.pipeline import flow
+from returns.pipeline import flow, is_successful
 from returns.result import safe
 from returns.pointfree import bind
 from lambdas import _
@@ -24,7 +23,7 @@ auth_source = os.getenv("DB_AUTH_SOURCE")
 db_host = os.getenv("DB_HOST")
 db_port = os.getenv("DB_PORT")
 
-client = MongoClient(
+client: MongoClient = MongoClient(
     f"mongodb://{username}:{password}@{db_host}:{db_port}/{auth_source}"
 )
 
@@ -44,6 +43,13 @@ def _setup_db():
         print("Индекс уже существует")
 
 
+def _get_config() -> dict:
+    if not config_db.find_one():
+        raise ValueError("Конфигурация не найдена")
+
+    return config_db.find_one()  # type: ignore
+
+
 @maybe
 def _find_one_maybe(collection, *args, **kwargs) -> dict:
     return collection.find_one(*args, **kwargs)
@@ -57,18 +63,22 @@ def find_user(user_id: str) -> Maybe[User]:
     return _find_raw_user(user_id).bind_optional(lambda raw: User(**raw))
 
 
-@maybe
-def find_user_by_login_data(login_data: LoginData) -> User:
-    raw_user: Maybe[dict] = _find_one_maybe(
+def find_user_by_login_data(login_data: LoginData) -> Maybe[User]:
+    return _find_one_maybe(
         users, {"fullName": login_data.fullName, "birthDate": login_data.birthDate}
+    ).bind_optional(
+        lambda raw: User(**raw)
+        if verify_password(password=login_data.password, hash=raw["password"])
+        else None
     )
 
-    if raw_user == Nothing or not verify_password(
-        password=login_data.password, hash=raw_user.unwrap()["password"]
-    ):
-        return None
 
-    return User(**raw_user.unwrap())
+def find_admin_by_login_data(login_data: AdminLoginDto) -> Maybe[AdminWithId]:
+    return _find_one_maybe(admins, {"email": login_data.email}).bind_optional(
+        lambda raw: AdminWithId(**raw, id=str(raw["_id"]))
+        if verify_password(password=login_data.password, hash=raw["password"])
+        else None
+    )
 
 
 def find_user_by_full_name(full_name: str) -> Maybe[User]:
@@ -112,18 +122,6 @@ def update_user_password(user_id: str, password: str):
     )
 
 
-@maybe
-def find_admin_by_login_data(login_data: AdminLoginDto) -> AdminWithId:
-    raw_admin: Maybe[dict] = _find_one_maybe(admins, {"email": login_data.email})
-
-    if raw_admin == Nothing or not verify_password(
-        password=login_data.password, hash=raw_admin.unwrap()["password"]
-    ):
-        return None
-
-    return AdminWithId(**raw_admin.unwrap(), id=str(raw_admin.unwrap()["_id"]))
-
-
 def find_user_creds(user_id: str) -> Maybe[LoginData]:
     return _find_raw_user(user_id).bind_optional(lambda raw: LoginData(**raw))
 
@@ -133,7 +131,7 @@ def find_users_with_status(status: statemachine.State) -> list[User]:
 
 
 def user_exists(user_id: str) -> bool:
-    return _find_raw_user(user_id) != Nothing
+    return is_successful(_find_raw_user(user_id))
 
 
 def modify_user(user_id: str, newUserData: UserBasicData):
@@ -226,10 +224,10 @@ def update_user_application_rejection_reason(
 
 def move_user_application_to_archive(user_id: str):
     user = find_user(user_id)
-    if user != Nothing:
+    if is_successful(user):
         users.update_one(
             {"_id": ObjectId(user_id)},
-            {"$push": {"applicationsArchive": user.application.dict()}},
+            {"$push": {"applicationsArchive": user.unwrap().application.dict()}},
             upsert=True,
         )
 
@@ -240,21 +238,25 @@ def move_user_application_to_archive(user_id: str):
         )
 
 
-def register_user(userData: RegistrationData) -> str | None:
+def register_user(user_data: RegistrationData) -> Maybe[str]:
     # Хэширование пароля
-    userData.password = get_password_hash(userData.password)
+    user_data.password = get_password_hash(user_data.password)
 
-    userData = userData.dict()
-    if (
-        users.find_one(
-            {"fullName": userData["fullName"], "birthDate": userData["birthDate"]}
+    user_data_dict = user_data.dict()
+
+    return (
+        _find_one_maybe(
+            users,
+            {
+                "fullName": user_data_dict["fullName"],
+                "birthDate": user_data_dict["birthDate"],
+            },
         )
-        is None
-    ):
-        result = users.insert_one(userData)
-        return str(result.inserted_id)
-    else:
-        return None  # Пользователь уже существует
+        .bind_optional(lambda x: Nothing)
+        .or_else_call(
+            lambda: Maybe.from_value(str(users.insert_one(user_data_dict).inserted_id))
+        )
+    )
 
 
 def add_auth_token(user_id: str, token: str, role: str = "user"):
@@ -268,9 +270,8 @@ def add_auth_token(user_id: str, token: str, role: str = "user"):
     )
 
 
-@maybe
-def find_auth_token(token: str) -> dict:
-    return tokens.find_one({"token": token})
+def find_auth_token(token: str) -> Maybe[dict]:
+    return _find_one_maybe(tokens, {"token": token})
 
 
 @maybe
@@ -305,12 +306,12 @@ def find_admin_by_token(token: str):
                 admins, {"_id": ObjectId(token_info["user_id"])}
             )
         )
-        .bind_optional(lambda raw: Admin(**raw, id=str(raw["_id"])))
+        .bind_optional(lambda raw: AdminWithId(**raw, id=str(raw["_id"])))
         .value_or(None)
     )
 
     # TODO ensure and remove
-    assert type(admin) == Admin or admin is None
+    assert type(admin) == AdminWithId or admin is None
 
     return admin
 
@@ -336,52 +337,50 @@ def load_relevant_programs(
     ]
 
 
-@maybe
-def resolve_program_by_realization_id(id: str) -> dict:
-    query = {"confirmed.realizations.id": {"$in": [id]}}
-    return programs.find_one(query)
+def resolve_program_by_realization_id(id: str | None) -> Maybe[dict]:
+    return _find_one_maybe(programs, {"confirmed.realizations.id": {"$in": [id]}})
+
+
+def resolve_program_by_base_id(id: str) -> Maybe[dict]:
+    return _find_one_maybe(programs, {"baseId": id})
 
 
 _setup_db()
 
 
-def add_program(program: Program) -> bool:
+def add_program(program: Program) -> None:
     if programs.find_one({"baseId": program.baseId}):
         raise ValueError("Program already exists")
 
-    return programs.insert_one(program.dict())
+    programs.insert_one(program.dict())
 
 
 def confirm_program(
     program_base_id: str, confirmed_program: ProgramConfirmedNoId
-) -> bool:
-    program = programs.find_one({"baseId": program_base_id})
+) -> None:
+    program_raw = programs.find_one({"baseId": program_base_id})
 
-    if not program:
+    if not program_raw:
         raise ValueError(f"Program {program_base_id} doesn't exist")
 
-    program: Program = Program(**program)
+    program: Program = Program(**program_raw)
 
     program.add_confirmed_program(confirmed_program)
     programs.replace_one({"baseId": program_base_id}, program.dict())
 
-    return True
-
 
 def realize_program(
     program_base_id: str, realized_program: ProgramRealizationNoId
-) -> bool:
-    program = programs.find_one({"baseId": program_base_id})
+) -> None:
+    program_raw = programs.find_one({"baseId": program_base_id})
 
-    if not program:
+    if not program_raw:
         raise ValueError(f"Program {program_base_id} doesn't exist")
 
-    program: Program = Program(**program)
+    program: Program = Program(**program_raw)
 
     program.add_program_realization(realized_program)
     programs.replace_one({"baseId": program_base_id}, program.dict())
-
-    return True
 
 
 def edit_program(program_base_id: str, program: Program) -> bool:
@@ -393,7 +392,7 @@ def edit_program(program_base_id: str, program: Program) -> bool:
 
 
 def get_all_discounts() -> list[str]:
-    return config_db.find_one()["discounts"]
+    return _get_config()["discounts"]
 
 
 def user_count_by_application_state(state: statemachine.State) -> int:
@@ -436,7 +435,7 @@ def get_rejected_by_data_users_count() -> int:
 
 
 def get_teachers() -> list[Teacher]:
-    return [Teacher(**teacher) for teacher in config_db.find_one({})["teachers"]]
+    return [Teacher(**teacher) for teacher in _get_config()["teachers"]]
 
 
 def export_graduate_csv() -> pathlib.Path:

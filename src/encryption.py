@@ -1,4 +1,4 @@
-from models import Document
+from src.models import Document
 from cryptography.fernet import Fernet
 
 
@@ -11,7 +11,9 @@ def save_file_encrypted(filename: str, data: bytes) -> Document:
     with open(filename, "wb") as f:
         f.write(data_encrypted)
 
-    return Document(filename=filename, encryptionKey=key, encryptionVersion=1)
+    return Document(
+        filename=filename, encryptionKey=key, encryptionVersion=1  # type: ignore
+    )
 
 
 def read_encrypted_document(document: Document) -> bytes:
@@ -22,3 +24,5 @@ def read_encrypted_document(document: Document) -> bytes:
         fernet = Fernet(document.encryptionKey)
         with open(document.filename, "rb") as f:
             return fernet.decrypt(f.read())
+
+    raise ValueError("Неверная версия шифрования документа")

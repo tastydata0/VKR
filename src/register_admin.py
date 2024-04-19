@@ -1,7 +1,7 @@
-import database
+import src.database as database
 import getpass
-from models import Admin
-import passwords
+from src.models import Admin
+import src.passwords as passwords
 
 
 def get_password_twice():

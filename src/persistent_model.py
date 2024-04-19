@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import logging
 
-import database
+import src.database as database
 
 
 class AbstractPersistentModel(ABC):

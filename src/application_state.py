@@ -1,5 +1,5 @@
-from statemachine import StateMachine, State
-from mail_service import Mail
+from statemachine import StateMachine, State  # type: ignore
+from src.mail_service import Mail
 
 IS_APPLICATIONS_STARTED = True
 

@@ -5,19 +5,15 @@ import re
 from typing import Optional
 from bson import ObjectId
 from pydantic import BaseModel, Field, validator
-from application_state import ApplicationState
+from src.application_state import ApplicationState
 
 
 class Regexes:
-    email = re.compile(
-        r"([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\"([]!#-[^-~ \t]|(\\[\t -~]))+\")@([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\[[\t -Z^-~]*])"
-    )
+    email = r"([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\"([]!#-[^-~ \t]|(\\[\t -~]))+\")@([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\[[\t -Z^-~]*])"
 
-    birth_date = re.compile(
-        r"(^(((0[1-9]|1[0-9]|2[0-8])\.(0[1-9]|1[012]))|((29|30|31)[\/](0[13578]|1[02]))|((29|30)\.(0[4,6,9]|11)))\.(19|[2-9][0-9])\d\d$)|(^29\.02\.(19|[2-9][0-9])(00|04|08|12|16|20|24|28|32|36|40|44|48|52|56|60|64|68|72|76|80|84|88|92|96)$)"
-    )
+    birth_date = r"(^(((0[1-9]|1[0-9]|2[0-8])\.(0[1-9]|1[012]))|((29|30|31)[\/](0[13578]|1[02]))|((29|30)\.(0[4,6,9]|11)))\.(19|[2-9][0-9])\d\d$)|(^29\.02\.(19|[2-9][0-9])(00|04|08|12|16|20|24|28|32|36|40|44|48|52|56|60|64|68|72|76|80|84|88|92|96)$)"
 
-    name = re.compile("[а-яА-Я ]+")
+    name = "[а-яА-Я ]+"
 
 
 class ApplicationStage(BaseModel):
@@ -60,21 +56,25 @@ class SelectedProgram(BaseModel):
     @validator("selectedProgram")
     @classmethod
     def validate_selected_program(cls, value):
-        from database import validate_program_realization_id_existence
+        from src.database import validate_program_realization_id_existence
 
         if value is not None and not validate_program_realization_id_existence(value):
             raise ValueError(f"Программы {value} не существует или она неактуальна")
         return value
 
     def get_brief_name(self):
-        from database import resolve_program_by_realization_id
+        from src.database import resolve_program_by_realization_id
 
-        return resolve_program_by_realization_id(self.selectedProgram).bind_optional(lambda p: p["brief"]).value_or('<Ошибка, неизвестная программа>')
+        return (
+            resolve_program_by_realization_id(self.selectedProgram)
+            .bind_optional(lambda p: p["brief"])
+            .value_or("<Ошибка, неизвестная программа>")
+        )
 
 
 class Document(BaseModel):
     filename: str
-    timestamp: Optional[datetime] = Field(datetime.now().replace(microsecond=0))
+    timestamp: datetime = Field(datetime.now().replace(microsecond=0))
     encryptionKey: str
     encryptionVersion: int = Field(1)
 
@@ -86,13 +86,13 @@ class Document(BaseModel):
         return value
 
     def read_file(self) -> bytes:
-        from encryption import read_encrypted_document
+        from src.encryption import read_encrypted_document
 
         return read_encrypted_document(self)
 
     @classmethod
     def save_file(cls, filename: str, data: bytes) -> "Document":
-        from encryption import save_file_encrypted
+        from src.encryption import save_file_encrypted
 
         return save_file_encrypted(filename, data)
 
@@ -209,7 +209,7 @@ class UserBasicData(UserMutableData):
     @validator("birthDate")
     @classmethod
     def validate_birth_date(cls, value):  # 12.04.2003
-        if Regexes.birth_date.fullmatch(value) is None:
+        if re.fullmatch(Regexes.birth_date, value) is None:
             raise ValueError("Неверный формат даты рождения")
         return value
 
@@ -235,7 +235,7 @@ class Admin(BaseModel):
     @validator("email")
     @classmethod
     def validate_email(cls, value):
-        if Regexes.email.fullmatch(value) is None:
+        if re.fullmatch(Regexes.email, value) is None:
             raise ValueError("Некорректная почта")
         return value
 
@@ -325,7 +325,7 @@ class FormField(BaseModel):
 
 
 class UserFillDataSubmission(UserBasicData, SelectedProgram):
-    discounts: Optional[list[str]] = Field([])
+    discounts: list[str] = Field([])
 
 
 """
@@ -400,7 +400,7 @@ class ProgramConfirmedNoId(BaseModel):
     hoursAud: int
     hoursHome: int
     confirmDate: datetime | str
-    realizations: Optional[list[ProgramRealization]] = Field([])
+    realizations: list[ProgramRealization] = Field([])
 
     @staticmethod
     def from_confirm_program_dto(dto: ConfirmProgramDto):
@@ -410,12 +410,13 @@ class ProgramConfirmedNoId(BaseModel):
             hoursAud=dto.hoursAud,
             hoursHome=dto.hoursHome,
             confirmDate=datetime.strptime(dto.confirmDate, "%d.%m.%Y"),
+            realizations=[],
         )
 
     @validator("confirmDate")
     @classmethod
     def validate_confirm_date(cls, value):
-        if not isinstance(value, date):
+        if not isinstance(value, datetime):
             value = datetime.strptime(value, "%d.%m.%Y")
         return value
 
@@ -436,7 +437,7 @@ class Program(BaseModel):
     def add_confirmed_program(self, program: ProgramConfirmedNoId):
         self.confirmed.append(
             ProgramConfirmed(
-                id=f"{self.baseId}-{program.confirmDate.strftime(DATE_STRFTIME_FORMAT)}",
+                id=f"{self.baseId}-{program.confirmDate.strftime(DATE_STRFTIME_FORMAT)}",  # type: ignore
                 **program.dict(),
             )
         )
@@ -446,7 +447,7 @@ class Program(BaseModel):
     def add_program_realization(self, realization: ProgramRealizationNoId):
         self.confirmed[0].realizations.append(
             ProgramRealization(
-                id=f"{self.confirmed[-1].id}-rel-{realization.realizationDate.strftime(DATE_STRFTIME_FORMAT)}",
+                id=f"{self.confirmed[-1].id}-rel-{realization.realizationDate.strftime(DATE_STRFTIME_FORMAT)}",  # type: ignore
                 **realization.dict(),
             )
         )

@@ -15,35 +15,31 @@ from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse
 from starlette.authentication import requires
 from starlette.middleware import Middleware
 from starlette.middleware.authentication import AuthenticationMiddleware
-import statemachine
+import statemachine  # type: ignore
 import uvicorn
-from docx_generator import generate_doc
-from docs_to_pdf import merge_docs_to_pdf
+from src.docx_generator import generate_doc
+from src.docs_to_pdf import merge_docs_to_pdf
 from fastapi.staticfiles import StaticFiles
 from src import application_state, schemas
 from src.persistent_model import MongodbPersistentModel
-from models import *
-import database
-from name_translation import fio_to_accusative
-import passwords
-from img2pdf import ImageOpenError
+from src.models import *
+import src.database as database
+from src.name_translation import fio_to_accusative
+import src.passwords as passwords
+from img2pdf import ImageOpenError  # type: ignore
 from slowapi.errors import RateLimitExceeded
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 from .middlewares import *
 from .captcha import *
-from forms.main_form_fields import form_fields
+from src.forms.main_form_fields import form_fields
 
-from application_stages import get_stages_according_to_state
+from src.application_stages import get_stages_according_to_state
 
 from returns.maybe import Maybe, Nothing, Some
+from returns.pipeline import is_successful
 from lambdas import _
-
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
-generated_docs_folder = "data/docx_files"
-
-active_tokens = {}
 
 
 def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
@@ -239,7 +235,7 @@ async def waiting_confirmation(request: Request):
 
 @app.get("/application/approved")
 @requires("authenticated")
-async def waiting_confirmation(request: Request):
+async def approved(request: Request):
     model = MongodbPersistentModel(
         request.user.id,
     )
@@ -283,7 +279,7 @@ async def passed(request: Request):
 
 @app.get("/")
 @requires("authenticated")
-async def waiting_confirmation(request: Request):
+async def homepage(request: Request):
     applicationSelectedProgram = None
     applicationStatus = None
     if request.user.application is not None:
@@ -294,13 +290,13 @@ async def waiting_confirmation(request: Request):
         state = application_state.ApplicationState(model=model)
         applicationStatus = state.current_state.name
 
-        applicationSelectedProgram = request.user.application.dict().get(
+        applicationSelectedProgramId = request.user.application.dict().get(
             "selectedProgram", None
         )
 
-        if applicationSelectedProgram is not None:
+        if applicationSelectedProgramId is not None:
             applicationSelectedProgram = (
-                database.resolve_program_by_realization_id(applicationSelectedProgram)
+                database.resolve_program_by_realization_id(applicationSelectedProgramId)
                 .bind_optional(lambda p: p["brief"])
                 .value_or("Неизвестная программа")
             )
@@ -829,7 +825,7 @@ async def admin_graduate_csv_upload(request: Request, table: UploadFile):
         else:
             state.graduate()
 
-        database.update_user_application_grade(student["id"], student["grade"])
+        database.update_user_application_grade(student["id"], int(student["grade"]))
         database.update_user_application_diploma(
             student["id"], student["diploma"].lower() in ("+", "да")
         )
@@ -994,7 +990,12 @@ async def admin_realize_program_post(request: Request, data: RealizeProgramDto):
 @app.get("/admin/edit_program")
 @requires("admin")
 async def admin_edit_program(request: Request, program_id: str):
-    program = Program(**database.programs.find_one({"baseId": program_id}))
+    program: Maybe[Program] = database.resolve_program_by_base_id(
+        program_id
+    ).bind_optional(lambda x: Program(**x))
+
+    if not is_successful(program):
+        raise HTTPException(status_code=404, detail="Программа не найдена")
 
     return templates.TemplateResponse(
         "admin_edit_programs.html",
@@ -1002,7 +1003,9 @@ async def admin_edit_program(request: Request, program_id: str):
             "request": request,
             "program": program,
             "program_json": re.sub(
-                r"\b(\d{4})-(\d{2})-(\d{2})T00:00:00\b", r"\3.\2.\1", program.json()
+                r"\b(\d{4})-(\d{2})-(\d{2})T00:00:00\b",
+                r"\3.\2.\1",
+                program.unwrap().json(),
             ),
             "edit_programs_schema": schemas.edit_programs_schema(),
         },
@@ -1035,7 +1038,8 @@ async def admin_statistics(request: Request):
 async def admin_statistics_lookup_people(request: Request, people: str):
     full_names_to_lookup = people.splitlines()
 
-    users, usersNotFound = [], []
+    users: list[User] = []
+    usersNotFound: list[str] = []
 
     for full_name in full_names_to_lookup:
         if full_name:

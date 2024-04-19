@@ -1,8 +1,8 @@
 import random
 from faker import Faker
-from models import *
+from src.models import *
 import os
-import database
+import src.database as database
 
 fake = Faker("ru_RU")
 

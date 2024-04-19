@@ -1,6 +1,6 @@
-from pytrovich.detector import PetrovichGenderDetector
-from pytrovich.enums import NamePart, Gender, Case
-from pytrovich.maker import PetrovichDeclinationMaker
+from pytrovich.detector import PetrovichGenderDetector  # type: ignore
+from pytrovich.enums import NamePart, Gender, Case  # type: ignore
+from pytrovich.maker import PetrovichDeclinationMaker  # type: ignore
 
 maker = PetrovichDeclinationMaker()
 detector = PetrovichGenderDetector()

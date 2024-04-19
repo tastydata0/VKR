@@ -4,8 +4,8 @@ import sys
 sys.path.insert(0, "./src")
 
 # User modules
-import logging_setup
-import server.server as server
+import src.logging_setup as logging_setup
+import src.server.server as server
 
 
 def main():

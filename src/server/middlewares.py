@@ -5,7 +5,7 @@ from starlette.authentication import (
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import RedirectResponse
 
-from database import find_user_by_token, find_admin_by_token
+from src.database import find_user_by_token, find_admin_by_token
 from returns.maybe import Nothing
 
 

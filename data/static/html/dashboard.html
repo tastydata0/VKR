@@ -57,8 +57,8 @@ block base_content %}
         Подать заявление на обучение
       </a>
     </div>
-    {% if user.completedPrograms %}
     <div class="col-md-8">
+      {% if user.completedPrograms %}
       <h4>Пройденные программы обучения</h4>
       <ul class="list-group mb-3">
         {% for completedProgram in user.completedPrograms %}
@@ -67,12 +67,12 @@ block base_content %}
             data-bs-placement="left" title="Грамота за лучший результат среди группы">, Грамота ⭐</b>{% endif %}</li>
         {% endfor %}
       </ul>
+      {% endif %}
       {% if user.applicationSelectedProgram is not none %}
       <h4>Активная заявка: {{user.applicationSelectedProgram}}</h4>
       <p>Статус: {{user.applicationStatus}}</p>
       {% endif %}
     </div>
-    {% endif %}
   </div>
 </div>
 <!-- <h3>Журнал</h3>

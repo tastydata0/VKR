@@ -1,10 +1,10 @@
 from pathlib import Path
 import random
-from fast_captcha import img_captcha
+from fast_captcha import img_captcha  # type: ignore
 from fastapi import HTTPException
 
 
-captcha_links = {}
+captcha_links: dict[str, list[str]] = {}
 
 MAX_CAPTHCHAS_PER_IP = 20
 

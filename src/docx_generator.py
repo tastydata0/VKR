@@ -1,13 +1,13 @@
 from io import BytesIO
-from docx import Document as DocxDocument
-import datetime
-from models import *
-from name_translation import fio_to_accusative
-import database
+from docx import Document as DocxDocument  # type: ignore
+import datetime as dt
+from src.models import *
+from src.name_translation import fio_to_accusative
+import src.database as database
 from returns.maybe import Maybe
 
 
-def format_date(date: date | datetime) -> str:
+def format_date(date: dt.date | dt.datetime) -> str:
     months = [
         "января",
         "февраля",
@@ -31,7 +31,7 @@ def format_date(date: date | datetime) -> str:
 
 
 def generate_doc(
-    userData: UserBasicData, template_name: str
+    userData: User, template_name: str
 ) -> BytesIO:  # template_name: application, consent, ...
     template_file_path = f"data/docx_files/{template_name}.docx"
 
@@ -58,10 +58,10 @@ def generate_doc(
             lambda program: program.relevant_confirmed().hoursAud
         ).value_or("__"),
         "{ПРОГРАММА_НАЧАЛО}": program_info.bind_optional(
-            lambda program: format_date(program.relevant_realization().realizationDate)
+            lambda program: format_date(program.relevant_realization().realizationDate)  # type: ignore
         ).value_or("______"),
         "{ПРОГРАММА_КОНЕЦ}": program_info.bind_optional(
-            lambda program: format_date(program.relevant_realization().finishDate)
+            lambda program: format_date(program.relevant_realization().finishDate)  # type: ignore
         ).value_or("______"),
         "{РЕБЕНОК_ФИО}": userData.fullName,  # | "ФИО ребенка",
         "{РЕБЕНОК_ДАТА_РОЖ}": userData.birthDate,  # | "Дата рождения ребенка",

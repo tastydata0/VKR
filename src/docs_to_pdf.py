@@ -1,8 +1,8 @@
 import itertools
 import os
 import uuid
-import img2pdf
-from models import Document
+import img2pdf  # type: ignore
+from src.models import Document
 import io
 import PIL
 from pdf2image import convert_from_bytes
@@ -23,7 +23,7 @@ if not os.path.exists(pdf_dir):
 
 
 def pdf_bytes_to_jpegs(pdf_bytes: bytes) -> list[bytes]:
-    pil_images: list[PIL.Image] = convert_from_bytes(pdf_bytes, fmt="jpeg")
+    pil_images: list[PIL.Image.Image] = convert_from_bytes(pdf_bytes, fmt="jpeg")
     image_bytearrays = []
 
     for img in pil_images:

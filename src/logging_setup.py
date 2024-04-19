@@ -9,7 +9,7 @@ from os import mkdir, getcwd, makedirs
 from datetime import datetime
 from sys import stdout
 
-from python_json_config import ConfigBuilder
+from python_json_config import ConfigBuilder  # type: ignore
 
 
 def setup():

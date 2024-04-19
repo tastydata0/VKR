@@ -20,7 +20,7 @@ def get_stages_according_to_state(state: statemachine.State):
     return [
         ApplicationStage(
             stageName="Ожидание начала сбора заявлений",
-            stageStatus="passed",
+            stageStatus=status(state, ApplicationState.waiting_for_applications),
             stageHref="#",
         ),
         ApplicationStage(

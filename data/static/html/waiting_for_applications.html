@@ -1,0 +1,32 @@
+{% extends "base_with_status.html" %} {% block title %} Подача заявления {%
+endblock %} {% block base_with_status_content %}
+<div class="container mt-5">
+  <h1 class="mb-2">
+    Этап приёма заявлений еще не начался.
+
+  </h1>
+  {% if not user.application.notifyOnStart %}
+  <p>Когда прием заявлений начнется, направить уведомления на <b>{{user.email}}</b> и <b>{{user.parentEmail}}</b> ?</p>
+  <button id="notify-button" class="btn btn-primary">
+    Уведомить меня
+  </button>
+  {% else %}
+  <p>Мы вас уведомим по почте: <b>{{user.email}}</b>, <b>{{user.parentEmail}}</b></p>
+  {% endif %}
+</div>
+<script>
+
+  document.addEventListener('DOMContentLoaded', function () {
+    $('#notify-button').on('click', function () {
+      $.ajax({
+        url: '/notify_on_appplications_start',
+        type: 'POST',
+        success: function (data) {
+          window.location.reload();
+        }
+      });
+    });
+  });
+
+</script>
+{% endblock %}

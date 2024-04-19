@@ -15,6 +15,7 @@ from returns.pipeline import flow, is_successful
 from returns.result import safe
 from returns.pointfree import bind
 from lambdas import _
+from application_state import ApplicationState
 
 dotenv.load_dotenv(".env")
 username = os.getenv("DB_USER")
@@ -178,6 +179,10 @@ def update_user_application_grade(user_id: str, grade: int):
 
 def update_user_application_diploma(user_id: str, diploma: bool):
     return update_user_application_field(user_id, "diploma", diploma)
+
+
+def update_user_application_notify_on_start(user_id: str, notify: bool):
+    return update_user_application_field(user_id, "notifyOnStart", notify)
 
 
 def update_user_application_order(user_id: str, order: str):
@@ -393,6 +398,14 @@ def edit_program(program_base_id: str, program: Program) -> bool:
 
 def get_all_discounts() -> list[str]:
     return _get_config()["discounts"]
+
+
+def are_applications_accepted() -> bool:
+    return _get_config().get("acceptApplications", False)
+
+
+def set_applications_accepted(accepted: bool) -> None:
+    config_db.update_one({}, {"$set": {"acceptApplications": accepted}}, upsert=True)
 
 
 def user_count_by_application_state(state: statemachine.State) -> int:

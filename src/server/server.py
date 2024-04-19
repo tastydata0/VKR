@@ -17,11 +17,7 @@ from starlette.middleware import Middleware
 from starlette.middleware.authentication import AuthenticationMiddleware
 import statemachine  # type: ignore
 import uvicorn
-from src.docx_generator import generate_doc
-from src.docs_to_pdf import merge_docs_to_pdf
 from fastapi.staticfiles import StaticFiles
-from src import application_state, schemas
-from src.persistent_model import MongodbPersistentModel
 from src.models import *
 import src.database as database
 from src.name_translation import fio_to_accusative
@@ -31,12 +27,16 @@ from slowapi.errors import RateLimitExceeded
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
+from src.docs_to_pdf import merge_docs_to_pdf
+from src.docx_generator import generate_doc
 from .middlewares import *
 from .captcha import *
 from src.forms.main_form_fields import form_fields
 
 from src.application_stages import get_stages_according_to_state
+from src.application_state import ApplicationState
 
+from src import application_state, schemas
 from returns.maybe import Maybe, Nothing, Some
 from returns.pipeline import is_successful
 from lambdas import _
@@ -75,9 +75,7 @@ templates = Jinja2Templates(directory="data/static/html")
 
 def application_stages_by_user_id(user_id):
     return get_stages_according_to_state(
-        state=application_state.ApplicationState(
-            model=MongodbPersistentModel(user_id=user_id)
-        ).current_state
+        state=application_state.ApplicationState(user_id=user_id).current_state
     )
 
 
@@ -105,7 +103,9 @@ async def login_form(request: Request):
 def redirect_according_to_application_state(
     state: application_state.ApplicationState,
 ):
-    if state.current_state.id == ApplicationState.filling_info.id:
+    if state.current_state.id == ApplicationState.waiting_for_applications.id:
+        return RedirectResponse("/application/waiting_for_applications")
+    elif state.current_state.id == ApplicationState.filling_info.id:
         return RedirectResponse("/application/fill_info")
     elif state.current_state.id == ApplicationState.filling_docs.id:
         return RedirectResponse("/application/fill_docs")
@@ -122,21 +122,34 @@ def redirect_according_to_application_state(
 @app.get("/application")
 @requires("authenticated")
 async def application_get(request: Request):
-    state = application_state.ApplicationState(
-        model=MongodbPersistentModel(request.user.id)
-    )
+    state = application_state.ApplicationState(request.user.id)
 
     return redirect_according_to_application_state(state)
+
+
+@app.get("/application/waiting_for_applications")
+@requires("authenticated")
+async def waiting_for_applications(request: Request):
+    return templates.TemplateResponse(
+        "waiting_for_applications.html",
+        {
+            "request": request,
+            "user": request.user.dict(),
+            "application_stages": application_stages_by_user_id(request.user.id),
+        },
+    )
+
+
+@app.post("/notify_on_appplications_start")
+@requires("authenticated")
+async def notify_on_appplications_start(request: Request):
+    database.update_user_application_notify_on_start(request.user.id, True)
 
 
 @app.get("/application/fill_docs")
 @requires("authenticated")
 async def send_docs_form(request: Request):
-    model = MongodbPersistentModel(
-        request.user.id,
-    )
-
-    state = application_state.ApplicationState(model=model)
+    state = application_state.ApplicationState(request.user.id)
 
     if state.current_state.id != "filling_docs":
         return redirect_according_to_application_state(state)
@@ -176,11 +189,7 @@ async def get_filled_consent(request: Request):
 @app.get("/application/fill_info")
 @requires("authenticated")
 async def get_form(request: Request):
-    model = MongodbPersistentModel(
-        request.user.id,
-    )
-
-    state = application_state.ApplicationState(model=model)
+    state = application_state.ApplicationState(request.user.id)
 
     if state.current_state.id not in ("filling_info", "filling_docs"):
         return redirect_according_to_application_state(state)
@@ -214,11 +223,7 @@ async def get_form(request: Request):
 @app.get("/application/waiting_confirmation")
 @requires("authenticated")
 async def waiting_confirmation(request: Request):
-    model = MongodbPersistentModel(
-        request.user.id,
-    )
-
-    state = application_state.ApplicationState(model=model)
+    state = application_state.ApplicationState(request.user.id)
 
     if state.current_state.id != ApplicationState.waiting_confirmation.id:
         return redirect_according_to_application_state(state)
@@ -236,11 +241,7 @@ async def waiting_confirmation(request: Request):
 @app.get("/application/approved")
 @requires("authenticated")
 async def approved(request: Request):
-    model = MongodbPersistentModel(
-        request.user.id,
-    )
-
-    state = application_state.ApplicationState(model=model)
+    state = application_state.ApplicationState(request.user.id)
 
     if state.current_state.id != ApplicationState.approved.id:
         return redirect_according_to_application_state(state)
@@ -258,11 +259,7 @@ async def approved(request: Request):
 @app.get("/application/passed")
 @requires("authenticated")
 async def passed(request: Request):
-    state = application_state.ApplicationState(
-        model=MongodbPersistentModel(
-            request.user.id,
-        )
-    )
+    state = application_state.ApplicationState(request.user.id)
 
     if state.current_state.id != ApplicationState.passed.id:
         return redirect_according_to_application_state(state)
@@ -283,11 +280,7 @@ async def homepage(request: Request):
     applicationSelectedProgram = None
     applicationStatus = None
     if request.user.application is not None:
-        model = MongodbPersistentModel(
-            request.user.id,
-        )
-
-        state = application_state.ApplicationState(model=model)
+        state = application_state.ApplicationState(request.user.id)
         applicationStatus = state.current_state.name
 
         applicationSelectedProgramId = request.user.application.dict().get(
@@ -332,11 +325,7 @@ async def homepage(request: Request):
 @limiter.limit("1/minute")
 @requires("authenticated")
 async def post_form(request: Request, data: UserFillDataSubmission):
-    model = MongodbPersistentModel(
-        request.user.id,
-    )
-
-    state = application_state.ApplicationState(model=model)
+    state = application_state.ApplicationState(request.user.id)
 
     if state.current_state.id not in ("filling_info", "filling_docs"):
         return redirect_according_to_application_state(state)
@@ -416,11 +405,7 @@ async def upload_files(
     ):
         ensure_field_filled(field)
 
-    state = application_state.ApplicationState(
-        model=MongodbPersistentModel(
-            request.user.id,
-        )
-    )
+    state = application_state.ApplicationState(request.user.id)
 
     if state.current_state.id not in ("filling_docs"):
         raise HTTPException(
@@ -544,9 +529,7 @@ async def upload_files(
 @app.post("/refill_data")
 @requires("authenticated")
 async def refill_data(request: Request):
-    state = application_state.ApplicationState(
-        model=MongodbPersistentModel(request.user.id)
-    )
+    state = application_state.ApplicationState(request.user.id)
 
     try:
         state.change_info()
@@ -816,9 +799,7 @@ async def admin_graduate_csv_upload(request: Request, table: UploadFile):
 
     for student in data:
         print(student)
-        state = application_state.ApplicationState(
-            model=MongodbPersistentModel(student["id"])
-        )
+        state = application_state.ApplicationState(student["id"])
 
         if student["grade"] == "0":
             state.not_graduate()
@@ -859,17 +840,15 @@ async def admin_approve_post(request: Request, data: AdminApprovalDto):
     # ПО id установить в Application поле lastRejectionReason, если это rejection
 
     state = application_state.ApplicationState(
-        model=MongodbPersistentModel(
-            data.userId,
-        )
+        data.userId,
     )
 
     try:
         if data.status == "approved":
-            state.approve(database.find_user(data.userId).unwrap())
+            state.approve()
 
         elif data.status == "rejected":
-            state.data_invalid(database.find_user(data.userId).unwrap())
+            state.data_invalid()
 
             database.update_user_application_rejection_reason(
                 user_id=data.userId, rejection_reason=data.reason
@@ -920,11 +899,7 @@ async def admin_competition(request: Request):
 async def admin_competition_post(request: Request, data: AdminApprovalDto):
     # ПО id установить в Application поле lastRejectionReason, если это rejection
 
-    state = application_state.ApplicationState(
-        model=MongodbPersistentModel(
-            data.userId,
-        )
-    )
+    state = application_state.ApplicationState(data.userId)
 
     if data.status == "approved":
         state.pass_(database.find_user(data.userId).unwrap())

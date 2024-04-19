@@ -1,6 +1,7 @@
 from pytrovich.detector import PetrovichGenderDetector  # type: ignore
 from pytrovich.enums import NamePart, Gender, Case  # type: ignore
 from pytrovich.maker import PetrovichDeclinationMaker  # type: ignore
+from returns.result import safe
 
 maker = PetrovichDeclinationMaker()
 detector = PetrovichGenderDetector()
@@ -13,6 +14,7 @@ def name_to_gender(fio: str) -> Gender:
     )
 
 
+@safe
 def fio_to_accusative(fio: str) -> str:
     lastname, firstname, middlename = tuple(fio.split())
 

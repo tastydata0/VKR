@@ -257,9 +257,8 @@ def move_user_application_to_archive(user_id: str):
 
 def register_user(user_data: RegistrationData) -> Maybe[str]:
     # Хэширование пароля
-    user_data.password = get_password_hash(user_data.password)
-
     user_data_dict = user_data.dict()
+    user_data_dict["password"] = get_password_hash(user_data.password)
 
     return (
         _find_one_maybe(
@@ -421,7 +420,7 @@ def set_applications_accepted(accepted: bool) -> None:
 
 
 def are_applications_accepted() -> bool:
-    return _get_config().get("acceptApplications", False)
+    return _get_config_raw().get("acceptApplications", False)
 
 
 def set_applications_accepted(accepted: bool) -> None:
@@ -472,9 +471,9 @@ def get_teachers() -> list[Teacher]:
 
 
 @maybe
-def resolve_teacher_by_name(full_name) -> Teacher:
+def resolve_teacher_by_name(name) -> Teacher:
     for t in get_teachers():
-        if t.fullName == full_name:
+        if t.name == name:
             return t
 
     return None  # type: ignore

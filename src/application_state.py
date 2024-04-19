@@ -19,6 +19,12 @@ class ApplicationState(StateMachine):
         StateMachine.__init__(self, model=MongodbPersistentModel(user_id=user_id))
         self.user_id = user_id
 
+        if self.current_state == ApplicationState.waiting_for_applications:
+            from src.database import are_applications_accepted
+
+            if are_applications_accepted():
+                self.start_application(False)
+
     @classmethod
     def has_state_by_name(cls, name: str):
         return hasattr(cls, name) and type(getattr(cls, name)) == State
@@ -61,12 +67,6 @@ class ApplicationState(StateMachine):
         from src.database import find_user
 
         return find_user(self.user_id).unwrap()
-
-    def on_enter_waiting_for_applications(self):
-        from src.database import are_applications_accepted
-
-        if are_applications_accepted():
-            self.start_application(False)
 
     def before_start_application(self, notify: bool):
         if notify:

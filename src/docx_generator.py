@@ -42,8 +42,8 @@ def generate_doc(
     variables = {
         "{ПРЕДСТАВИТЕЛЬ_ФИО}": userData.parentFullName,  # | "ФИО родителя",
         "{ПРЕДСТАВИТЕЛЬ_АДРЕС}": userData.parentAddress,  # | "Адрес родителя",
-        "{РЕБЕНОК_ФИО_РОД_ПАДЕЖ}": fio_to_accusative(
-            userData.fullName
+        "{РЕБЕНОК_ФИО_РОД_ПАДЕЖ}": fio_to_accusative(userData.fullName).value_or(
+            "_" * 20
         ),  # | "ФИО ребенка",
         "{ПРОГРАММА}": program_info.bind_optional(
             lambda program: program.relevant_confirmed().formalName

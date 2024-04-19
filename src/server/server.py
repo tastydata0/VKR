@@ -130,6 +130,13 @@ async def application_get(request: Request):
 @app.get("/application/waiting_for_applications")
 @requires("authenticated")
 async def waiting_for_applications(request: Request):
+    state = ApplicationState(request.user.id)
+
+    state.current_state = state.current_state
+
+    if state.current_state.id != ApplicationState.waiting_for_applications.id:
+        return redirect_according_to_application_state(state)
+
     return templates.TemplateResponse(
         "waiting_for_applications.html",
         {
@@ -196,7 +203,9 @@ async def get_form(request: Request):
 
     known_data = request.user.dict()
     if known_data["fullNameGenitive"] is None:
-        known_data["fullNameGenitive"] = fio_to_accusative(known_data["fullName"])
+        known_data["fullNameGenitive"] = fio_to_accusative(
+            known_data["fullName"]
+        ).value_or("")
 
     print(known_data)
 
@@ -300,32 +309,34 @@ async def homepage(request: Request):
             .value_or(None)
         )
 
+    info = DashboardUserInfo(
+        **request.user.dict(),
+        applicationSelectedProgram=applicationSelectedProgram,
+        applicationStatus=applicationStatus,
+        applicationTeacher=database.resolve_teacher_by_name(teacher_name).value_or(
+            None
+        ),
+        completedPrograms=[
+            {
+                **(
+                    database.resolve_program_by_realization_id(
+                        application.selectedProgram
+                    ).value_or({"brief": "Неизвестная программа"})
+                ),
+                "year": application.selectedProgram.split("-")[-3],
+                "grade": application.grade,
+                "diploma": application.diploma,
+            }
+            for application in request.user.applicationsArchive
+        ],
+    )
+
     return templates.TemplateResponse(
         "dashboard.html",
         {
             "request": request,
             "application_stages": application_stages_by_user_id(request.user.id),
-            "user": DashboardUserInfo(
-                **request.user.dict(),
-                applicationSelectedProgram=applicationSelectedProgram,
-                applicationStatus=applicationStatus,
-                applicationTeacher=database.resolve_teacher_by_name(
-                    teacher_name
-                ).value_or(None),
-                completedPrograms=[
-                    {
-                        **(
-                            database.resolve_program_by_realization_id(
-                                application.selectedProgram
-                            ).value_or({"brief": "Неизвестная программа"})
-                        ),
-                        "year": application.selectedProgram.split("-")[-3],
-                        "grade": application.grade,
-                        "diploma": application.diploma,
-                    }
-                    for application in request.user.applicationsArchive
-                ],
-            ),
+            "user": info,
         },
     )
 
@@ -559,7 +570,7 @@ async def register(request: Request, data: RegistrationData, captcha: str):
     if not database.register_user(data):
         raise HTTPException(status_code=400, detail="Пользователь уже существует")
 
-    return fastapi.responses.RedirectResponse("/login", status_code=302)
+    return await create_token(LoginData(**data.dict()))
 
 
 # @app.get("/download")
@@ -593,6 +604,7 @@ async def register(request: Request, data: RegistrationData, captcha: str):
 # Эндпоинт для создания токена
 @app.post("/token")
 async def create_token(form_data: LoginData):
+    print(form_data)
     user = database.find_user_by_login_data(form_data)
 
     if user == Nothing:
@@ -781,12 +793,15 @@ async def admin_config_post(request: Request, data: Config):
         data.acceptApplications and not database.get_config().acceptApplications
     )
     if started_accepting_applications:
+        print(123)
         for user in database.find_users_with_status(
             ApplicationState.waiting_for_applications
         ):
+            print(user.fullName)
             ApplicationState(user_id=user.id).start_application(True)
 
-    database.config_db.update_one({}, data)
+    database.config_db.delete_many({})
+    database.config_db.insert_one(data.dict())
 
 
 @app.get("/admin/graduate")

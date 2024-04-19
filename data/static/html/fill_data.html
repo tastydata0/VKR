@@ -63,7 +63,7 @@ endblock %} {% block base_with_status_content %}
       <label for="{{ field.id }}" class="form-label">{{ field.label }}:</label>
       <input type="{{ field.type }}" class="form-control automatic-form-field {{field.extraInputClasses}}"
         id="{{ field.id }}" name="{{ field.name }}" placeholder="{{ field.placeholder }}"
-        value="{% if known_data[field.name] is not none %}{{ known_data[field.name] }}{% endif %}" />
+        value="{% if known_data[field.name] is not none %}{{ known_data[field.name] }}{% endif %}" required />
     </div>
     {% endfor %}
     <div class="mb-3">

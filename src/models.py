@@ -12,7 +12,7 @@ class Regexes:
 
     birth_date = r"(^(((0[1-9]|1[0-9]|2[0-8])\.(0[1-9]|1[012]))|((29|30|31)[\/](0[13578]|1[02]))|((29|30)\.(0[4,6,9]|11)))\.(19|[2-9][0-9])\d\d$)|(^29\.02\.(19|[2-9][0-9])(00|04|08|12|16|20|24|28|32|36|40|44|48|52|56|60|64|68|72|76|80|84|88|92|96)$)"
 
-    name = "[а-яА-Я ]+"
+    name = "^[а-яА-Яё\-']+ [а-яА-Яё\-']+ [а-яА-Яё\-']+$"
 
 
 class ApplicationStage(BaseModel):
@@ -196,22 +196,8 @@ class UserMutableData(BaseModel):
 
 
 class UserBasicData(UserMutableData):
-    fullName: str
-    birthDate: str
-
-    @validator("fullName")
-    @classmethod
-    def validate_full_name(cls, value):
-        if len(value) == 0:
-            raise ValueError("Имя не может быть пустым")
-        return value
-
-    @validator("birthDate")
-    @classmethod
-    def validate_birth_date(cls, value):  # 12.04.2003
-        if re.fullmatch(Regexes.birth_date, value) is None:
-            raise ValueError("Неверный формат даты рождения")
-        return value
+    fullName: str = Field(regex=Regexes.name, min_length=1, max_length=100)
+    birthDate: str = Field(regex=Regexes.birth_date)
 
 
 class AdminApprovalDto(BaseModel):
@@ -251,9 +237,13 @@ class AdminLoginDto(BaseModel):
 
 class User(UserBasicData):
     def __init__(self, *args, **kwargs):
-        if not "id" in kwargs:
-            kwargs.setdefault("id", str(kwargs.get("_id")))
-        super().__init__(*args, **kwargs)
+        try:
+            if not "id" in kwargs:
+                kwargs.setdefault("id", str(kwargs.get("_id")))
+            super().__init__(*args, **kwargs)
+        except Exception as e:
+            print({"args": args, "kwargs": kwargs})
+            raise e
 
     id: str
     application: Application = Field(Application())
@@ -293,19 +283,6 @@ class ProgramId(BaseModel):
 class UserMinInfo(BaseModel):
     fullName: str
     email: str
-
-
-class DashboardUserInfo(BaseModel):
-    fullName: str
-    email: Optional[str] = Field(None)
-    parentEmail: str
-    school: str
-    schoolClass: int
-    phone: Optional[str] = Field(None)
-    parentPhone: Optional[str] = Field(None)
-    applicationSelectedProgram: str | None
-    applicationStatus: str | None
-    completedPrograms: list
 
 
 class UserKey(BaseModel):
@@ -525,6 +502,20 @@ class MultipleSetTeacherDto(BaseModel):
 class MultipleSetOrderDto(BaseModel):
     order: str
     usersIds: list[str]
+
+
+class DashboardUserInfo(BaseModel):
+    fullName: str
+    email: Optional[str] = Field(None)
+    parentEmail: str
+    school: str
+    schoolClass: int
+    phone: Optional[str] = Field(None)
+    parentPhone: Optional[str] = Field(None)
+    applicationSelectedProgram: Optional[str]
+    applicationStatus: Optional[str]
+    applicationTeacher: Optional[Teacher]
+    completedPrograms: list
 
 
 class Discount(BaseModel):

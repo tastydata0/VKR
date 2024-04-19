@@ -5,7 +5,6 @@ import re
 from typing import Optional
 from bson import ObjectId
 from pydantic import BaseModel, Field, validator
-from src.application_state import ApplicationState
 
 
 class Regexes:
@@ -161,19 +160,20 @@ class Application(SelectedProgram):
         None
     )  # Полное имя на момент подачи заявления (т.к. может измениться)
     documents: Optional[ApplicationDocuments] = Field(None)
-    status: Optional[str] = Field(
-        ApplicationState.filling_info.id, validate_default=True
-    )
+    status: Optional[str] = Field("waiting_for_applications", validate_default=True)
     lastRejectionReason: Optional[str] = Field(None)
     discounts: Optional[list[str]] = Field([])
     teacherName: Optional[str] = Field(None)
     grade: Optional[int] = Field(None)
     order: Optional[str] = Field(None)
     diploma: Optional[bool] = Field(False)
+    notifyOnStart: Optional[bool] = Field(False)
 
     @validator("status")
     @classmethod
     def validate_status(cls, value):
+        from src.application_state import ApplicationState
+
         if not ApplicationState.has_state_by_name(value):
             raise ValueError(f"Статуса заявления {value} не существует")
         return value
@@ -535,6 +535,7 @@ class Discount(BaseModel):
 class Config(BaseModel):
     teachers: list[Teacher] = Field([], title="Преподаватели")
     discounts: list[Discount] = Field([], title="Льготы")
+    acceptApplications: bool = Field(True, title="Принимать ли заявки")
 
 
 class ChangePasswordDto(BaseModel):

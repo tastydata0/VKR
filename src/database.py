@@ -14,7 +14,9 @@ from returns.maybe import Maybe, Nothing, Some, maybe
 from returns.pipeline import flow, is_successful
 from returns.result import safe
 from returns.pointfree import bind
+from returns.curry import partial
 from lambdas import _
+from application_state import ApplicationState
 
 dotenv.load_dotenv(".env")
 username = os.getenv("DB_USER")
@@ -54,9 +56,10 @@ def _get_config() -> dict:
 def _find_one_maybe(collection, *args, **kwargs) -> dict:
     return collection.find_one(*args, **kwargs)
 
+_find_one_user_maybe = partial(_find_one_maybe, users)
 
 def _find_raw_user(user_id: str) -> Maybe[dict]:
-    return _find_one_maybe(users, {"_id": ObjectId(user_id)})
+    return _find_one_user_maybe({"_id": ObjectId(user_id)})
 
 
 def find_user(user_id: str) -> Maybe[User]:
@@ -64,8 +67,7 @@ def find_user(user_id: str) -> Maybe[User]:
 
 
 def find_user_by_login_data(login_data: LoginData) -> Maybe[User]:
-    return _find_one_maybe(
-        users, {"fullName": login_data.fullName, "birthDate": login_data.birthDate}
+    return _find_one_user_maybe({"fullName": login_data.fullName, "birthDate": login_data.birthDate}
     ).bind_optional(
         lambda raw: User(**raw)
         if verify_password(password=login_data.password, hash=raw["password"])
@@ -82,7 +84,7 @@ def find_admin_by_login_data(login_data: AdminLoginDto) -> Maybe[AdminWithId]:
 
 
 def find_user_by_full_name(full_name: str) -> Maybe[User]:
-    return _find_one_maybe(users, {"fullName": full_name}).bind_optional(
+    return _find_one_user_maybe({"fullName": full_name}).bind_optional(
         lambda raw: User(**raw)
     )
 
@@ -178,6 +180,10 @@ def update_user_application_grade(user_id: str, grade: int):
 
 def update_user_application_diploma(user_id: str, diploma: bool):
     return update_user_application_field(user_id, "diploma", diploma)
+
+
+def update_user_application_notify_on_start(user_id: str, notify: bool):
+    return update_user_application_field(user_id, "notifyOnStart", notify)
 
 
 def update_user_application_order(user_id: str, order: str):
@@ -393,6 +399,14 @@ def edit_program(program_base_id: str, program: Program) -> bool:
 
 def get_all_discounts() -> list[str]:
     return _get_config()["discounts"]
+
+
+def are_applications_accepted() -> bool:
+    return _get_config().get("acceptApplications", False)
+
+
+def set_applications_accepted(accepted: bool) -> None:
+    config_db.update_one({}, {"$set": {"acceptApplications": accepted}}, upsert=True)
 
 
 def user_count_by_application_state(state: statemachine.State) -> int:

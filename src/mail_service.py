@@ -54,6 +54,9 @@ class Mail:
         service.quit()
 
     def send_text(self, receiver, subject, text):
+        if not receiver:
+            return
+
         ssl_context = ssl.create_default_context()
         service = smtplib.SMTP_SSL(
             self.smtp_server_domain_name, self.port, context=ssl_context
@@ -76,6 +79,26 @@ class Mail:
     def notify_of_approval(
         self, receiver, full_name, approved=True, rejection_reason=""
     ):
+        if approved:
+            self.send_text(
+                receiver,
+                "Документы в Школу::Кода прошли проверку",
+                f"Здравствуйте, {full_name}!<br>"
+                + "<h3>Сообщаем вам, что ваши документы на обучение в Школе::Кода прошли проверку!</h3><br>",
+            )
+        else:
+            self.send_text(
+                receiver,
+                "Документы в Школу::Кода не прошли проверку",
+                f"Здравствуйте, {full_name}!<br>"
+                + "<h3>Сообщаем вам, что ваши документы на обучение в Школе::Кода не прошли проверку.</h3><br>"
+                + f"Причина: {rejection_reason}<br>"
+                if rejection_reason
+                else ""
+                + "Перейдите в личный кабинет, чтобы внести правки в данные или документы",
+            )
+
+    def notify_on_application_start(self, receiver, full_name):
         if approved:
             self.send_text(
                 receiver,

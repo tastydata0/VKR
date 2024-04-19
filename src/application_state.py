@@ -1,7 +1,8 @@
 from statemachine import StateMachine, State  # type: ignore
 from src.mail_service import Mail
+from src.persistent_model import MongodbPersistentModel
 
-IS_APPLICATIONS_STARTED = True
+mail = Mail()
 
 
 class ApplicationState(StateMachine):
@@ -13,6 +14,10 @@ class ApplicationState(StateMachine):
     not_passed = State("Не прошел конкурс на программу")
     passed = State("Зачислен на программу")
     graduated = State("Программа пройдена", final=True)
+
+    def __init__(self, user_id: str):
+        StateMachine.__init__(self, model=MongodbPersistentModel(user_id=user_id))
+        self.user_id = user_id
 
     @classmethod
     def has_state_by_name(cls, name: str):
@@ -52,9 +57,27 @@ class ApplicationState(StateMachine):
     graduate = passed.to(graduated)
     not_graduate = passed.to(not_passed)
 
+    def get_user(self):
+        from src.database import find_user
+
+        return find_user(self.user_id).unwrap()
+
     def on_enter_waiting_for_applications(self):
-        print(self.current_state.name)
-        if IS_APPLICATIONS_STARTED:
+        from src.database import are_applications_accepted
+
+        if are_applications_accepted():
+            user = self.get_user()
+
+            if user.application.notifyOnStart:
+                mail.notify_on_application_start(
+                    receiver=user.email,
+                    full_name=user.fullName,
+                )
+                mail.notify_on_application_start(
+                    receiver=user.parentEmail,
+                    full_name=user.parentFullName,
+                )
+
             self.start_application()
 
     def on_enter_filling_info(self):
@@ -66,23 +89,17 @@ class ApplicationState(StateMachine):
     def on_enter_waiting_confirmation(self):
         print(self.current_state.name)
 
-    def on_enter_approved(self, user):
-        # Отправить письмо
-        mail = Mail()
-        if user.email:
-            mail.notify_of_approval(
-                receiver=user.email,
-                full_name=user.fullName,
-                approved=False,
-                rejection_reason=user.application.lastRejectionReason,
-            )
-        if user.parentEmail:
-            mail.notify_of_approval(
-                receiver=user.parentEmail,
-                full_name=user.fullName,
-                approved=False,
-                rejection_reason=user.application.lastRejectionReason,
-            )
+    def on_enter_approved(self):
+        user = self.get_user()
+
+        mail.notify_of_approval(
+            receiver=user.email,
+            full_name=user.fullName,
+        )
+        mail.notify_of_approval(
+            receiver=user.parentEmail,
+            full_name=user.parentFullName,
+        )
 
         print(self.current_state.name)
 
@@ -96,24 +113,23 @@ class ApplicationState(StateMachine):
     def on_enter_graduated(self):
         print(self.current_state.name)
 
-    def before_data_invalid(self, user):
+    def before_data_invalid(self):
         # Отправить письмо
 
-        mail = Mail()
-        if user.email:
-            mail.notify_of_approval(
-                receiver=user.email,
-                full_name=user.fullName,
-                approved=False,
-                rejection_reason=user.application.lastRejectionReason,
-            )
-        if user.parentEmail:
-            mail.notify_of_approval(
-                receiver=user.parentEmail,
-                full_name=user.fullName,
-                approved=False,
-                rejection_reason=user.application.lastRejectionReason,
-            )
+        user = self.get_user()
+
+        mail.notify_of_approval(
+            receiver=user.email,
+            full_name=user.fullName,
+            approved=False,
+            rejection_reason=user.application.lastRejectionReason,
+        )
+        mail.notify_of_approval(
+            receiver=user.parentEmail,
+            full_name=user.fullName,
+            approved=False,
+            rejection_reason=user.application.lastRejectionReason,
+        )
 
 
 # model = MongodbPersistentModel(

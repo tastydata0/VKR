@@ -69,8 +69,10 @@ block base_content %}
       </ul>
       {% endif %}
       {% if user.applicationSelectedProgram is not none %}
-      <h4>Активная заявка: {{user.applicationSelectedProgram}}</h4>
+      <h4>{% if user.applicationStatus != 'Зачислен на обучение' %}Активная заявка: {% else %}Обучение по программе: {%
+        endif %}{{user.applicationSelectedProgram}}</h4>
       <p>Статус: {{user.applicationStatus}}</p>
+      {% if user.applicationTeacherName %} <p>Преподаватель: {{ user.applicationTeacherName }}</p> {% endif %}
       {% endif %}
     </div>
   </div>

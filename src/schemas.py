@@ -217,7 +217,8 @@ def user_schema():
                     "teacherName": {
                         "title": "Имя учителя",
                         "type": "string",
-                        "enum": [t.name for t in database.get_teachers()],
+                        "enum": [t.name for t in database.get_teachers()] + [""],
+                        "default": ""
                     },
                     "order": {"title": "Приказ о зачислении", "type": "string"},
                     "diploma": {

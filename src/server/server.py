@@ -303,6 +303,7 @@ async def homepage(request: Request):
                 **request.user.dict(),
                 applicationSelectedProgram=applicationSelectedProgram,
                 applicationStatus=applicationStatus,
+                applicationTeacherName=Maybe.from_optional(request.user.application).bind_optional(lambda app: app.dict().get('teacherName', None)).value_or(None)
                 completedPrograms=[
                     {
                         **(

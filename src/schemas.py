@@ -247,6 +247,15 @@ def config_schema():
                 "type": "array",
                 "items": {"$ref": "#/definitions/Discount"},
             },
+            "acceptApplications": {
+                "title": "Принимать ли заявки",
+                "default": False,
+                "type": "boolean"
+            },
+            "termsUrl": {
+                "title": "Ссылка на политику обработки данных сайтом",
+                "type": "string"
+            }
         },
         "definitions": {
             "Teacher": {

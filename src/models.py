@@ -536,6 +536,7 @@ class Config(BaseModel):
     teachers: list[Teacher] = Field([], title="Преподаватели")
     discounts: list[Discount] = Field([], title="Льготы")
     acceptApplications: bool = Field(True, title="Принимать ли заявки")
+    termsUrl: str = Field('/error', title='Ссылка на политику обработки данных сайтом')
 
 
 class ChangePasswordDto(BaseModel):

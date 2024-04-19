@@ -45,11 +45,15 @@ def _setup_db():
         print("Индекс уже существует")
 
 
-def _get_config() -> dict:
+def _get_config_raw() -> dict:
     if not config_db.find_one():
         raise ValueError("Конфигурация не найдена")
 
     return config_db.find_one()  # type: ignore
+
+
+def get_config() -> Config:
+    return Config(**_get_config_raw())
 
 
 @maybe
@@ -398,11 +402,11 @@ def edit_program(program_base_id: str, program: Program) -> bool:
 
 
 def get_all_discounts() -> list[str]:
-    return _get_config()["discounts"]
+    return _get_config_raw()["discounts"]
 
 
 def are_applications_accepted() -> bool:
-    return _get_config().get("acceptApplications", False)
+    return _get_config_raw().get("acceptApplications", False)
 
 
 def set_applications_accepted(accepted: bool) -> None:
@@ -449,7 +453,7 @@ def get_rejected_by_data_users_count() -> int:
 
 
 def get_teachers() -> list[Teacher]:
-    return [Teacher(**teacher) for teacher in _get_config()["teachers"]]
+    return get_config().teachers
 
 
 def export_graduate_csv() -> pathlib.Path:

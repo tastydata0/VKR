@@ -66,6 +66,10 @@ class ApplicationState(StateMachine):
         from src.database import are_applications_accepted
 
         if are_applications_accepted():
+            self.start_application(False)
+
+    def before_start_application(self, notify: bool):
+        if notify:
             user = self.get_user()
 
             if user.application.notifyOnStart:
@@ -77,8 +81,6 @@ class ApplicationState(StateMachine):
                     receiver=user.parentEmail,
                     full_name=user.parentFullName,
                 )
-
-            self.start_application()
 
     def on_enter_filling_info(self):
         print(self.current_state.name)

@@ -764,6 +764,16 @@ async def admin_config(request: Request):
         },
     )
 
+@app.post("/admin/edit_config")
+@requires("admin")
+async def admin_config_post(request: Request, data: Config):
+    started_accepting_applications = data.acceptApplications and not database.get_config().acceptApplications
+    if started_accepting_applications:
+        for user in database.find_users_with_status(ApplicationState.waiting_for_applications):
+            ApplicationState(user_id=user.id).start_application(True)
+
+    database.config_db.update_one({}, data)
+
 
 @app.get("/admin/graduate")
 @requires("admin")

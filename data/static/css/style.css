@@ -48,13 +48,3 @@ html *:not(h1, h2, h3, h4) {
   display: flex;
   align-items: center;
 }
-
-.warning {
-  margin-bottom: 10px;
-  padding: 10px;
-  background-color: #ffc10733;
-  border: 1px solid #ffc107;
-  border-radius: 5px;
-}
-
-

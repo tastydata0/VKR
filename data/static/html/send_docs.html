@@ -21,9 +21,15 @@
       .png, .pdf</b></p>
 
   {% if lastRejectionReason %}
-  <div class="warning mt-4">
-    Внимание! Документы и/или данные были отклонены. Причина: {{
-    lastRejectionReason }}
+
+  <div class="alert alert-danger d-flex align-items-center" role="alert">
+    <svg class="bi flex-shrink-0 me-3" width="24" height="24" role="img">
+      <use xlink:href="#exclamation-triangle-fill" />
+    </svg>
+    <div>
+      Внимание! Документы и/или данные были отклонены. Причина: {{
+      lastRejectionReason }}
+    </div>
   </div>
   {% endif %}
 
@@ -100,9 +106,14 @@
       <input type="text" class="form-control" id="captcha" name="captcha" required />
     </div>
 
-    <div class="info-block">
-      После отправки мы будем рассматривать документы и данные и уведомим
-      вас о том, были ли они приняты или нужно внести изменения.
+    <div class="alert alert-primary d-flex align-items-center" role="alert">
+      <svg class="bi flex-shrink-0 me-3" width="24" height="24" role="img" aria-label="Info:">
+        <use xlink:href="#info-fill" />
+      </svg>
+      <div>
+        После отправки мы будем рассматривать документы и данные и уведомим
+        вас о том, были ли они приняты или нужно внести изменения.
+      </div>
     </div>
 
     <button type="submit" class="btn btn-primary mb-4 btn-submit">Загрузить

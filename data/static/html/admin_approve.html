@@ -33,6 +33,7 @@ block base_content %}
             <td>
               <button class="btn btn-success confirm-btn" data-id="{{ user.id }}">
                 Подтвердить
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" hidden></span>
               </button>
             </td>
             <td>
@@ -63,6 +64,7 @@ block base_content %}
                       <button type="button" class="btn btn-danger reject-modal-btn" data-id="{{ user.id }}"
                         data-bs-dismiss="modal">
                         Отклонить
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" hidden></span>
                       </button>
                     </div>
                   </div>
@@ -88,7 +90,9 @@ block base_content %}
     // Обработчик для кнопки "Подтвердить"
     document.querySelectorAll(".confirm-btn").forEach(function (button) {
       button.addEventListener("click", function () {
-        console.log(this);
+        $(this).prop("disabled", true);
+        $(this).find(".spinner-border").prop("hidden", false);
+
         var userId = this.getAttribute("data-id");
         sendDecision(button, userId, "approved");
       });
@@ -99,6 +103,9 @@ block base_content %}
       .querySelectorAll(".reject-modal-btn")
       .forEach(function (button) {
         button.addEventListener("click", function () {
+          $(this).prop("disabled", true);
+          $(this).find(".spinner-border").prop("hidden", false);
+
           var userId = this.getAttribute("data-id");
           var reason = document.getElementById(
             "rejectionReason" + userId

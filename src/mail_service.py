@@ -98,6 +98,25 @@ class Mail:
                 + "Перейдите в личный кабинет, чтобы внести правки в данные или документы",
             )
 
+    def notify_of_passed(self, receiver, full_name, passed=True, rejection_reason=""):
+        if passed:
+            self.send_text(
+                receiver,
+                "Зачисление в Школу::Кода ",
+                f"Здравствуйте, {full_name}!<br>"
+                + "<h3>Сообщаем вам, что заявка на зачисление в Школу::Кода одобрена!</h3><br>",
+            )
+        else:
+            self.send_text(
+                receiver,
+                "Отказ в зачислении в Школу::Кода",
+                f"Здравствуйте, {full_name}!<br>"
+                + "<h3>Сообщаем вам, что заявка на зачисление в Школу::Кода не одобрена.</h3><br>"
+                + f"Причина: {rejection_reason}<br>"
+                if rejection_reason
+                else "",
+            )
+
     def notify_on_application_start(self, receiver, full_name):
         self.send_text(
             receiver,

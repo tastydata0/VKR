@@ -58,10 +58,3 @@ html *:not(h1, h2, h3, h4) {
 }
 
 
-.info {
-  margin-bottom: 10px;
-  padding: 10px;
-  background-color: #5107ff33;
-  border: 1px solid #2c07ff;
-  border-radius: 5px;
-}

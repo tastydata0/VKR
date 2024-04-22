@@ -37,6 +37,7 @@ class ApplicationState(StateMachine):
             ApplicationState.filling_docs,
             ApplicationState.waiting_confirmation,
             ApplicationState.approved,
+            ApplicationState.not_passed,
             ApplicationState.passed,
             ApplicationState.graduated,
         ].index(state)
@@ -106,10 +107,33 @@ class ApplicationState(StateMachine):
         print(self.current_state.name)
 
     def on_enter_not_passed(self):
-        # Отправить письмо
+        user = self.get_user()
+
+        mail.notify_of_passed(
+            receiver=user.email,
+            full_name=user.fullName,
+            passed=False,
+            rejection_reason=user.application.lastRejectionReason,
+        )
+        mail.notify_of_passed(
+            receiver=user.parentEmail,
+            full_name=user.parentFullName,
+            passed=False,
+            rejection_reason=user.application.lastRejectionReason,
+        )
         print(self.current_state.name)
 
     def on_enter_passed(self):
+        user = self.get_user()
+
+        mail.notify_of_passed(
+            receiver=user.email,
+            full_name=user.fullName,
+        )
+        mail.notify_of_passed(
+            receiver=user.parentEmail,
+            full_name=user.parentFullName,
+        )
         print(self.current_state.name)
 
     def on_enter_graduated(self):

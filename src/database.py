@@ -251,7 +251,6 @@ def move_user_application_to_archive(user_id: str):
         users.update_one(
             {"_id": ObjectId(user_id)},
             {"$unset": {"application": None}},
-            upsert=True,
         )
 
 

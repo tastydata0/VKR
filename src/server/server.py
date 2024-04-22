@@ -115,6 +115,8 @@ def redirect_according_to_application_state(
         return RedirectResponse("/application/approved")
     elif state.current_state.id == ApplicationState.passed.id:
         return RedirectResponse("/application/passed")
+    elif state.current_state.id == ApplicationState.not_passed.id:
+        return RedirectResponse("/application/not_passed")
     else:
         return RedirectResponse("/error")
 
@@ -283,18 +285,48 @@ async def passed(request: Request):
     )
 
 
+@app.get("/application/not_passed")
+@requires("authenticated")
+async def not_passed(request: Request):
+    state = application_state.ApplicationState(request.user.id)
+
+    if state.current_state.id != ApplicationState.not_passed.id:
+        return redirect_according_to_application_state(state)
+
+    return templates.TemplateResponse(
+        "not_passed.html",
+        {
+            "request": request,
+            "rejectionReason": request.user.application.lastRejectionReason,
+            "application_stages": application_stages_by_user_id(request.user.id),
+            "user": UserMinInfo(**request.user.dict()),
+        },
+    )
+
+
+@app.post("/application/delete_application")
+@requires("authenticated")
+async def delete_application(request: Request):
+    database.move_user_application_to_archive(request.user.id)
+    return
+
+
 @app.get("/")
 @requires("authenticated")
 async def homepage(request: Request):
+    print(request.user.application)
     applicationSelectedProgram = None
     applicationStatus = None
     if request.user.application is not None:
         state = application_state.ApplicationState(request.user.id)
         applicationStatus = state.current_state.name
 
-        applicationSelectedProgramId = request.user.application.dict().get(
-            "selectedProgram", None
-        )
+        if request.user.application:
+            applicationSelectedProgramId = request.user.application.dict().get(
+                "selectedProgram", None
+            )
+        else:
+            applicationSelectedProgramId = None
 
         if applicationSelectedProgramId is not None:
             applicationSelectedProgram = (
@@ -328,6 +360,7 @@ async def homepage(request: Request):
                 "diploma": application.diploma,
             }
             for application in request.user.applicationsArchive
+            if application.status == ApplicationState.graduated.id
         ],
     )
 
@@ -1015,7 +1048,7 @@ async def admin_edit_program(request: Request, program_id: str):
         "admin_edit_programs.html",
         {
             "request": request,
-            "program": program,
+            "program": program.unwrap().dict(),
             "program_json": re.sub(
                 r"\b(\d{4})-(\d{2})-(\d{2})T00:00:00\b",
                 r"\3.\2.\1",

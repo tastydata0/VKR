@@ -1,6 +1,16 @@
 {% extends "base_with_status.html" %} {% block title %} Загрузка документов
 {% endblock %} {% block base_with_status_content %}
 
+<style>
+  .info-block {
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #5107ff0d;
+    border: 1px solid #2c07ff;
+    border-radius: 5px;
+  }
+</style>
+
 <div class="container">
   <h1 class="mt-4">Загрузка документов</h1>
 
@@ -90,12 +100,15 @@
       <input type="text" class="form-control" id="captcha" name="captcha" required />
     </div>
 
-    <div class="info">
+    <div class="info-block">
       После отправки мы будем рассматривать документы и данные и уведомим
       вас о том, были ли они приняты или нужно внести изменения.
     </div>
 
-    <button type="submit" class="btn btn-primary mb-4">Загрузить</button>
+    <button type="submit" class="btn btn-primary mb-4 btn-submit">Загрузить
+      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" hidden></span>
+
+    </button>
   </form>
 </div>
 <script>
@@ -201,6 +214,10 @@
         return;
       }
 
+
+      $(".btn-submit").prop("disabled", true);
+      $(".btn-submit").find(".spinner-border").prop("hidden", false);
+
       console.log(data);
 
       var xhr = new XMLHttpRequest();
@@ -221,6 +238,9 @@
         if (xhr.status === 200) {
           window.location.href = xhr.responseURL;
         } else {
+          $(".btn-submit").prop("disabled", false);
+          $(".btn-submit").find(".spinner-border").prop("hidden", true);
+
           alert(
             "Ошибка отправки документов: " +
             JSON.parse(xhr.responseText).detail

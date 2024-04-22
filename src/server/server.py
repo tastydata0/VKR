@@ -209,8 +209,6 @@ async def get_form(request: Request):
             known_data["fullName"]
         ).value_or("")
 
-    print(known_data)
-
     return templates.TemplateResponse(
         "fill_data.html",
         {
@@ -314,7 +312,6 @@ async def delete_application(request: Request):
 @app.get("/")
 @requires("authenticated")
 async def homepage(request: Request):
-    print(request.user.application)
     applicationSelectedProgram = None
     applicationStatus = None
     if request.user.application is not None:
@@ -637,7 +634,6 @@ async def register(request: Request, data: RegistrationData, captcha: str):
 # Эндпоинт для создания токена
 @app.post("/token")
 async def create_token(form_data: LoginData):
-    print(form_data)
     user = database.find_user_by_login_data(form_data)
 
     if user == Nothing:
@@ -826,11 +822,9 @@ async def admin_config_post(request: Request, data: Config):
         data.acceptApplications and not database.get_config().acceptApplications
     )
     if started_accepting_applications:
-        print(123)
         for user in database.find_users_with_status(
             ApplicationState.waiting_for_applications
         ):
-            print(user.fullName)
             ApplicationState(user_id=user.id).start_application(True)
 
     database.config_db.delete_many({})
@@ -870,7 +864,6 @@ async def admin_graduate_csv_upload(request: Request, table: UploadFile):
     data = list(csv.DictReader(table.file.read().decode("utf-8-sig").splitlines()))
 
     for student in data:
-        print(student)
         state = application_state.ApplicationState(student["id"])
 
         if student["grade"] == "0":
@@ -1063,7 +1056,24 @@ async def admin_edit_program(request: Request, program_id: str):
 @requires("admin")
 async def admin_edit_program_post(request: Request, program_id: str, data: Program):
     try:
-        print(data)
+        current_relevant: bool = (
+            database.resolve_program_by_base_id(program_id)
+            .bind_optional(lambda x: x["relevant"])
+            .value_or(False)
+        )
+
+        if current_relevant and not data.relevant:
+            for user in database.find_all_users():
+                if (
+                    Maybe.from_optional(user.application.selectedProgram)
+                    .bind_optional(lambda x: x.split("-")[0] == program_id)
+                    .value_or(False)
+                ):
+                    user.application.selectedProgram = None
+                    database.update_user_application_selected_program(user.id, None)
+
+                    ApplicationState(user.id).program_cancelled()
+
         database.edit_program(program_id, data)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

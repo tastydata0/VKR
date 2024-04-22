@@ -157,6 +157,19 @@ class ApplicationState(StateMachine):
             rejection_reason=user.application.lastRejectionReason,
         )
 
+    def before_program_cancelled(self):
+        print("before_program_cancelled")
+        user = self.get_user()
+
+        mail.notify_on_program_cancelled(
+            receiver=user.email,
+            full_name=user.fullName,
+        )
+        mail.notify_on_program_cancelled(
+            receiver=user.parentEmail,
+            full_name=user.fullName,
+        )
+
 
 # model = MongodbPersistentModel(
 #     UserKey(fullName="Иванов Иван Иванович", birthDate="12.04.2003")

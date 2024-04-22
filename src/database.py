@@ -180,6 +180,8 @@ def update_user_application_field(user_id: str, field: str, value):
 def update_user_application_state(user_id: str, application_state: str):
     return update_user_application_field(user_id, "status", application_state)
 
+def update_user_application_selected_program(user_id: str, selected_program: Optional[str]):
+    return update_user_application_field(user_id, "selectedProgram", selected_program)
 
 def update_user_application_teacher(user_id: str, teacher_name: str):
     return update_user_application_field(user_id, "teacherName", teacher_name)

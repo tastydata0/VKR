@@ -21,38 +21,6 @@ class Mail:
         self.sender_mail = mail_username
         self.password = mail_password
 
-    # Основной метод, формирующий html и отправляющий пользователю
-    def send_pdf_docs(self, receiver, pdf_file_path, sender_email, sender_fullname):
-        # Вход
-        ssl_context = ssl.create_default_context()
-        service = smtplib.SMTP_SSL(
-            self.smtp_server_domain_name, self.port, context=ssl_context
-        )
-        service.login(self.sender_mail, self.password)
-
-        # Ввод данных
-        mail = MIMEMultipart("alternative")
-        mail["Subject"] = "Подача документов от " + sender_fullname
-        mail["To"] = receiver
-
-        # Добавляем информацию о том, кто подал документы
-        from_text = f"От: {sender_fullname} <{sender_email}>"
-        mail.attach(MIMEText(from_text, "plain"))
-
-        # Прикрепляем PDF-файл
-        with open(pdf_file_path, "rb") as pdf_file:
-            pdf_attachment = MIMEApplication(pdf_file.read(), _subtype="pdf")
-            pdf_attachment.add_header(
-                "Content-Disposition", f"attachment; filename={pdf_file_path}"
-            )
-            mail.attach(pdf_attachment)
-
-        # Отправка
-        service.sendmail(self.sender_mail, receiver, mail.as_string())
-
-        # Закрытие сервиса
-        service.quit()
-
     def send_text(self, receiver, subject, text):
         if not receiver:
             return
@@ -123,4 +91,12 @@ class Mail:
             "Начался прием заявок в Школу:Кода",
             f"Здравствуйте, {full_name}!<br>"
             + "<h3>Сообщаем вам, что прием заявок только что начался!</h3><br>",
+        )
+
+    def notify_on_program_cancelled(self, receiver, full_name):
+        self.send_text(
+            receiver,
+            "Выбранная Вами программа отменяется",
+            f"Здравствуйте, {full_name}!<br>"
+            + "<h3>Сообщаем вам, что программа обучения, которую вы выбрали, стала неактуальной. Статус заявления изменён, нужно выбрать другую программу.</h3><br>",
         )

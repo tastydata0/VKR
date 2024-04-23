@@ -10,9 +10,15 @@ endblock %} {% block base_with_status_content %}
 
 <body>
   {% if lastRejectionReason %}
-  <div class="warning mt-4">
-    Внимание! Документы и/или данные были отклонены. Причина: {{
-    lastRejectionReason }}
+
+  <div class="alert alert-danger d-flex align-items-center mt-4" role="alert">
+    <svg class="bi flex-shrink-0 me-3" width="24" height="24" role="img">
+      <use xlink:href="#exclamation-triangle-fill" />
+    </svg>
+    <div>
+      Внимание! Документы и/или данные были отклонены. Причина: {{
+      lastRejectionReason }}
+    </div>
   </div>
   {% endif %}
 

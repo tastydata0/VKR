@@ -180,8 +180,12 @@ def update_user_application_field(user_id: str, field: str, value):
 def update_user_application_state(user_id: str, application_state: str):
     return update_user_application_field(user_id, "status", application_state)
 
-def update_user_application_selected_program(user_id: str, selected_program: Optional[str]):
+
+def update_user_application_selected_program(
+    user_id: str, selected_program: Optional[str]
+):
     return update_user_application_field(user_id, "selectedProgram", selected_program)
+
 
 def update_user_application_teacher(user_id: str, teacher_name: str):
     return update_user_application_field(user_id, "teacherName", teacher_name)
@@ -256,7 +260,7 @@ def move_user_application_to_archive(user_id: str):
         )
 
 
-def register_user(user_data: RegistrationData) -> Maybe[str]:
+def register_user(user_data: RegistrationDto) -> Maybe[str]:
     # Хэширование пароля
     user_data_dict = user_data.dict()
     user_data_dict["password"] = get_password_hash(user_data.password)
@@ -430,6 +434,15 @@ def set_applications_accepted(accepted: bool) -> None:
 
 def user_count_by_application_state(state: statemachine.State) -> int:
     return users.count_documents({"application.status": state.id})
+
+
+def get_users_with_enrollment_order() -> list[User]:
+    return [
+        User(**user)
+        for user in users.find(
+            {"application.order": {"$exists": True, "$ne": None, "$ne": ""}}
+        )
+    ]
 
 
 def get_rejected_by_data_users() -> list[User]:

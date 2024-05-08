@@ -1,7 +1,7 @@
-{% extends "admin_base.html" %} {% block title %} Подтверждение документов {% endblock %} {%
+{% extends "admin_base.html" %} {% block title %} Проверка документов {% endblock %} {%
 block base_content %}
 <div class="m-4">
-  <h2 class="mb-3">Подтверждение документов</h2>
+  <h2 class="mb-3">Проверка документов</h2>
   <div>
     <div>
       <table class="table sortable">
@@ -23,23 +23,23 @@ block base_content %}
             <td>
               <input style="width: 60px" value="{{ user.id }}" readonly />
             </td>
-            <td>{{ user.fullName }}<br>{{ user.parentFullName }} (род.)</td>
-            <td>{{ user.email }}<br>{{ user.parentEmail }} (род.)</td>
-            <td>{{ user.phone }}<br>{{ user.parentPhone }} (род.)</td>
+            <td>{{ user.fullName }}{% if user.parentFullName %} <br>{{ user.parentFullName }} (род.) {% endif %}</td>
+            <td>{{ user.email }}{% if user.parentEmail %} <br>{{ user.parentEmail }} (род.) {% endif %}</td>
+            <td>{{ user.phone }}{% if user.parentPhone %} <br>{{ user.parentPhone }} (род.) {% endif %}</td>
             <td>{{ user.application.selectedProgram }}</td>
             <td>
               <a href="/admin/get_pdf_docs?user_id={{ user.id }}">Документы</a>
             </td>
             <td>
               <button class="btn btn-success confirm-btn" data-id="{{ user.id }}">
-                Подтвердить
+                Допустить к конкурсу
                 <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" hidden></span>
               </button>
             </td>
             <td>
               <button class="btn btn-danger reject-btn" data-bs-toggle="modal"
                 data-bs-target="#rejectModal{{ user.id }}" data-id="{{ user.id }}">
-                Отклонить
+                Отклонить документы
               </button>
               <div class="modal fade" id="rejectModal{{ user.id }}" tabindex="-1" role="dialog"
                 aria-labelledby="rejectModalLabel{{ user.id }}" aria-hidden="true">
@@ -47,7 +47,7 @@ block base_content %}
                   <div class="modal-content">
                     <div class="modal-header">
                       <h5 class="modal-title" id="rejectModalLabel{{ user.id }}">
-                        Отклонить абитуриента
+                        Отклонить документы
                       </h5>
                       <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>

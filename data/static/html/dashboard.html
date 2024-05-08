@@ -16,9 +16,9 @@ block base_content %}
       <p>
         {% if user.phone is not none and user.phone != "" %} Телефон:
         {{user.phone}} <br />
-        {% endif %} {% if user.parentPhone is not none and user.parentPhone !=
-        "" %} Телефон родителя: {{user.parentPhone}} <br />
-        {% endif %} Школа: {{user.school}}, {{user.schoolClass}} класс <br />
+        {% endif %} {% if user.parentPhone %} Телефон родителя: {{user.parentPhone}} <br />
+        {% endif %} {% if user.school %} Школа: {{user.school}}{% if user.schoolClass %}, {{user.schoolClass}} класс {%
+        endif %}<br /> {% endif %}
       </p>
 
       <div class="d-grid gap-2 col-6">
@@ -93,8 +93,23 @@ block base_content %}
       <h4>{% if user.applicationStatus != 'Зачислен на обучение' %}Активная заявка: {% else %}Обучение по программе: {%
         endif %}{{user.applicationSelectedProgram}}</h4>
       <p>Статус: {{user.applicationStatus}}</p>
-      {% if user.applicationTeacher %} <p>Преподаватель: {{ user.applicationTeacher.name }}</p> {% endif %}
+      <p>
+        {% if user.applicationTeacher %}
+      <p>Преподаватель: {{ user.applicationTeacher.name }}</p> {% endif %}
       {% endif %}
+      {% if user.applicationTeacher.auditory %} Аудитория: {{user.applicationTeacher.auditory}} {%
+      endif %}
+      <br>
+      {% if user.applicationTeacher.schedule %} Расписание занятий: {{user.applicationTeacher.schedule}} {%
+      endif %}
+      </p>
+      {% if user.applicationTeacher.relevantVkGroupUrl %} Группа ВК: <a
+        href="{{user.applicationTeacher.relevantVkGroupUrl}}">{{user.applicationTeacher.relevantVkGroupUrl}}</a> {%
+      endif %}
+      <br>
+      {% if user.applicationTeacher.relevantDiscordUrl %} Discord-сервер группы: <a
+        href="{{user.applicationTeacher.relevantDiscordUrl}}">{{user.applicationTeacher.relevantDiscordUrl}}</a> {%
+      endif %}
     </div>
   </div>
 </div>

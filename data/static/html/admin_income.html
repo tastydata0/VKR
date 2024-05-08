@@ -1,0 +1,38 @@
+{% extends "admin_base.html" %} {% block title %} Ожидаемый доход {% endblock %} {%
+block base_content %}
+<div class="m-4">
+  <h2 class="mb-3">Ожидаемый доход</h2>
+  <div>
+    <div>
+      <table class="table sortable">
+        <thead>
+          <tr>
+            <th>Программа</th>
+            <th>Стоимость</th>
+            <th>Количество учащихся</th>
+            <th>Доход за программу без учета льгот</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for income in incomes %}
+          <tr>
+            {% if "Все программы" in income.program %}
+            <td style="background-color: #e8ecef">{{ income.program }}</td>
+            <td style="background-color: #e8ecef">{{ income.cost }}</td>
+            <td style="background-color: #e8ecef">{{ income.studentsCount }}</td>
+            <td style="background-color: #e8ecef">{{ income.income }}</td>
+            {% else %}
+            <td>{{ income.program }}</td>
+            <td>{{ income.cost }}</td>
+            <td>{{ income.studentsCount }}</td>
+            <td>{{ income.income }}</td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

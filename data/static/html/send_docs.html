@@ -41,6 +41,7 @@
         accept=".pdf, .jpg, .jpeg, .png" multiple required />
       <div id="applicationFilesThumbnail" class="thumbnail"></div>
     </div>
+    <hr>
 
     <div class="mb-3">
       <label for="consentFiles" class="form-label">Согласие на обработку данных:</label>
@@ -50,10 +51,12 @@
         multiple required />
       <div id="consentFilesThumbnail" class="thumbnail"></div>
     </div>
+    <hr>
 
 
     <div class="mb-3">
-      <label for="parentPassportFiles" class="form-label">Паспорт родителя:</label>
+      <label for="parentPassportFiles" class="form-label">Паспорт родителя (не загружайте, если подаёте заявление без
+        представителя):</label>
       <input type="file" class="form-control" id="parentPassportFiles" name="parent_passport_files"
         accept=".pdf, .jpg, .jpeg, .png" multiple required />
       <div id="parentPassportFilesThumbnail" class="thumbnail"></div>
@@ -63,9 +66,10 @@
         {{documents.parentPassportFiles[0].timestamp}}</label>
       {% endif %}
     </div>
+    <hr>
 
     <div class="mb-3">
-      <label for="childPassportFiles" class="form-label">Паспорт ребенка:</label>
+      <label for="childPassportFiles" class="form-label">Паспорт обучающегося:</label>
       <input type="file" class="form-control" id="childPassportFiles" name="child_passport_files"
         accept=".pdf, .jpg, .jpeg, .png" multiple required />
       <div id="childPassportFilesThumbnail" class="thumbnail"></div>
@@ -75,10 +79,12 @@
         {{documents.childPassportFiles[0].timestamp}}</label>
       {% endif %}
     </div>
+    <hr>
 
 
     <div class="mb-3">
-      <label for="parentSnilsFiles" class="form-label">СНИЛС родителя:</label>
+      <label for="parentSnilsFiles" class="form-label">СНИЛС родителя (не загружайте, если подаёте заявление без
+        представителя):</label>
       <input type="file" class="form-control" id="parentSnilsFiles" name="parent_snils_files"
         accept=".pdf, .jpg, .jpeg, .png" multiple required />
       <div id="parentSnilsFilesThumbnail" class="thumbnail"></div>
@@ -88,9 +94,10 @@
         {{documents.parentSnilsFiles[0].timestamp}}</label>
       {% endif %}
     </div>
+    <hr>
 
     <div class="mb-3">
-      <label for="childSnilsFiles" class="form-label">СНИЛС ребенка:</label>
+      <label for="childSnilsFiles" class="form-label">СНИЛС обучающегося:</label>
       <input type="file" class="form-control" id="childSnilsFiles" name="child_snils_files"
         accept=".pdf, .jpg, .jpeg, .png" multiple required />
       <div id="childSnilsFilesThumbnail" class="thumbnail"></div>
@@ -100,6 +107,7 @@
         {{documents.childSnilsFiles[0].timestamp}}</label>
       {% endif %}
     </div>
+    <hr>
     <div class="mb-3">
       <label for="captcha">Введите сообщение с картинки:</label><br />
       <img id="captchaImg" class="mb-2" src="/captcha" />
@@ -209,19 +217,19 @@
         return;
       }
       if (!data.has("parent_passport_files")) {
-        alert("Необходимо заполнить паспорт родителя");
-        return;
+        // alert("Необходимо заполнить паспорт родителя");
+        data.append("parent_passport_files", "not_use");
       }
       if (!data.has("child_passport_files")) {
-        alert("Необходимо заполнить паспорт ребенка");
+        alert("Необходимо заполнить паспорт обучающегося");
         return;
       }
       if (!data.has("parent_snils_files")) {
-        alert("Необходимо заполнить СНИЛС родителя");
-        return;
+        // alert("Необходимо заполнить СНИЛС родителя");
+        data.append("parent_snils_files", "not_use");
       }
       if (!data.has("child_snils_files")) {
-        alert("Необходимо заполнить СНИЛС ребенка");
+        alert("Необходимо заполнить СНИЛС обучающегося");
         return;
       }
 

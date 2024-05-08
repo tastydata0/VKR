@@ -23,6 +23,7 @@ form_fields = [
         type="text",
         placeholder="Введите полное имя родителя",
         default_value="",
+        required=False,
     ),
     FormField(
         id="parentAddress",
@@ -31,6 +32,7 @@ form_fields = [
         type="text",
         placeholder="Введите адрес родителя",
         default_value="",
+        required=False,
     ),
     FormField(
         id="email",
@@ -46,20 +48,23 @@ form_fields = [
         name="parentEmail",
         type="email",
         placeholder="parent@example.com",
+        required=False,
     ),
     FormField(
         id="school",
-        label="Школа",
+        label="Образовательная организация (если есть)",
         name="school",
         type="text",
-        placeholder="Введите название школы",
+        placeholder="Школа №1",
+        required=False,
     ),
     FormField(
         id="schoolClass",
-        label="Класс",
+        label="Класс образовательной организации (если есть)",
         name="schoolClass",
         type="number",
-        placeholder="Укажите класс",
+        placeholder="10",
+        required=False,
     ),
     FormField(
         id="birthDate",
@@ -94,5 +99,6 @@ form_fields = [
         placeholder="+7 ...",
         default_value="",
         extraInputClasses="input-phone-2",
+        required=False,
     ),
 ]

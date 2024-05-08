@@ -44,7 +44,7 @@ def generate_doc(
         "{ПРЕДСТАВИТЕЛЬ_АДРЕС}": userData.parentAddress,  # | "Адрес родителя",
         "{РЕБЕНОК_ФИО_РОД_ПАДЕЖ}": fio_to_accusative(userData.fullName).value_or(
             "_" * 20
-        ),  # | "ФИО ребенка",
+        ),  # | "ФИО обучающегося",
         "{ПРОГРАММА}": program_info.bind_optional(
             lambda program: program.relevant_confirmed().formalName
         ).value_or("_" * 20),
@@ -63,12 +63,12 @@ def generate_doc(
         "{ПРОГРАММА_КОНЕЦ}": program_info.bind_optional(
             lambda program: format_date(program.relevant_realization().finishDate)  # type: ignore
         ).value_or("______"),
-        "{РЕБЕНОК_ФИО}": userData.fullName,  # | "ФИО ребенка",
-        "{РЕБЕНОК_ДАТА_РОЖ}": userData.birthDate,  # | "Дата рождения ребенка",
-        "{РЕБЕНОК_МЕСТО_РОЖ}": userData.birthPlace,  # | "Место рождения ребенка",
-        "{РЕБЕНОК_МЕСТО_УЧЕБЫ}": userData.school,  # | "Школа ребенка",
+        "{РЕБЕНОК_ФИО}": userData.fullName,  # | "ФИО обучающегося",
+        "{РЕБЕНОК_ДАТА_РОЖ}": userData.birthDate,  # | "Дата рождения обучающегося",
+        "{РЕБЕНОК_МЕСТО_РОЖ}": userData.birthPlace,  # | "Место рождения обучающегося",
+        "{РЕБЕНОК_МЕСТО_УЧЕБЫ}": userData.school,  # | "Школа обучающегося",
         "{РЕБЕНОК_КЛАСС}": userData.schoolClass,  # | "Класс",
-        "{РЕБЕНОК_ТЕЛЕФОН}": userData.phone,  # | "Телефон ребенка",
+        "{РЕБЕНОК_ТЕЛЕФОН}": userData.phone,  # | "Телефон обучающегося",
         "{ПРЕДСТАВИТЕЛЬ_ТЕЛЕФОН}": userData.parentPhone,  # | "Телефон родителя",
         "{ПРЕДСТАВИТЕЛЬ_ПОЧТА}": userData.parentEmail,  # | "Email родителя",
         "{ГОД}": datetime.now().year,

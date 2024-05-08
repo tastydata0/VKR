@@ -23,9 +23,9 @@ block base_content %}
             <td>
               <input style="width: 60px" value="{{ user.id }}" readonly />
             </td>
-            <td>{{ user.fullName }}<br>{{ user.parentFullName }} (род.)</td>
-            <td>{{ user.email }}<br>{{ user.parentEmail }} (род.)</td>
-            <td>{{ user.phone }}<br>{{ user.parentPhone }} (род.)</td>
+            <td>{{ user.fullName }}{% if user.parentFullName %} <br>{{ user.parentFullName }} (род.) {% endif %}</td>
+            <td>{{ user.email }}{% if user.parentEmail %} <br>{{ user.parentEmail }} (род.) {% endif %}</td>
+            <td>{{ user.phone }}{% if user.parentPhone %} <br>{{ user.parentPhone }} (род.) {% endif %}</td>
             <td>{{ user.application.selectedProgram }}</td>
             <td>
               <a href="/admin/get_pdf_docs?user_id={{ user.id }}">Документы</a>

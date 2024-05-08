@@ -50,7 +50,8 @@ endblock %} {% block base_with_status_content %}
                 <div id="stars-container" style="display: flex"></div>
               </div>
               <p id="program-hours" style="margin-bottom: 0px"></p>
-              <p id="program-cost"></p>
+              <p id="program-cost" style="margin-bottom: 0px"></p>
+              <p id="program-formal"></p>
               <p id="program-description" class="fixed-width-description">
               </p>
             </div>
@@ -62,6 +63,8 @@ endblock %} {% block base_with_status_content %}
       </div>
     </div>
 
+    <hr>
+
     <h2>Личные данные</h2>
 
     {% for field in form_fields %}
@@ -69,7 +72,8 @@ endblock %} {% block base_with_status_content %}
       <label for="{{ field.id }}" class="form-label">{{ field.label }}:</label>
       <input type="{{ field.type }}" class="form-control automatic-form-field {{field.extraInputClasses}}"
         id="{{ field.id }}" name="{{ field.name }}" placeholder="{{ field.placeholder }}"
-        value="{% if known_data[field.name] is not none %}{{ known_data[field.name] }}{% endif %}" required />
+        value="{% if known_data[field.name] is not none %}{{ known_data[field.name] }}{% endif %}" {% if field.required
+        %}required{% endif %} />
     </div>
     {% endfor %}
     <div class="mb-3">
@@ -139,7 +143,7 @@ endblock %} {% block base_with_status_content %}
       var userData = {};
 
       for (let field of $(".automatic-form-field")) {
-        userData[field.name] = field.value;
+        userData[field.name] = field.value === "" ? null : field.value;
       }
 
       userData["hasLaptop"] = document.getElementById("hasLaptop").checked;
@@ -246,7 +250,8 @@ endblock %} {% block base_with_status_content %}
 
       $("#program-hours").text(`${currentSelectedProgram.hoursAud + currentSelectedProgram.hoursHome} часов (${currentSelectedProgram.hoursAud} аудиторных)`)
 
-      $("#program-cost").text(`Стоимость: ${currentSelectedProgram.cost}`);
+      $("#program-cost").text(`Полная стоимость: ${currentSelectedProgram.cost}`);
+      $("#program-formal").text(`Формально: ${currentSelectedProgram.formalName}`);
 
       $("#program-description").html(currentSelectedProgram.infoHtml);
     }

@@ -422,16 +422,18 @@ async def upload_files(
     application_files: list[UploadFile],  # Заявление
     consent_files: list[UploadFile],  # Согласие на обработку данных
     parent_passport_files: list[UploadFile | str],  # паспорт родителя (1 стр + проп.)
-    child_passport_files: list[UploadFile | str],  # Паспорт ребенка (свидетельство)
+    child_passport_files: list[
+        UploadFile | str
+    ],  # Паспорт обучающегося (свидетельство)
     parent_snils_files: list[UploadFile | str],  # Снилс родителя
-    child_snils_files: list[UploadFile | str],  # Снилс ребенка
+    child_snils_files: list[UploadFile | str],  # Снилс обучающегося
     captcha: str,
 ):
     """
     Поскольку fastapi тут принимает только списком, мы принимаем либо списки UploadFile
     либо список ["use_existing"]. Последний означает, что надо взять ранее загруженный документ.
     """
-    check_captcha(request.client.host, captcha)
+    check_captcha(request.client.host, captcha)  # type: ignore
 
     def ensure_field_filled(field):
         if len(field) == 0:
@@ -441,6 +443,8 @@ async def upload_files(
         ):
             pass
         elif field == ["use_existing"]:
+            pass
+        elif field == ["not_use"]:
             pass
         else:
             raise HTTPException(status_code=400, detail="Некорректный тип поля")
@@ -486,6 +490,8 @@ async def upload_files(
                 status_code=400, detail="Необходимо заполнить паспорт родителя"
             )
         parent_passport_local_files = request.user.latestDocs.parentPassportFiles
+    elif parent_passport_files == ["not_use"]:
+        parent_passport_local_files = None
     else:
         parent_passport_local_files = upload_files_to_local_files(parent_passport_files)
 
@@ -495,7 +501,7 @@ async def upload_files(
             or request.user.latestDocs.childPassportFiles is None
         ):
             raise HTTPException(
-                status_code=400, detail="Необходимо заполнить паспорт ребенка"
+                status_code=400, detail="Необходимо заполнить паспорт обучающегося"
             )
         child_passport_local_files = request.user.latestDocs.childPassportFiles
     else:
@@ -510,6 +516,8 @@ async def upload_files(
                 status_code=400, detail="Необходимо заполнить СНИЛС родителя"
             )
         parent_snils_local_files = request.user.latestDocs.parentSnilsFiles
+    elif parent_snils_files == ["not_use"]:
+        parent_snils_local_files = None
     else:
         parent_snils_local_files = upload_files_to_local_files(parent_snils_files)
 
@@ -519,7 +527,7 @@ async def upload_files(
             or request.user.latestDocs.childSnilsFiles is None
         ):
             raise HTTPException(
-                status_code=400, detail="Необходимо заполнить СНИЛС ребенка"
+                status_code=400, detail="Необходимо заполнить СНИЛС обучающегося"
             )
         child_snils_local_files = request.user.latestDocs.childSnilsFiles
     else:
@@ -531,9 +539,9 @@ async def upload_files(
     all_files = (
         application_local_files
         + consent_local_files
-        + parent_passport_local_files
+        + (parent_passport_local_files or [])
         + child_passport_local_files
-        + parent_snils_local_files
+        + (parent_snils_local_files or [])
         + child_snils_local_files
     )
 
@@ -594,8 +602,8 @@ async def refill_data(request: Request):
 
 @app.post("/registration")
 @limiter.limit("1/minute")
-async def register(request: Request, data: RegistrationData, captcha: str):
-    check_captcha(request.client.host, captcha)
+async def register(request: Request, data: RegistrationDto, captcha: str):
+    check_captcha(request.client.host, captcha)  # type: ignore
 
     if not database.register_user(data):
         raise HTTPException(status_code=400, detail="Пользователь уже существует")
@@ -873,7 +881,7 @@ async def admin_graduate_csv_upload(request: Request, table: UploadFile):
 
         database.update_user_application_grade(student["id"], int(student["grade"]))
         database.update_user_application_diploma(
-            student["id"], student["diploma"].lower() in ("+", "да")
+            student["id"], student["diploma"].lower() in ("+", "да", "диплом")
         )
         database.move_user_application_to_archive(student["id"])
 
@@ -1109,6 +1117,47 @@ async def admin_statistics_lookup_people(request: Request, people: str):
     return templates.TemplateResponse(
         "admin_lookup_result.html",
         {"request": request, "users": users, "usersNotFound": usersNotFound},
+    )
+
+
+@app.get("/admin/income")
+@requires("admin")
+async def admin_income(request: Request):
+    users = database.get_users_with_enrollment_order()
+    incomes = [
+        {
+            "program": p.brief,
+            "cost": p.relevant_confirmed().cost,
+            "studentsCount": len(
+                [
+                    True
+                    for u in users
+                    if u.application.selectedProgram == p.relevant_realization().id
+                ]
+            ),
+            "income": sum(
+                [
+                    p.relevant_confirmed().cost
+                    for u in users
+                    if u.application.selectedProgram == p.relevant_realization().id
+                ]
+            ),
+        }
+        for p in database.load_relevant_programs(True, True)
+    ]
+
+    incomes.append(
+        {
+            "program": "< Все программы >",
+            "cost": "",
+            "studentsCount": len(users),
+            "income": sum([income["income"] for income in incomes]),
+        }
+    )
+
+    return templates.TemplateResponse(
+        "admin_income.html",
+        {"request": request, "incomes": incomes},
     )
 
 

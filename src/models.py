@@ -21,12 +21,12 @@ class ApplicationStage(BaseModel):
     stageHref: Optional[str] = Field("#")
 
 
-class RegistrationData(BaseModel):
+class RegistrationDto(BaseModel):
     fullName: str = Field(regex=Regexes.name, min_length=1, max_length=100)
     email: str = Field(regex=Regexes.email)
-    parentEmail: str
-    school: str
-    schoolClass: int
+    parentEmail: Optional[str] = Field(None)
+    school: Optional[str] = Field(None)
+    schoolClass: Optional[int] = Field(None)
     birthDate: str
     password: str
 
@@ -105,9 +105,9 @@ def files_existence_checker(files: list[Document] | Document):
 
 
 class PersonalDocuments(BaseModel):
-    parentPassportFiles: list[Document]
+    parentPassportFiles: Optional[list[Document]]
     childPassportFiles: list[Document]
-    parentSnilsFiles: list[Document]
+    parentSnilsFiles: Optional[list[Document]]
     childSnilsFiles: list[Document]
 
     @validator(
@@ -118,7 +118,8 @@ class PersonalDocuments(BaseModel):
     )
     @classmethod
     def validate_parent_passport_files(cls, value):
-        return files_existence_checker(value)
+        if value:
+            return files_existence_checker(value)
 
 
 class ApplicationDocuments(PersonalDocuments):
@@ -185,10 +186,10 @@ class UserMutableData(BaseModel):
         None, regex=Regexes.name, min_length=1, max_length=100
     )
     parentAddress: Optional[str] = Field(None)
-    email: Optional[str] = Field(None, regex=Regexes.email)
-    parentEmail: str = Field(regex=Regexes.email)
-    school: str
-    schoolClass: int
+    email: str = Field(regex=Regexes.email)
+    parentEmail: Optional[str] = Field(regex=Regexes.email)
+    school: Optional[str] = Field(None)
+    schoolClass: Optional[int] = Field(None)
     birthPlace: Optional[str] = Field(None)
     phone: Optional[str] = Field(None)
     parentPhone: Optional[str] = Field(None)
@@ -299,6 +300,7 @@ class FormField(BaseModel):
     type: str = "text"
     placeholder: str
     extraInputClasses: str = ""
+    required: bool = True
 
 
 class UserFillDataSubmission(UserBasicData, SelectedProgram):
@@ -506,10 +508,10 @@ class MultipleSetOrderDto(BaseModel):
 
 class DashboardUserInfo(BaseModel):
     fullName: str
-    email: Optional[str] = Field(None)
-    parentEmail: str
-    school: str
-    schoolClass: int
+    email: str
+    parentEmail: Optional[str] = Field(None)
+    school: Optional[str] = Field(None)
+    schoolClass: Optional[int] = Field(None)
     phone: Optional[str] = Field(None)
     parentPhone: Optional[str] = Field(None)
     applicationSelectedProgram: Optional[str]

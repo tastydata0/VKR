@@ -10,7 +10,6 @@ block base_content %}
             <th>ID</th>
             <th>Имя</th>
             <th>Почта</th>
-            <th>Почта родителя</th>
             <th>Телефон</th>
             <th>Программа обучения</th>
             <th>Подтвердить</th>
@@ -25,7 +24,6 @@ block base_content %}
             </td>
             <td>{{ user.fullName }}</td>
             <td>{{ user.email }}</td>
-            <td>{{ user.parentEmail }}</td>
             <td>{{ user.phone }}</td>
             <td>{{ user.application.selectedProgram }}</td>
             <td>

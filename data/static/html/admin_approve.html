@@ -23,7 +23,9 @@ block base_content %}
             <td>
               <input style="width: 60px" value="{{ user.id }}" readonly />
             </td>
-            <td>{{ user.fullName }}{% if user.parentFullName %} <br>{{ user.parentFullName }} (род.) {% endif %}</td>
+            <td><b>{{ user.fullName }}</b>{% if user.parentFullName %}
+              <br>{{ user.parentFullName }} (род.) {% endif %}
+            </td>
             <td>{{ user.email }}{% if user.parentEmail %} <br>{{ user.parentEmail }} (род.) {% endif %}</td>
             <td>{{ user.phone }}{% if user.parentPhone %} <br>{{ user.parentPhone }} (род.) {% endif %}</td>
             <td>{{ user.application.selectedProgram }}</td>

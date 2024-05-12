@@ -603,40 +603,34 @@ async def refill_data(request: Request):
 @app.post("/registration")
 @limiter.limit("1/minute")
 async def register(request: Request, data: RegistrationDto, captcha: str):
+    password_strength = passwords.password_strength_check(data.password)
+
+    if password_strength["length_error"]:
+        raise HTTPException(
+            status_code=400, detail="Длина пароля должна быть не менее 8 символов"
+        )
+    if password_strength["uppercase_error"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Пароль должен содержать хотя бы одну заглавную букву",
+        )
+    if password_strength["lowercase_error"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Пароль должен содержать хотя бы одну строчную букву",
+        )
+    if password_strength["digit_error"] and password_strength["symbol_error"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Пароль должен содержать хотя бы одну цифру или специальный символ",
+        )
+
     check_captcha(request.client.host, captcha)  # type: ignore
 
     if not database.register_user(data):
         raise HTTPException(status_code=400, detail="Пользователь уже существует")
 
     return await create_token(LoginData(**data.dict()))
-
-
-# @app.get("/download")
-# async def download_data():
-#     # Создаем Excel-файл с данными о всех учениках
-#     workbook = openpyxl.Workbook()
-#     worksheet = workbook.active
-
-#     # Создаем заголовок на основе полей модели RegistrationData
-#     headers = list(RegistrationData.__annotations__.keys())
-#     worksheet.append(headers)
-
-#     for data in users.values():
-#         worksheet.append([data[field] for field in headers])
-
-#     # Создаем временный файл для сохранения XLSX-файла
-#     with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmpfile:
-#         file_path = tmpfile.name
-#         workbook.save(file_path)
-
-#     # Отправьте файл в HTTP-ответе
-#     response = FileResponse(
-#         file_path,
-#         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-# )
-#     response.headers["Content-Disposition"] = "attachment; filename=users.xlsx"
-
-#     return response
 
 
 # Эндпоинт для создания токена

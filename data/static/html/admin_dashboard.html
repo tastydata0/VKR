@@ -81,6 +81,22 @@ endblock %} {% block base_content %}
             Инструменты статистики
           </div>
         </li>
+        <li class="list-group-item d-flex justify-content-between align-items-start">
+          <div class="ms-2 me-auto">
+            <b class="mr-3">📤 Экспорт документов в ZIP </b><a href="/admin/export_pdf_docs?all=1" class="ml-3 fw-bold">
+              (Все</a> | <a href="/admin/export_pdf_docs?all=0" class="fw-bold">Только зачисленные)</a>
+            <br>
+            Экспорт документов для дальнейшей обработки
+          </div>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-start">
+          <div class="ms-2 me-auto">
+            <b class="mr-3">📤 Экспорт данных в Excel </b><a href="/admin/export_csv?all=1" class="ml-3 fw-bold">
+              (Все</a> | <a href="/admin/export_csv?all=0" class="fw-bold">Только зачисленные)</a>
+            <br>
+            Экспорт данных для дальнейшей обработки
+          </div>
+        </li>
       </ol>
 
     </div>

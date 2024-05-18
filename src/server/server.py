@@ -36,7 +36,7 @@ from src.forms.main_form_fields import form_fields
 from src.application_stages import get_stages_according_to_state
 from src.application_state import ApplicationState
 
-from src import application_state, schemas
+from src import application_state, export_docs, schemas
 from returns.maybe import Maybe, Nothing, Some
 from returns.pipeline import is_successful
 from lambdas import _
@@ -947,6 +947,14 @@ async def admin_get_pdf_docs(request: Request, user_id: str):
         )
 
     return database.find_user(user_id).bind_optional(check_docs).unwrap()
+
+
+@app.get("/admin/export_pdf_docs")
+@requires("admin")
+async def admin_export_pdf_docs(request: Request, all: int):
+    return Response(
+        content=export_docs.users_docs_archive(database.find_all_users() if all == 1 else database.find_users_with_status(ApplicationState.passed)), media_type="application/zip"
+    )
 
 
 @app.get("/admin/competition")

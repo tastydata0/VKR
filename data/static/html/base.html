@@ -32,46 +32,83 @@
 </head>
 
 <body>
-  <div id="header-container">
-    <nav class="navbar navbar-expand-lg navbar-light bg-light p-3">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="#">
-          <img src="/static/icons/cs.png" style="max-height: 48px; width: auto;"
-            class="navbar-logo d-inline-block align-top" />
-        </a>
-        <button class="navbar-toggler" type="button" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-          <ul class="navbar-nav">
-            {% if user is undefined %}
-            <li class="nav-item">
-              <a class="nav-link" href="/login">Вход</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/registration">Регистрация</a>
-            </li>
-            {% else %}
-            <li class="nav-item">
-              <a class="nav-link" href="/"> <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                  fill="currentColor" class="bi bi-person-arms-up" viewBox="0 0 16 16">
-                  <path d="M8 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3" />
-                  <path
-                    d="m5.93 6.704-.846 8.451a.768.768 0 0 0 1.523.203l.81-4.865a.59.59 0 0 1 1.165 0l.81 4.865a.768.768 0 0 0 1.523-.203l-.845-8.451A1.5 1.5 0 0 1 10.5 5.5L13 2.284a.796.796 0 0 0-1.239-.998L9.634 3.84a.7.7 0 0 1-.33.235c-.23.074-.665.176-1.304.176-.64 0-1.074-.102-1.305-.176a.7.7 0 0 1-.329-.235L4.239 1.286a.796.796 0 0 0-1.24.998l2.5 3.216c.317.316.475.758.43 1.204Z" />
-                </svg> {{ user.fullName }}</a>
+  <div class="content">
+    <div id="header-container">
+      <nav class="navbar navbar-expand-lg navbar-light bg-light p-3">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#">
+            <img src="/static/icons/cs.png" style="max-height: 48px; width: auto;"
+              class="navbar-logo d-inline-block align-top" />
+          </a>
+          <button class="navbar-toggler" type="button" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+            <ul class="navbar-nav">
+              {% if user is undefined %}
+              <li class="nav-item">
+                <a class="nav-link" href="/login">Вход</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/registration">Регистрация</a>
+              </li>
+              {% else %}
+              <li class="nav-item">
+                <a class="nav-link" href="/"> <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                    fill="currentColor" class="bi bi-person-arms-up" viewBox="0 0 16 16">
+                    <path d="M8 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3" />
+                    <path
+                      d="m5.93 6.704-.846 8.451a.768.768 0 0 0 1.523.203l.81-4.865a.59.59 0 0 1 1.165 0l.81 4.865a.768.768 0 0 0 1.523-.203l-.845-8.451A1.5 1.5 0 0 1 10.5 5.5L13 2.284a.796.796 0 0 0-1.239-.998L9.634 3.84a.7.7 0 0 1-.33.235c-.23.074-.665.176-1.304.176-.64 0-1.074-.102-1.305-.176a.7.7 0 0 1-.329-.235L4.239 1.286a.796.796 0 0 0-1.24.998l2.5 3.216c.317.316.475.758.43 1.204Z" />
+                  </svg> {{ user.fullName }}</a>
 
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" id="logout" href="#">Выход</a>
-            </li>
-            {% endif %}
-          </ul>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" id="logout" href="#">Выход</a>
+              </li>
+              {% endif %}
+            </ul>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+    </div>
+
+    <div class="container mb-5">{% block base_content %}{% endblock %}</div>
   </div>
 
-  <div class="container">{% block base_content %}{% endblock %}</div>
+  <footer class="footer">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4">
+          <h5>Наш адрес</h5>
+          <p>
+            <i class="fas fa-map-marker-alt"></i> Ф. Энгельса ул.,1, Таганрог
+          </p>
+        </div>
+        <div class="col-md-4">
+          <h5>Соцсети</h5>
+          <p>
+            <a href="https://vk.com/mopevm_school" target="_blank">
+              <i class="fab fa-vk"></i> Группа ВК
+            </a>
+          </p>
+        </div>
+        <div class="col-md-4">
+          <h5>Контакты</h5>
+          <p>
+            <a href="tel:+78634393545"> <i class="fas fa-phone"></i> +7 (863) 439-35-45</a><br>
+            <a href="mailto:mopevm.school@gmail.com "><i class="fas fa-envelope"></i> mopevm.school@gmail.com </a>
+          </p>
+        </div>
+        <div class="col">
+          <small>
+            <i class="far fa-copyright"></i> Кафедра МОП ЭВМ + Научно-образовательный центр математического и
+            программного обеспечения информационных систем реального времени Южного федерального университета
+          </small>
+        </div>
+      </div>
+    </div>
+  </footer>
+
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="/static/dist/bundle.js"></script>

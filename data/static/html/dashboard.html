@@ -103,11 +103,11 @@ block base_content %}
       {% if user.applicationTeacher.schedule %} Расписание занятий: {{user.applicationTeacher.schedule}} {%
       endif %}
       </p>
-      {% if user.applicationTeacher.relevantVkGroupUrl %} Группа ВК: <a
+      {% if user.applicationTeacher.relevantVkGroupUrl %} <i class="fa-brands fa-vk"></i> ВК учебной группы: <a
         href="{{user.applicationTeacher.relevantVkGroupUrl}}">{{user.applicationTeacher.relevantVkGroupUrl}}</a> {%
       endif %}
       <br>
-      {% if user.applicationTeacher.relevantDiscordUrl %} Discord-сервер группы: <a
+      {% if user.applicationTeacher.relevantDiscordUrl %} <i class="fa-brands fa-discord"></i> Discord-сервер группы: <a
         href="{{user.applicationTeacher.relevantDiscordUrl}}">{{user.applicationTeacher.relevantDiscordUrl}}</a> {%
       endif %}
     </div>

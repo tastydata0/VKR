@@ -17,6 +17,35 @@ html *:not(h1, h2, h3, h4) {
   font-style: normal;
 }
 
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  flex: 1;
+}
+
+.footer {
+  background-color: #343a40;
+  color: #ffffff;
+  padding: 20px 0;
+}
+
+.footer a {
+  color: #8bb7fe;
+}
+
+.footer a:hover {
+  color: #adb5bd;
+  }
+
 .navbar-logo {
   margin-left: 16px;
 }

@@ -15,7 +15,7 @@ endblock %} {% block base_with_status_content %}
         url: "/application/delete_application",
         type: "POST",
         success: function (data) {
-          window.location.href = "/";
+          window.location.href = "/dashboard";
         },
         error: function (data) {
           console.log(data);

@@ -310,8 +310,12 @@ async def delete_application(request: Request):
 
 
 @app.get("/")
+async def main_page(request: Request):
+    return templates.TemplateResponse("main_page.html", {"request": request})
+
+@app.get("/dashboard")
 @requires("authenticated")
-async def homepage(request: Request):
+async def dashboard(request: Request):
     applicationSelectedProgram = None
     applicationStatus = None
     if request.user.application is not None:
@@ -658,7 +662,7 @@ async def create_token(form_data: LoginData):
     access_token = str(uuid.uuid4())
     database.add_auth_token(user.unwrap().id, access_token)
 
-    response = fastapi.responses.RedirectResponse(url="/", status_code=302)
+    response = fastapi.responses.RedirectResponse(url="/dashboard", status_code=302)
     response.set_cookie("access_token", access_token, httponly=True)
 
     return response
@@ -667,7 +671,7 @@ async def create_token(form_data: LoginData):
 @app.post("/logout")
 @requires("authenticated")
 async def logout(request: Request):
-    response = fastapi.responses.RedirectResponse(url="/", status_code=302)
+    response = fastapi.responses.RedirectResponse(url="/login", status_code=302)
     response.delete_cookie("access_token")
     return response
 

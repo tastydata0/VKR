@@ -26,6 +26,16 @@ form_fields = [
         required=False,
     ),
     FormField(
+        id="parentBirthDate",
+        label="Дата рождения родителя",
+        name="parentBirthDate",
+        type="text",
+        placeholder="27.10.1977",
+        default_value="",
+        required=False,
+        extraInputClasses="datepicker",
+    ),
+    FormField(
         id="parentAddress",
         label="Адрес родителя",
         name="parentAddress",

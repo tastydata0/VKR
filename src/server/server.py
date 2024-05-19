@@ -390,13 +390,24 @@ async def post_form(request: Request, data: UserFillDataSubmission):
 
     if (
         database.update_user_application_program_id(
-            user_id=request.user.id, program_id=data.selectedProgram
+            user_id=request.user.id, program_id=data.selectedProgram  # type: ignore
         )
         == -1
     ):
         raise HTTPException(
             status_code=500,
             detail="Не удалось обновить заявление (программа). Обратитесь к администратору",
+        )
+
+    if (
+        database.update_user_application_full_name(
+            user_id=request.user.id, full_name=data.fullName
+        )
+        == -1
+    ):
+        raise HTTPException(
+            status_code=500,
+            detail="Не удалось обновить заявление (ФИО). Обратитесь к администратору",
         )
 
     if (
@@ -857,7 +868,7 @@ async def admin_graduate(request: Request):
 @app.get("/admin/graduate_csv")
 @requires("admin")
 async def admin_graduate_csv(request: Request):
-    return FileResponse(database.export_graduate_csv())
+    return Response(content=database.export_graduate_csv(), media_type="text/csv")
 
 
 @app.post("/admin/graduate_csv")
@@ -953,7 +964,25 @@ async def admin_get_pdf_docs(request: Request, user_id: str):
 @requires("admin")
 async def admin_export_pdf_docs(request: Request, all: int):
     return Response(
-        content=export_docs.users_docs_archive(database.find_all_users() if all == 1 else database.find_users_with_status(ApplicationState.passed)), media_type="application/zip"
+        content=export_docs.users_docs_archive(
+            database.find_all_users()
+            if all == 1
+            else database.find_users_with_status(ApplicationState.passed)
+        ),
+        media_type="application/zip",
+    )
+
+
+@app.get("/admin/export_users_xlsx")
+@requires("admin")
+async def admin_export_users_xlsx(request: Request, all: int):
+    return Response(
+        content=database.users_to_xlsx(
+            database.find_all_users()
+            if all == 1
+            else database.find_users_with_status(ApplicationState.passed)
+        ),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
 

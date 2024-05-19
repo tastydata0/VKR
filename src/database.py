@@ -1,4 +1,5 @@
 from datetime import datetime
+from io import BytesIO
 import logging
 import pathlib
 import uuid
@@ -231,6 +232,10 @@ def update_user_application_documents(user_id: str, documents: ApplicationDocume
 
 def update_user_application_program_id(user_id: str, program_id: str):
     return update_user_application_field(user_id, "selectedProgram", program_id)
+
+
+def update_user_application_full_name(user_id: str, full_name: str):
+    return update_user_application_field(user_id, "fullName", full_name)
 
 
 def update_user_application_discounts(user_id: str, discounts: list[str]):
@@ -493,7 +498,7 @@ def resolve_teacher_by_name(name) -> Teacher:
     return None  # type: ignore
 
 
-def export_graduate_csv() -> pathlib.Path:
+def export_graduate_csv() -> bytes:
     cursor = users.find(
         {"application.status": ApplicationState.passed.id},
         {"_id": 1, "fullName": 1, "application.teacherName": 1},
@@ -512,6 +517,61 @@ def export_graduate_csv() -> pathlib.Path:
 
     items.sort(key=lambda x: (x["teacherName"], x["fullName"]))
 
-    output_path = pathlib.Path("/tmp/export_" + uuid.uuid4().hex).with_suffix(".csv")
-    pd.DataFrame(items).to_csv(output_path, index=False)
-    return output_path
+    csv_buffer = BytesIO()
+
+    pd.DataFrame(items).to_csv(csv_buffer, index=False)
+    return csv_buffer.getvalue()
+
+
+def users_to_xlsx(users_to_export: list[User]) -> bytes:
+    programs_cached: dict[str, Maybe[Program]] = {}
+
+    def get_program(program_realization: Optional[str]) -> Maybe[Program]:
+        if not program_realization:
+            return Nothing
+
+        if program_realization not in programs_cached:
+            programs_cached[program_realization] = resolve_program_by_realization_id(
+                program_realization
+            ).bind_optional(lambda p: Program(**p))
+        return programs_cached[program_realization]
+
+    items = [
+        {
+            # "id": user.id,
+            "Программа": get_program(user.application.selectedProgram)
+            .bind_optional(lambda p: p.relevant_confirmed().formalName)
+            .value_or("< Ещё не заполнил анкету >"),
+            "Часы (аудиторные)": get_program(user.application.selectedProgram)
+            .bind_optional(lambda p: p.relevant_confirmed().hoursAud)
+            .value_or(""),
+            "Часы (дома)": get_program(user.application.selectedProgram)
+            .bind_optional(lambda p: p.relevant_confirmed().hoursHome)
+            .value_or(""),
+            "Часы (всего)": get_program(user.application.selectedProgram)
+            .bind_optional(
+                lambda p: p.relevant_confirmed().hoursAud
+                + p.relevant_confirmed().hoursHome
+            )
+            .value_or(""),
+            "ФИО ученика": user.application.fullName or "< Ещё не заполнил анкету >",
+            "Дата рождения ученика": user.birthDate,
+            "ФИО родителя": user.parentFullName,
+            "Дата рождения родителя": user.parentBirthDate,
+        }
+        for user in users_to_export
+    ]
+
+    items.sort(key=lambda x: (x["ФИО ученика"], x["Программа"]))
+
+    xlsx_buffer = BytesIO()
+
+    with pd.ExcelWriter(xlsx_buffer, engine="openpyxl") as writer:
+        pd.DataFrame(items).to_excel(writer, index=False)
+
+    return xlsx_buffer.getvalue()
+
+
+for user in find_all_users():
+    if user.application and user.application.status != "filling_info":
+        update_user_application_full_name(user.id, user.fullName)

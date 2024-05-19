@@ -185,6 +185,7 @@ class UserMutableData(BaseModel):
     parentFullName: Optional[str] = Field(
         None, regex=Regexes.name, min_length=1, max_length=100
     )
+    parentBirthDate: Optional[str] = Field(None)
     parentAddress: Optional[str] = Field(None)
     email: str = Field(regex=Regexes.email)
     parentEmail: Optional[str] = Field(regex=Regexes.email)

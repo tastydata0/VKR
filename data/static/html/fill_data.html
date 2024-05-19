@@ -181,6 +181,9 @@ endblock %} {% block base_with_status_content %}
         if (xhr.status === 200) {
           window.location.href = xhr.responseURL;
         }
+        else {
+          alert("Ошибка: " + JSON.parse(xhr.responseText).detail);
+        }
       };
       xhr.send(JSON.stringify(userData));
     }

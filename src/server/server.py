@@ -313,6 +313,7 @@ async def delete_application(request: Request):
 async def main_page(request: Request):
     return templates.TemplateResponse("main_page.html", {"request": request})
 
+
 @app.get("/dashboard")
 @requires("authenticated")
 async def dashboard(request: Request):

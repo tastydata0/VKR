@@ -16,7 +16,6 @@ from returns.pipeline import flow, is_successful
 from returns.result import safe
 from returns.pointfree import bind
 from returns.curry import partial
-from lambdas import _
 from application_state import ApplicationState
 
 dotenv.load_dotenv(".env")
@@ -270,25 +269,26 @@ def register_user(user_data: RegistrationDto) -> Maybe[str]:
     user_data_dict = user_data.dict()
     user_data_dict["password"] = get_password_hash(user_data.password)
 
-    return (
-        _find_one_maybe(
+    user = _find_one_maybe(
             users,
             {
                 "fullName": user_data_dict["fullName"],
                 "birthDate": user_data_dict["birthDate"],
             },
         )
-        .bind_optional(lambda x: Nothing)
-        .or_else_call(
-            lambda: Maybe.from_value(str(users.insert_one(user_data_dict).inserted_id))
-        )
-    )
+
+    print(user)
+
+    if is_successful(user):
+        return Nothing
+    else:
+        return Maybe.from_value(str(users.insert_one(user_data_dict).inserted_id))
 
 
 def add_auth_token(user_id: str, token: str, role: str = "user"):
     return tokens.insert_one(
         {
-            "user_id": user_id,
+            "user_id": ObjectId(user_id),
             "created_at": datetime.utcnow(),
             "token": token,
             "role": role,
@@ -297,7 +297,8 @@ def add_auth_token(user_id: str, token: str, role: str = "user"):
 
 
 def find_auth_token(token: str) -> Maybe[dict]:
-    return _find_one_maybe(tokens, {"token": token})
+    return _find_one_maybe(tokens, {"token": token}).bind_optional(
+        lambda x: {**x, "user_id": str(x["user_id"])})
 
 
 @maybe

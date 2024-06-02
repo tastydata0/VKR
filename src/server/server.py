@@ -39,8 +39,6 @@ from src.application_state import ApplicationState
 from src import application_state, export_docs, schemas
 from returns.maybe import Maybe, Nothing, Some
 from returns.pipeline import is_successful
-from lambdas import _
-
 
 def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
     """
@@ -643,7 +641,7 @@ async def register(request: Request, data: RegistrationDto, captcha: str):
 
     check_captcha(request.client.host, captcha)  # type: ignore
 
-    if not database.register_user(data):
+    if database.register_user(data) == Nothing:
         raise HTTPException(status_code=400, detail="Пользователь уже существует")
 
     return await create_token(LoginData(**data.dict()))

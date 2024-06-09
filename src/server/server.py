@@ -678,6 +678,28 @@ async def logout(request: Request):
 @app.post("/change_password")
 @requires("authenticated")
 async def change_password(request: Request, data: ChangePasswordDto):
+    password_strength = passwords.password_strength_check(data.newPassword)
+
+    if password_strength["length_error"]:
+        raise HTTPException(
+            status_code=400, detail="Длина пароля должна быть не менее 8 символов"
+        )
+    if password_strength["uppercase_error"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Пароль должен содержать хотя бы одну заглавную букву",
+        )
+    if password_strength["lowercase_error"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Пароль должен содержать хотя бы одну строчную букву",
+        )
+    if password_strength["digit_error"] and password_strength["symbol_error"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Пароль должен содержать хотя бы одну цифру или специальный символ",
+        )
+
     if database.check_user_password(request.user.id, data.oldPassword) is False:
         raise HTTPException(status_code=400, detail="Неверный пароль")
 

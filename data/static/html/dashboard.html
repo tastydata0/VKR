@@ -147,8 +147,10 @@ block base_content %}
         if (response.ok) {
           alert("Пароль успешно изменен");
           window.location.reload();
-        } else {
-          alert("Неправильный пароль");
+        } else if (response.status == 400) {
+          response.text().then(function (text) {
+            alert("Некорректный пароль: " + JSON.parse(text).detail);
+          });
         }
       });
     });

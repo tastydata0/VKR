@@ -1,4 +1,4 @@
-{% extends "base.html" %} {% block title %} Вход | Школа::Кода {% endblock %} {%
+{% extends "base.html" %} {% block title %}Вход | Школа::Кода{% endblock %} {%
 block base_content %}
 <div id="header-container"></div>
 <div class="container">
@@ -62,7 +62,7 @@ block base_content %}
         if (xhr.status === 200) {
           location.href = xhr.responseURL;
         } else {
-          alert("Ошибка входа");
+          alert("Ошибка входа: " + JSON.parse(xhr.responseText).detail);
         }
       };
     });

@@ -11,10 +11,10 @@ from returns.maybe import Nothing
 
 class CookieTokenAuthBackend(AuthenticationBackend):
     async def authenticate(self, conn):
-        if "access_token" not in conn.cookies:
+        if "access_token" not in conn.cookies and "access_token" not in conn.headers:
             return
 
-        token = conn.cookies.get("access_token")
+        token = conn.cookies.get("access_token", conn.headers.get("access_token"))
 
         user = find_user_by_token(token)
         if user != Nothing:

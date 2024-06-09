@@ -174,3 +174,4 @@ node_modules/*
 docker-compose-mongo.yml
 Dockerfile
 data/fake_documents
+states.drawio

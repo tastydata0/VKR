@@ -170,3 +170,6 @@ data/pdf_files/
 
 token.json
 node_modules/*
+
+docker-compose-mongo.yml
+Dockerfile

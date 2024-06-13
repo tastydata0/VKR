@@ -1,5 +1,7 @@
 # Разработка информационной системы «Личный кабинет слушателя Школы::Кода». Серверная часть и веб-приложение
 
+Автор: Зверев А.Е.
+
 ![image](https://github.com/tastydata0/VKR/assets/76962395/dcb83bc1-82d8-41b2-9798-d34dd5736217)
 
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
